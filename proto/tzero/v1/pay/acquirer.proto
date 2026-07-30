@@ -8,7 +8,7 @@ package tzero.v1.pay;
 
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
-import "tzero/v1/pay/types.proto";
+import "tzero/v1/pay/common.proto";
 
 /**
  * t-0 endpoints the Acquirer calls to price a sale, open a payment intent, and
