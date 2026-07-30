@@ -1,0 +1,247 @@
+syntax = "proto3";
+
+// MODELING DRAFT — not yet wired into any buf module.
+// Eventual home: proto/tzero/v1/pay/lp.proto. The LP ↔ t-0 edge:
+// LpService is hosted by t-0 and called by the LP;
+// LpCallbackService is implemented by the LP and called by t-0.
+
+package tzero.v1.pay;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+import "tzero/v1/common/common.proto";
+
+/**
+ * t-0 endpoints the LP calls to push and withdraw standing quotes and to report
+ * its self-initiated fiat settlements. Fiat mode only.
+ */
+service LpService {
+  /** Pushes one immutable standing quote into t-0's Order Book; multi-consumable while it stands. */
+  rpc PublishQuote(PublishQuoteRequest) returns (PublishQuoteResponse) {
+    option idempotency_level = IDEMPOTENT;
+  }
+
+  /** Removes one standing quote before expiry; intents already accepted against it are unaffected. */
+  rpc WithdrawQuote(WithdrawQuoteRequest) returns (WithdrawQuoteResponse) {
+    option idempotency_level = IDEMPOTENT;
+  }
+
+  /** Reports a fiat bank-rails settlement the LP made on its own initiative against locked executions. */
+  rpc FiatSettlementSent(FiatSettlementSentRequest) returns (FiatSettlementSentResponse) {
+    option idempotency_level = IDEMPOTENT;
+  }
+}
+
+/**
+ * LP-implemented endpoint t-0 calls to bind the LP to a standing quote's locked
+ * rate for one authorized sale. Fiat mode only.
+ */
+service LpCallbackService {
+  /** Creates the LP's firm per-sale obligation at the standing quote's locked rate. */
+  rpc ExecuteQuote(ExecuteQuoteRequest) returns (ExecuteQuoteResponse) {
+    option idempotency_level = IDEMPOTENT;
+  }
+}
+
+// ── LpService ────────────────────────────────────────────────────────
+
+message PublishQuoteRequest {
+  /** LP's identifier for this quote; idempotency key, unique per LP. */
+  string quote_ref = 10 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 64
+  }];
+
+  /** ISO 4217 currency the quote prices (e.g. COP). */
+  string local_currency = 20 [(buf.validate.field).string = {
+    len: 3
+    pattern: "^[A-Z]{3}$"
+  }];
+
+  /** Rate committed, in units of local_currency per 1 USDt. */
+  tzero.v1.common.Decimal fx_rate = 30 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      message: "fx_rate must be greater than zero"
+      expression: "this.unscaled > 0"
+    }
+  ];
+
+  /** Smallest single sale this quote may price, in USDt (domain rule: at least 0.01). */
+  tzero.v1.common.Decimal min_amount_usdt = 40 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      message: "min_amount_usdt must be greater than zero"
+      expression: "this.unscaled > 0"
+    }
+  ];
+
+  /** Largest single sale this quote may price, in USDt (domain rule: at least min_amount_usdt). */
+  tzero.v1.common.Decimal max_amount_usdt = 50 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      message: "max_amount_usdt must be greater than zero"
+      expression: "this.unscaled > 0"
+    }
+  ];
+
+  /** Moment the quote stops standing, on t-0's clock. */
+  google.protobuf.Timestamp expires_at = 60 [(buf.validate.field).timestamp.gt_now = true];
+}
+
+message PublishQuoteResponse {
+  oneof result {
+    option (buf.validate.oneof).required = true;
+    Success success = 10;
+    Failure failure = 20;
+  }
+
+  message Success {
+    /** t-0's id for the standing quote, used everywhere downstream. */
+    uint64 quote_id = 10 [(buf.validate.field).uint64.gt = 0];
+  }
+
+  message Failure {
+    Reason reason = 10 [(buf.validate.field).enum.not_in = 0];
+
+    enum Reason {
+      REASON_UNSPECIFIED = 0;
+      // The quote's currency is not supported.
+      REASON_CURRENCY_UNSUPPORTED = 10;
+      // min/max bounds are not well-formed.
+      REASON_LIMITS_INVALID = 20;
+      // expires_at is in the past, too short to be usable, or beyond the max window.
+      REASON_VALIDITY_INVALID = 30;
+    }
+  }
+}
+
+message WithdrawQuoteRequest {
+  /** The standing quote to withdraw; must have been minted for this LP. */
+  uint64 quote_id = 10 [(buf.validate.field).uint64.gt = 0];
+}
+
+message WithdrawQuoteResponse {
+  oneof result {
+    option (buf.validate.oneof).required = true;
+    Success success = 10;
+    Failure failure = 20;
+  }
+
+  message Success {}
+
+  message Failure {
+    Reason reason = 10 [(buf.validate.field).enum.not_in = 0];
+
+    enum Reason {
+      REASON_UNSPECIFIED = 0;
+      // quote_id is unknown or belongs to another LP.
+      REASON_QUOTE_UNKNOWN = 10;
+    }
+  }
+}
+
+message FiatSettlementSentRequest {
+  /** Reference on the bank-rails transfer; idempotency key, unique per LP. */
+  string bank_transfer_ref = 10 [(buf.validate.field).string = {min_len: 1}];
+
+  /** Executions this settlement clears, in the LP's execution-space. */
+  repeated uint64 settled_execution_ids = 20 [(buf.validate.field).repeated = {min_items: 1}];
+
+  /** ISO 4217 currency delivered; matches the covered executions' currency. */
+  string local_currency = 30 [(buf.validate.field).string = {
+    len: 3
+    pattern: "^[A-Z]{3}$"
+  }];
+
+  /** Local-fiat amount delivered; must equal the sum of the covered executions' local amounts. */
+  tzero.v1.common.Decimal settlement_amount = 40 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      message: "settlement_amount must be greater than zero"
+      expression: "this.unscaled > 0"
+    }
+  ];
+
+  /** Acquirer's registered bank destination the fiat was sent to. */
+  string destination_account = 50 [(buf.validate.field).string = {min_len: 1}];
+
+  /** Moment the LP released the bank-rails transfer. */
+  google.protobuf.Timestamp settled_at = 60 [(buf.validate.field).required = true];
+}
+
+message FiatSettlementSentResponse {
+  oneof result {
+    option (buf.validate.oneof).required = true;
+    Accepted accepted = 10;
+    Rejected rejected = 20;
+  }
+
+  message Accepted {}
+
+  message Rejected {
+    Reason reason = 10 [(buf.validate.field).enum.not_in = 0];
+
+    /** Executions that failed validation against t-0's ledger. */
+    repeated uint64 failing_execution_ids = 20;
+
+    enum Reason {
+      REASON_UNSPECIFIED = 0;
+      // A listed execution was never created for this LP.
+      REASON_EXECUTION_UNKNOWN = 10;
+      // A listed execution is already covered by an accepted settlement.
+      REASON_EXECUTION_ALREADY_COVERED = 20;
+      // local_currency does not match the covered executions' currency.
+      REASON_CURRENCY_MISMATCH = 30;
+      // settlement_amount does not equal the covered executions' sum.
+      REASON_AMOUNT_MISMATCH = 40;
+      // destination_account is not the Acquirer's registered bank destination.
+      REASON_DESTINATION_MISMATCH = 50;
+      // The covered executions span more than one Acquirer (one transfer credits one account).
+      REASON_ACQUIRER_MIXED = 60;
+    }
+  }
+}
+
+// ── LpCallbackService ───────────────────────────────────────────────────────
+
+message ExecuteQuoteRequest {
+  /** t-0's id for this execution; idempotency key and the LP's obligation handle. */
+  uint64 execution_id = 10 [(buf.validate.field).uint64.gt = 0];
+
+  /** t-0's id for the standing quote this execution is under. */
+  uint64 quote_id = 20 [(buf.validate.field).uint64.gt = 0];
+
+  /**
+   * LP's own identifier for that quote — a non-authoritative correlation echo.
+   * Lets the LP attribute the execution even when it arrives before the LP has
+   * recorded t-0's quote_id (publish-vs-execute race).
+   */
+  string quote_ref = 30 [(buf.validate.field).string = {min_len: 1}];
+
+  /** t-0's stable id for the Acquirer; the LP resolves the registered bank destination from it. */
+  uint64 acquirer_id = 40 [(buf.validate.field).uint64.gt = 0];
+
+  /** Fiat amount owed to the Acquirer for this sale, in the standing quote's currency. */
+  tzero.v1.common.Decimal local_amount = 50 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      message: "local_amount must be greater than zero"
+      expression: "this.unscaled > 0"
+    }
+  ];
+
+  /** USDt the LP receives at settlement for this sale. */
+  tzero.v1.common.Decimal amount_usdt = 60 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      message: "amount_usdt must be greater than zero"
+      expression: "this.unscaled > 0"
+    }
+  ];
+
+  /** Moment t-0 bound the LP to this execution. */
+  google.protobuf.Timestamp executed_at = 70 [(buf.validate.field).required = true];
+}
+
+message ExecuteQuoteResponse {}
