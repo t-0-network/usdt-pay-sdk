@@ -7,6 +7,8 @@ import network.t0.pay.proto.tzero.v1.pay.WithdrawQuoteResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * §2 WithdrawQuote — takes one standing quote out of the Order Book before it
  * expires.
@@ -20,22 +22,36 @@ public final class WithdrawQuote {
 
     private static final Logger log = LoggerFactory.getLogger(WithdrawQuote.class);
 
-    public static void withdraw(LpServiceGrpc.LpServiceBlockingStub t0, long quoteId) {
+    private static final int TIMEOUT_SECONDS = 10;
+
+    public static Outcome<WithdrawQuoteResponse.Success> withdraw(
+            LpServiceGrpc.LpServiceBlockingStub t0, long quoteId) {
         try {
-            WithdrawQuoteResponse response = t0.withdrawQuote(WithdrawQuoteRequest.newBuilder()
-                    .setQuoteId(quoteId)
-                    .build());
+            WithdrawQuoteResponse response = t0.withDeadlineAfter(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                    .withdrawQuote(WithdrawQuoteRequest.newBuilder()
+                            .setQuoteId(quoteId)
+                            .build());
 
             switch (response.getResultCase()) {
-                case SUCCESS -> log.info("§2 withdrew quote {}", quoteId);
-                case FAILURE ->
-                        // QUOTE_UNKNOWN — unknown id, or a quote that belongs to another LP.
-                        log.warn("§2 declined for quote {}: {}",
-                                quoteId, response.getFailure().getReason());
-                default -> log.warn("WithdrawQuote returned no result variant");
+                case SUCCESS -> {
+                    log.info("§2 withdrew quote {}", quoteId);
+                    return new Outcome.Accepted<>(response.getSuccess());
+                }
+                case FAILURE -> {
+                    // QUOTE_UNKNOWN — unknown id, or a quote that belongs to another LP.
+                    // Either way it is not standing, so there is nothing left to withdraw.
+                    String reason = response.getFailure().getReason().name();
+                    log.warn("§2 declined for quote {}: {}", quoteId, reason);
+                    return new Outcome.Rejected<>(reason);
+                }
+                default -> {
+                    return new Outcome.Rejected<>("response carried no result variant");
+                }
             }
         } catch (StatusRuntimeException e) {
-            log.error("§2 failed for quote {}: {}", quoteId, e.getStatus(), e);
+            // The quote is still standing as far as you know — keep the id and retry.
+            log.error("§2 failed for quote {}: {}", quoteId, e.getStatus());
+            return new Outcome.Unknown<>(e.getStatus().toString());
         }
     }
 

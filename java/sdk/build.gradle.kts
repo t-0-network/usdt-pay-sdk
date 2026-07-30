@@ -44,6 +44,12 @@ tasks.configureEach {
     }
 }
 
+// buf appends to its output directory rather than owning it, so a proto that is
+// deleted upstream keeps a stale class in the jar until someone runs `clean`.
+tasks.named("bufGenerate").configure {
+    doFirst { delete(layout.buildDirectory.dir("bufbuild/generated")) }
+}
+
 tasks.named("compileJava").configure {
     dependsOn("bufGenerate")
 }

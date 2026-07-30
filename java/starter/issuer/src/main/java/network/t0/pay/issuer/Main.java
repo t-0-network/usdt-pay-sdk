@@ -5,12 +5,15 @@ import network.t0.pay.issuer.handler.IssuerCallbackHandler;
 import network.t0.pay.proto.tzero.v1.pay.IssuerServiceGrpc;
 import network.t0.sdk.crypto.Signer;
 import network.t0.sdk.network.BlockingNetworkClient;
-import network.t0.sdk.provider.ProviderServer;
+import network.t0.pay.server.UsdtPayServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 /**
  * Issuer starter for the t-0 QR payment flow.
@@ -21,6 +24,10 @@ import java.util.concurrent.TimeUnit;
 public final class Main {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
+
+    /** Uncompressed secp256k1 point: 65 bytes as hex, 0x prefix optional. */
+    private static final Pattern NETWORK_PUBLIC_KEY_PATTERN =
+            Pattern.compile("(0x)?[0-9a-fA-F]{130}");
 
     public static void main(String[] args) {
         try {
@@ -47,8 +54,8 @@ public final class Main {
                 config.tzeroEndpoint(), signer, IssuerServiceGrpc::newBlockingStub);
 
         // Inbound: the one callback t-0 pushes to you (§5).
-        // ProviderServer verifies every inbound signature against NETWORK_PUBLIC_KEY.
-        ProviderServer server = startCallbackServer(config);
+        // Every inbound signature is verified against NETWORK_PUBLIC_KEY.
+        UsdtPayServer server = startCallbackServer(config);
 
         // ──────────────────────────────────────────────────────────────────
         // Phase 3 — report what you see on-chain.
@@ -71,6 +78,13 @@ public final class Main {
     }
 
     private static Config loadConfig() {
+        // Dotenv reads .env from the process working directory, so run the binary
+        // from the directory holding your .env. Say where we looked — otherwise a
+        // .env one directory up looks exactly like a .env that is not filled in.
+        Path env = Path.of(".env").toAbsolutePath();
+        if (!Files.exists(env)) {
+            log.info("No .env at {} — taking configuration from the environment instead", env);
+        }
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
         String privateKey = dotenv.get("PRIVATE_KEY");
@@ -90,16 +104,21 @@ public final class Main {
                     "Ask the t-0 team for the network public key and put it in .env.");
         }
 
+        // Checked here so a typo reports as configuration rather than as a stack
+        // trace out of the signature verifier when the first callback arrives.
+        if (!NETWORK_PUBLIC_KEY_PATTERN.matcher(networkPublicKey).matches()) {
+            throw new ConfigurationException(
+                    "NETWORK_PUBLIC_KEY is not a valid uncompressed secp256k1 public key",
+                    "Expected 130 hex characters (65 bytes), optionally 0x-prefixed; got "
+                            + networkPublicKey.length() + " characters.");
+        }
+
         return new Config(privateKey, networkPublicKey, endpoint, port);
     }
 
-    /**
-     * ProviderServer comes from the provider SDK — it is the signed gRPC transport,
-     * not the provider protocol. It hosts whatever services you give it.
-     */
-    private static ProviderServer startCallbackServer(Config config) {
+    private static UsdtPayServer startCallbackServer(Config config) {
         try {
-            ProviderServer server = ProviderServer.create(config.port(), config.networkPublicKey())
+            UsdtPayServer server = UsdtPayServer.create(config.port(), config.networkPublicKey())
                     .withService(new IssuerCallbackHandler())
                     .start();
 
@@ -111,7 +130,7 @@ public final class Main {
     }
 
     private static void waitForShutdown(
-            ProviderServer server,
+            UsdtPayServer server,
             BlockingNetworkClient<IssuerServiceGrpc.IssuerServiceBlockingStub> t0) {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             log.info("Shutting down");

@@ -7,15 +7,18 @@ import network.t0.pay.lp.internal.WithdrawQuote;
 import network.t0.pay.proto.tzero.v1.pay.LpServiceGrpc;
 import network.t0.sdk.crypto.Signer;
 import network.t0.sdk.network.BlockingNetworkClient;
-import network.t0.sdk.provider.ProviderServer;
+import network.t0.pay.server.UsdtPayServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -27,6 +30,10 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class Main {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
+
+    /** Uncompressed secp256k1 point: 65 bytes as hex, 0x prefix optional. */
+    private static final Pattern NETWORK_PUBLIC_KEY_PATTERN =
+            Pattern.compile("(0x)?[0-9a-fA-F]{130}");
 
     /** No standing quote means no fiat sales for your acquirer — refresh well before expiry. */
     private static final Duration QUOTE_REFRESH_INTERVAL = Duration.ofSeconds(30);
@@ -60,8 +67,8 @@ public final class Main {
                 config.tzeroEndpoint(), signer, LpServiceGrpc::newBlockingStub);
 
         // Inbound: the one callback t-0 pushes to you (§8).
-        // ProviderServer verifies every inbound signature against NETWORK_PUBLIC_KEY.
-        ProviderServer server = startCallbackServer(config);
+        // Every inbound signature is verified against NETWORK_PUBLIC_KEY.
+        UsdtPayServer server = startCallbackServer(config);
 
         // ──────────────────────────────────────────────────────────────────
         // Phase 2 — keep a quote standing.
@@ -88,18 +95,34 @@ public final class Main {
     /**
      * Publishes a fresh quote and withdraws the one it replaces, so exactly one
      * quote of yours stands at a time.
+     *
+     * <p>A withdrawal that does not complete leaves the old quote standing and
+     * executable at a stale rate — so its id is reported rather than dropped
+     * silently, because it is the only handle you have left to retire it.
      */
     private static void refreshStandingQuote(
             BlockingNetworkClient<LpServiceGrpc.LpServiceBlockingStub> t0) {
-        PublishQuote.publish(t0.stub(), QUOTE_VALIDITY).ifPresent(newQuoteId -> {
-            long previous = standingQuoteId.getAndSet(newQuoteId);
-            if (previous != 0) {
-                WithdrawQuote.withdraw(t0.stub(), previous);
-            }
-        });
+        var published = PublishQuote.publish(t0.stub(), QUOTE_VALIDITY).value();
+        if (published.isEmpty()) {
+            return;
+        }
+
+        long previous = standingQuoteId.getAndSet(published.get().getQuoteId());
+        if (previous != 0 && WithdrawQuote.withdraw(t0.stub(), previous).shouldRetry()) {
+            // TODO: Step 2.2 — hand this to your retry path. Until it is withdrawn or
+            //       expires, two of your quotes stand at once and either can execute.
+            log.warn("Quote {} may still be standing — its withdrawal did not complete", previous);
+        }
     }
 
     private static Config loadConfig() {
+        // Dotenv reads .env from the process working directory, so run the binary
+        // from the directory holding your .env. Say where we looked — otherwise a
+        // .env one directory up looks exactly like a .env that is not filled in.
+        Path env = Path.of(".env").toAbsolutePath();
+        if (!Files.exists(env)) {
+            log.info("No .env at {} — taking configuration from the environment instead", env);
+        }
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
         String privateKey = dotenv.get("PRIVATE_KEY");
@@ -119,16 +142,21 @@ public final class Main {
                     "Ask the t-0 team for the network public key and put it in .env.");
         }
 
+        // Checked here so a typo reports as configuration rather than as a stack
+        // trace out of the signature verifier when the first callback arrives.
+        if (!NETWORK_PUBLIC_KEY_PATTERN.matcher(networkPublicKey).matches()) {
+            throw new ConfigurationException(
+                    "NETWORK_PUBLIC_KEY is not a valid uncompressed secp256k1 public key",
+                    "Expected 130 hex characters (65 bytes), optionally 0x-prefixed; got "
+                            + networkPublicKey.length() + " characters.");
+        }
+
         return new Config(privateKey, networkPublicKey, endpoint, port);
     }
 
-    /**
-     * ProviderServer comes from the provider SDK — it is the signed gRPC transport,
-     * not the provider protocol. It hosts whatever services you give it.
-     */
-    private static ProviderServer startCallbackServer(Config config) {
+    private static UsdtPayServer startCallbackServer(Config config) {
         try {
-            ProviderServer server = ProviderServer.create(config.port(), config.networkPublicKey())
+            UsdtPayServer server = UsdtPayServer.create(config.port(), config.networkPublicKey())
                     .withService(new LpCallbackHandler())
                     .start();
 
@@ -140,12 +168,23 @@ public final class Main {
     }
 
     private static void waitForShutdown(
-            ProviderServer server,
+            UsdtPayServer server,
             ScheduledExecutorService scheduler,
             BlockingNetworkClient<LpServiceGrpc.LpServiceBlockingStub> t0) {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             log.info("Shutting down");
+
+            // Wait for a refresh that is already running before reading the standing
+            // id: shutdown() only stops new runs, so an in-flight publish would
+            // otherwise store its quote after we withdrew and leave it standing.
             scheduler.shutdown();
+            try {
+                if (!scheduler.awaitTermination(10, TimeUnit.SECONDS)) {
+                    log.warn("Quote refresh did not finish; a newer quote may still be standing");
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
 
             // Step 2.2 — pull the standing quote before going away. Leaving it up
             // keeps t-0 pricing sales you are no longer around to execute.
@@ -157,7 +196,6 @@ public final class Main {
             server.shutdown();
             t0.shutdown();
             try {
-                scheduler.awaitTermination(10, TimeUnit.SECONDS);
                 server.awaitTermination(10, TimeUnit.SECONDS);
                 t0.awaitTermination(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {

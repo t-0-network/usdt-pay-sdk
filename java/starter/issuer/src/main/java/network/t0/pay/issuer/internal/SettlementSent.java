@@ -1,8 +1,7 @@
 package network.t0.pay.issuer.internal;
 
-import com.google.protobuf.Timestamp;
 import io.grpc.StatusRuntimeException;
-import network.t0.pay.proto.tzero.v1.common.Decimal;
+import network.t0.pay.proto.tzero.v1.pay.Decimal;
 import network.t0.pay.proto.tzero.v1.pay.Blockchain;
 import network.t0.pay.proto.tzero.v1.pay.IssuerServiceGrpc;
 import network.t0.pay.proto.tzero.v1.pay.OnChainSettlementDetails;
@@ -13,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * §9 SettlementSent — you broadcast a USDt settlement transfer; t-0 verifies it
@@ -29,7 +29,9 @@ public final class SettlementSent {
 
     private static final Logger log = LoggerFactory.getLogger(SettlementSent.class);
 
-    public static void report(
+    private static final int TIMEOUT_SECONDS = 15;
+
+    public static Outcome<SettlementSentResponse.Accepted> report(
             IssuerServiceGrpc.IssuerServiceBlockingStub t0,
             String settlementRef,
             Decimal amountUsdt,
@@ -48,33 +50,37 @@ public final class SettlementSent {
                         .setDestinationAddress(destinationAddress)
                         .build())
                 .addAllSettledPaymentIntentIds(settledPaymentIntentIds)
-                .setSettledAt(Timestamp.newBuilder()
-                        .setSeconds(settledAt.getEpochSecond())
-                        .setNanos(settledAt.getNano())
-                        .build())
+                .setSettledAt(Times.from(settledAt))
                 .build();
 
         try {
-            SettlementSentResponse response = t0.settlementSent(request);
+            SettlementSentResponse response =
+                    t0.withDeadlineAfter(TIMEOUT_SECONDS, TimeUnit.SECONDS).settlementSent(request);
 
             switch (response.getResultCase()) {
-                case ACCEPTED -> log.info("§9 accepted: ref={} {} USDt covering {}",
-                        settlementRef, Decimals.format(amountUsdt), settledPaymentIntentIds);
-                case REJECTED ->
-                        // ON_CHAIN_UNCONFIRMED — resend the same ref once the tx confirms.
-                        // AMOUNT_MISMATCH / WRONG_DESTINATION / INTENT_NOT_SETTLEABLE — fix
-                        // the fields (failingIntentIds names the offenders) and resend the
-                        // same ref. A rejection never consumes the key.
-                        log.warn("§9 rejected for ref {}: {} (failing intents {})",
-                                settlementRef,
-                                response.getRejected().getReason(),
-                                response.getRejected().getFailingIntentIdsList());
-                default -> log.warn("SettlementSent returned no result variant");
+                case ACCEPTED -> {
+                    log.info("§9 accepted: ref={} {} USDt covering {}",
+                            settlementRef, Decimals.format(amountUsdt), settledPaymentIntentIds);
+                    return new Outcome.Accepted<>(response.getAccepted());
+                }
+                case REJECTED -> {
+                    // ON_CHAIN_UNCONFIRMED — resend the same ref once the tx confirms.
+                    // AMOUNT_MISMATCH / WRONG_DESTINATION / INTENT_NOT_SETTLEABLE — fix the
+                    // fields named by failingIntentIds and resend the same ref.
+                    SettlementSentResponse.Rejected rejected = response.getRejected();
+                    log.warn("§9 rejected for ref {}: {} (failing intents {})",
+                            settlementRef, rejected.getReason(), rejected.getFailingIntentIdsList());
+                    return new Outcome.Rejected<>(
+                            rejected.getReason().name(), rejected.getFailingIntentIdsList());
+                }
+                default -> {
+                    return new Outcome.Rejected<>("response carried no result variant");
+                }
             }
         } catch (StatusRuntimeException e) {
-            // TODO: Step 3.2 — no acknowledgment means retry with backoff, same ref,
-            //       identical content. Never broadcast a second transfer to "retry".
-            log.error("§9 failed for ref {}: {}", settlementRef, e.getStatus(), e);
+            // Never broadcast a second transfer to "retry" — resend this same ref.
+            log.error("§9 failed for ref {}: {}", settlementRef, e.getStatus());
+            return new Outcome.Unknown<>(e.getStatus().toString());
         }
     }
 

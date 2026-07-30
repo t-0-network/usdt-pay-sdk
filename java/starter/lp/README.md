@@ -20,8 +20,12 @@ says what every field means.
 
 ```bash
 cp .env.example .env      # then fill in PRIVATE_KEY and NETWORK_PUBLIC_KEY
-cd ../.. && ./gradlew :starter:lp:installDist
-./starter/lp/build/install/lp/bin/lp
+
+# Build from the java/ root — the starter compiles against the local :sdk project.
+(cd ../.. && ./gradlew :starter:lp:installDist)
+
+# Run from here: .env is read from the working directory.
+./build/install/lp/bin/lp
 ```
 
 It prints your public key, starts the callback server, and begins refreshing a
@@ -115,6 +119,12 @@ content:
 A rejection is an acknowledgment — stop retrying — but it never consumes the key:
 fix the fields and resend the same key.
 
+Every call in `internal/` returns an `Outcome` so you can tell the three apart:
+`Accepted` (record it), `Rejected` (fix the fields, resend the same key), `Unknown`
+(no answer — retry the same key unchanged). `outcome.shouldRetry()` is true only for
+`Unknown` — that is what the quote-refresh loop in `Main.java` keys off when a
+withdrawal does not complete.
+
 ## Layout
 
 ```
@@ -126,7 +136,9 @@ src/main/java/network/t0/pay/lp/
     ├── PublishQuote.java          # §1
     ├── WithdrawQuote.java         # §2
     ├── FiatSettlementSent.java    # §10
-    └── Decimals.java              # unscaled × 10^exponent ↔ BigDecimal
+    ├── Outcome.java               # accepted / rejected / unknown
+    ├── Decimals.java              # unscaled × 10^exponent ↔ BigDecimal
+    └── Times.java                 # protobuf Timestamp ↔ Instant
 ```
 
 ## Docker

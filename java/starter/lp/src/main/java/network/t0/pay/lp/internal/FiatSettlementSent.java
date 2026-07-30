@@ -1,8 +1,7 @@
 package network.t0.pay.lp.internal;
 
-import com.google.protobuf.Timestamp;
 import io.grpc.StatusRuntimeException;
-import network.t0.pay.proto.tzero.v1.common.Decimal;
+import network.t0.pay.proto.tzero.v1.pay.Decimal;
 import network.t0.pay.proto.tzero.v1.pay.FiatSettlementSentRequest;
 import network.t0.pay.proto.tzero.v1.pay.FiatSettlementSentResponse;
 import network.t0.pay.proto.tzero.v1.pay.LpServiceGrpc;
@@ -11,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * §10 FiatSettlementSent — you released a bank transfer to the acquirer covering a
@@ -30,7 +30,9 @@ public final class FiatSettlementSent {
 
     private static final Logger log = LoggerFactory.getLogger(FiatSettlementSent.class);
 
-    public static void report(
+    private static final int TIMEOUT_SECONDS = 15;
+
+    public static Outcome<FiatSettlementSentResponse.Accepted> report(
             LpServiceGrpc.LpServiceBlockingStub t0,
             String bankTransferRef,
             List<Long> settledExecutionIds,
@@ -45,36 +47,38 @@ public final class FiatSettlementSent {
                 .setLocalCurrency(localCurrency)
                 .setSettlementAmount(settlementAmount)
                 .setDestinationAccount(destinationAccount)
-                .setSettledAt(Timestamp.newBuilder()
-                        .setSeconds(settledAt.getEpochSecond())
-                        .setNanos(settledAt.getNano())
-                        .build())
+                .setSettledAt(Times.from(settledAt))
                 .build();
 
         try {
-            FiatSettlementSentResponse response = t0.fiatSettlementSent(request);
+            FiatSettlementSentResponse response =
+                    t0.withDeadlineAfter(TIMEOUT_SECONDS, TimeUnit.SECONDS).fiatSettlementSent(request);
 
             switch (response.getResultCase()) {
-                case ACCEPTED -> log.info("§10 accepted: ref={} {} {} covering {}",
-                        bankTransferRef, Decimals.format(settlementAmount), localCurrency,
-                        settledExecutionIds);
-                case REJECTED ->
-                        // EXECUTION_UNKNOWN / EXECUTION_ALREADY_COVERED / CURRENCY_MISMATCH /
-                        // AMOUNT_MISMATCH / DESTINATION_MISMATCH / ACQUIRER_MIXED.
-                        // A rejection is an acknowledgment — stop retrying. The key is not
-                        // consumed: correct the fields (failingExecutionIds names the
-                        // offenders) and resend the same ref. The money already moved, so
-                        // the fix is in what you reported, not another transfer.
-                        log.warn("§10 rejected for ref {}: {} (failing executions {})",
-                                bankTransferRef,
-                                response.getRejected().getReason(),
-                                response.getRejected().getFailingExecutionIdsList());
-                default -> log.warn("FiatSettlementSent returned no result variant");
+                case ACCEPTED -> {
+                    log.info("§10 accepted: ref={} {} {} covering {}",
+                            bankTransferRef, Decimals.format(settlementAmount), localCurrency,
+                            settledExecutionIds);
+                    return new Outcome.Accepted<>(response.getAccepted());
+                }
+                case REJECTED -> {
+                    // EXECUTION_UNKNOWN / EXECUTION_ALREADY_COVERED / CURRENCY_MISMATCH /
+                    // AMOUNT_MISMATCH / DESTINATION_MISMATCH / ACQUIRER_MIXED.
+                    // The money already moved: the fix is in what you reported, not another
+                    // transfer. Correct the fields and resend the same ref.
+                    FiatSettlementSentResponse.Rejected rejected = response.getRejected();
+                    log.warn("§10 rejected for ref {}: {} (failing executions {})",
+                            bankTransferRef, rejected.getReason(), rejected.getFailingExecutionIdsList());
+                    return new Outcome.Rejected<>(
+                            rejected.getReason().name(), rejected.getFailingExecutionIdsList());
+                }
+                default -> {
+                    return new Outcome.Rejected<>("response carried no result variant");
+                }
             }
         } catch (StatusRuntimeException e) {
-            // TODO: Step 4.1 — no acknowledgment means retry with backoff, same ref,
-            //       identical content. Drive it off your durable record, not this catch block.
-            log.error("§10 failed for ref {}: {}", bankTransferRef, e.getStatus(), e);
+            log.error("§10 failed for ref {}: {}", bankTransferRef, e.getStatus());
+            return new Outcome.Unknown<>(e.getStatus().toString());
         }
     }
 

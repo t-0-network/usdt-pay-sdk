@@ -18,8 +18,12 @@ says what every field means.
 
 ```bash
 cp .env.example .env      # then fill in PRIVATE_KEY and NETWORK_PUBLIC_KEY
-cd ../.. && ./gradlew :starter:issuer:installDist
-./starter/issuer/build/install/issuer/bin/issuer
+
+# Build from the java/ root — the starter compiles against the local :sdk project.
+(cd ../.. && ./gradlew :starter:issuer:installDist)
+
+# Run from here: .env is read from the working directory.
+./build/install/issuer/bin/issuer
 ```
 
 It prints your public key and starts the callback server. Nothing else happens
@@ -107,6 +111,11 @@ content until t-0 answers:
 A rejection is an acknowledgment — stop retrying — but it never consumes the key:
 fix the fields and resend the same key.
 
+Every call in `internal/` returns an `Outcome` so you can tell the three apart:
+`Accepted` (record it), `Rejected` (fix the fields, resend the same key), `Unknown`
+(no answer — retry the same key unchanged). `outcome.shouldRetry()` is true only for
+`Unknown`.
+
 ## Layout
 
 ```
@@ -118,7 +127,9 @@ src/main/java/network/t0/pay/issuer/
     ├── PaymentReceived.java           # §6
     ├── SettlementSent.java            # §9
     ├── PaymentExpired.java            # §14
-    └── Decimals.java                  # unscaled × 10^exponent ↔ BigDecimal
+    ├── Outcome.java                   # accepted / rejected / unknown
+    ├── Decimals.java                  # unscaled × 10^exponent ↔ BigDecimal
+    └── Times.java                     # protobuf Timestamp ↔ Instant
 ```
 
 ## Docker

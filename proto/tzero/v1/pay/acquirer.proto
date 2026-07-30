@@ -1,7 +1,6 @@
 syntax = "proto3";
 
-// MODELING DRAFT — not yet wired into any buf module.
-// Eventual home: proto/tzero/v1/pay/acquirer.proto. The Acquirer ↔ t-0 edge:
+// The Acquirer ↔ t-0 edge:
 // AcquirerService is hosted by t-0 and called by the Acquirer;
 // AcquirerCallbackService is implemented by the Acquirer and called by t-0.
 
@@ -9,7 +8,6 @@ package tzero.v1.pay;
 
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
-import "tzero/v1/common/common.proto";
 import "tzero/v1/pay/types.proto";
 
 /**
@@ -69,7 +67,7 @@ message GetPaymentQuoteRequest {
   }];
 
   /** Fiat amount the merchant wants to price. */
-  tzero.v1.common.Decimal local_amount = 20 [
+  Decimal local_amount = 20 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
       message: "local_amount must be greater than zero"
@@ -90,7 +88,7 @@ message GetPaymentQuoteResponse {
     uint64 quote_id = 10 [(buf.validate.field).uint64.gt = 0];
 
     /** USDt the customer pays for local_amount at fx_rate. */
-    tzero.v1.common.Decimal amount_usdt = 20 [
+    Decimal amount_usdt = 20 [
       (buf.validate.field).required = true,
       (buf.validate.field).cel = {
         message: "amount_usdt must be greater than zero"
@@ -99,7 +97,7 @@ message GetPaymentQuoteResponse {
     ];
 
     /** Standing quote's rate, in units of local_currency per 1 USDt. */
-    tzero.v1.common.Decimal fx_rate = 30 [
+    Decimal fx_rate = 30 [
       (buf.validate.field).required = true,
       (buf.validate.field).cel = {
         message: "fx_rate must be greater than zero"
@@ -132,7 +130,7 @@ message CreatePaymentIntentRequest {
   }];
 
   /** Fiat amount of the sale, in the settlement currency. */
-  tzero.v1.common.Decimal local_amount = 30 [
+  Decimal local_amount = 30 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
       message: "local_amount must be greater than zero"
@@ -156,7 +154,7 @@ message CreatePaymentIntentRequest {
     }];
 
     /** Units of local_currency per 1 USDt, set by the Acquirer. */
-    tzero.v1.common.Decimal fx_rate = 20 [
+    Decimal fx_rate = 20 [
       (buf.validate.field).required = true,
       (buf.validate.field).cel = {
         message: "fx_rate must be greater than zero"
@@ -190,7 +188,7 @@ message CreatePaymentIntentResponse {
     }];
 
     /** Fiat amount of the sale. */
-    tzero.v1.common.Decimal local_amount = 30 [
+    Decimal local_amount = 30 [
       (buf.validate.field).required = true,
       (buf.validate.field).cel = {
         message: "local_amount must be greater than zero"
@@ -199,7 +197,7 @@ message CreatePaymentIntentResponse {
     ];
 
     /** Units of local_currency per 1 USDt locked for this intent. */
-    tzero.v1.common.Decimal fx_rate = 40 [
+    Decimal fx_rate = 40 [
       (buf.validate.field).required = true,
       (buf.validate.field).cel = {
         message: "fx_rate must be greater than zero"
@@ -208,7 +206,7 @@ message CreatePaymentIntentResponse {
     ];
 
     /** Exact amount the customer pays, round(local_amount / fx_rate, 2dp, half-up). */
-    tzero.v1.common.Decimal amount_usdt = 50 [
+    Decimal amount_usdt = 50 [
       (buf.validate.field).required = true,
       (buf.validate.field).cel = {
         message: "amount_usdt must be greater than zero"
@@ -256,7 +254,7 @@ message SettlementReceivedRequest {
   }];
 
   /** Fiat amount credited to the Acquirer's account. */
-  tzero.v1.common.Decimal amount_received = 40 [
+  Decimal amount_received = 40 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
       message: "amount_received must be greater than zero"
@@ -337,7 +335,7 @@ message SettlementInitiatedRequest {
   }];
 
   /** Fiat amount the LP transferred. */
-  tzero.v1.common.Decimal settlement_amount = 60 [
+  Decimal settlement_amount = 60 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
       message: "settlement_amount must be greater than zero"
@@ -356,7 +354,7 @@ message SettlementCompletedRequest {
   uint64 settlement_id = 10 [(buf.validate.field).uint64.gt = 0];
 
   /** Amount the Acquirer actually received; currency set by the settlement variant. */
-  tzero.v1.common.Decimal settlement_amount = 20 [
+  Decimal settlement_amount = 20 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
       message: "settlement_amount must be greater than zero"

@@ -1,8 +1,7 @@
 package network.t0.pay.issuer.internal;
 
-import com.google.protobuf.Timestamp;
 import io.grpc.StatusRuntimeException;
-import network.t0.pay.proto.tzero.v1.common.Decimal;
+import network.t0.pay.proto.tzero.v1.pay.Decimal;
 import network.t0.pay.proto.tzero.v1.pay.Blockchain;
 import network.t0.pay.proto.tzero.v1.pay.IssuerServiceGrpc;
 import network.t0.pay.proto.tzero.v1.pay.PaymentReceivedRequest;
@@ -12,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import java.util.concurrent.TimeUnit;
 
 /**
  * §6 PaymentReceived — the customer's transfer is final on-chain and KYT-cleared.
@@ -28,7 +28,9 @@ public final class PaymentReceived {
 
     private static final Logger log = LoggerFactory.getLogger(PaymentReceived.class);
 
-    public static void report(
+    private static final int TIMEOUT_SECONDS = 10;
+
+    public static Outcome<PaymentReceivedResponse.Accepted> report(
             IssuerServiceGrpc.IssuerServiceBlockingStub t0,
             long paymentIntentId,
             Decimal amountUsdt,
@@ -45,32 +47,34 @@ public final class PaymentReceived {
                         .setOnChainTxHash(txHash)
                         .setSenderAddress(senderAddress)
                         .build())
-                .setReceivedAt(Timestamp.newBuilder()
-                        .setSeconds(receivedAt.getEpochSecond())
-                        .setNanos(receivedAt.getNano())
-                        .build())
+                .setReceivedAt(Times.from(receivedAt))
                 .build();
 
         try {
-            PaymentReceivedResponse response = t0.paymentReceived(request);
+            PaymentReceivedResponse response =
+                    t0.withDeadlineAfter(TIMEOUT_SECONDS, TimeUnit.SECONDS).paymentReceived(request);
 
             switch (response.getResultCase()) {
-                case ACCEPTED -> log.info("§6 accepted: intent={} {} USDt via {}",
-                        paymentIntentId, Decimals.format(amountUsdt), txHash);
-                case REJECTED ->
-                        // INTENT_EXPIRED / UNKNOWN_INTENT / AMOUNT_MISMATCH.
-                        // A rejection is an acknowledgment — stop retrying. The key is not
-                        // consumed: correct the fields and resend the same paymentIntentId.
-                        // A payment that arrived late or in the wrong amount is yours to
-                        // refund; it does not become the acquirer's problem.
-                        log.warn("§6 rejected for intent {}: {}",
-                                paymentIntentId, response.getRejected().getReason());
-                default -> log.warn("PaymentReceived returned no result variant");
+                case ACCEPTED -> {
+                    log.info("§6 accepted: intent={} {} USDt via {}",
+                            paymentIntentId, Decimals.format(amountUsdt), txHash);
+                    return new Outcome.Accepted<>(response.getAccepted());
+                }
+                case REJECTED -> {
+                    // INTENT_EXPIRED / UNKNOWN_INTENT / AMOUNT_MISMATCH.
+                    // A payment that arrived late or in the wrong amount is yours to
+                    // refund; it does not become the acquirer's problem.
+                    String reason = response.getRejected().getReason().name();
+                    log.warn("§6 rejected for intent {}: {}", paymentIntentId, reason);
+                    return new Outcome.Rejected<>(reason);
+                }
+                default -> {
+                    return new Outcome.Rejected<>("response carried no result variant");
+                }
             }
         } catch (StatusRuntimeException e) {
-            // TODO: Step 3.1 — no acknowledgment means retry with backoff, same key,
-            //       identical content. Drive it off your durable record, not this catch block.
-            log.error("§6 failed for intent {}: {}", paymentIntentId, e.getStatus(), e);
+            log.error("§6 failed for intent {}: {}", paymentIntentId, e.getStatus());
+            return new Outcome.Unknown<>(e.getStatus().toString());
         }
     }
 

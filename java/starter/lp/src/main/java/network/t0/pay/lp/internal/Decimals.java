@@ -1,6 +1,6 @@
 package network.t0.pay.lp.internal;
 
-import network.t0.pay.proto.tzero.v1.common.Decimal;
+import network.t0.pay.proto.tzero.v1.pay.Decimal;
 
 import java.math.BigDecimal;
 
@@ -10,10 +10,30 @@ import java.math.BigDecimal;
  */
 public final class Decimals {
 
+    /** The contract constrains exponent to this range; anything else is rejected on the wire. */
+    private static final int MIN_EXPONENT = -8;
+    private static final int MAX_EXPONENT = 8;
+
+    /**
+     * @throws IllegalArgumentException if the value cannot be represented within the
+     *         contract's exponent range — division results carry a scale well past it,
+     *         so round to the precision you mean before calling this
+     */
     public static Decimal of(BigDecimal value) {
+        // A quotient like 1.000000000 is exactly representable; only its trailing
+        // zeros push the scale out of range.
+        BigDecimal scaled = value.scale() > MAX_EXPONENT ? value.stripTrailingZeros() : value;
+        int exponent = -scaled.scale();
+
+        if (exponent < MIN_EXPONENT || exponent > MAX_EXPONENT) {
+            throw new IllegalArgumentException(
+                    "%s needs exponent %d, outside the contract's [%d, %d] — round it first"
+                            .formatted(value.toPlainString(), exponent, MIN_EXPONENT, MAX_EXPONENT));
+        }
+
         return Decimal.newBuilder()
-                .setUnscaled(value.unscaledValue().longValueExact())
-                .setExponent(-value.scale())
+                .setUnscaled(scaled.unscaledValue().longValueExact())
+                .setExponent(exponent)
                 .build();
     }
 

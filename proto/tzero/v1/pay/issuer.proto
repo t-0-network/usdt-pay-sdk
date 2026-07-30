@@ -1,7 +1,6 @@
 syntax = "proto3";
 
-// MODELING DRAFT — not yet wired into any buf module.
-// Eventual home: proto/tzero/v1/pay/issuer.proto. The Issuer ↔ t-0 edge:
+// The Issuer ↔ t-0 edge:
 // IssuerService is hosted by t-0 and called by the Issuer;
 // IssuerCallbackService is implemented by the Issuer and called by t-0.
 
@@ -9,7 +8,6 @@ package tzero.v1.pay;
 
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
-import "tzero/v1/common/common.proto";
 import "tzero/v1/pay/types.proto";
 
 /**
@@ -51,7 +49,7 @@ message PaymentReceivedRequest {
   uint64 payment_intent_id = 10 [(buf.validate.field).uint64.gt = 0];
 
   /** Amount credited; must equal the intent's stored amount_usdt exactly. */
-  tzero.v1.common.Decimal amount_usdt = 20 [
+  Decimal amount_usdt = 20 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
       message: "amount_usdt must be greater than zero"
@@ -98,7 +96,7 @@ message SettlementSentRequest {
   string settlement_ref = 10 [(buf.validate.field).string = {min_len: 1}];
 
   /** Total USDt settled across the covered intents. */
-  tzero.v1.common.Decimal amount_usdt = 20 [
+  Decimal amount_usdt = 20 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
       message: "amount_usdt must be greater than zero"
@@ -189,7 +187,7 @@ message CreatePaymentInstructionsRequest {
   uint64 acquirer_id = 20 [(buf.validate.field).uint64.gt = 0];
 
   /** Amount the reserved addresses should accept. */
-  tzero.v1.common.Decimal amount_usdt = 30 [
+  Decimal amount_usdt = 30 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
       message: "amount_usdt must be greater than zero"

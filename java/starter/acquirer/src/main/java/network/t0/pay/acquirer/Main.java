@@ -3,16 +3,21 @@ package network.t0.pay.acquirer;
 import io.github.cdimascio.dotenv.Dotenv;
 import network.t0.pay.acquirer.handler.AcquirerCallbackHandler;
 import network.t0.pay.acquirer.internal.CreatePaymentIntent;
+import network.t0.pay.acquirer.internal.Decimals;
 import network.t0.pay.acquirer.internal.GetPaymentQuote;
 import network.t0.pay.proto.tzero.v1.pay.AcquirerServiceGrpc;
 import network.t0.sdk.crypto.Signer;
 import network.t0.sdk.network.BlockingNetworkClient;
-import network.t0.sdk.provider.ProviderServer;
+import network.t0.pay.server.UsdtPayServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 /**
  * Acquirer starter for the t-0 QR payment flow.
@@ -23,6 +28,10 @@ import java.util.concurrent.TimeUnit;
 public final class Main {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
+
+    /** Uncompressed secp256k1 point: 65 bytes as hex, 0x prefix optional. */
+    private static final Pattern NETWORK_PUBLIC_KEY_PATTERN =
+            Pattern.compile("(0x)?[0-9a-fA-F]{130}");
 
     public static void main(String[] args) {
         try {
@@ -50,8 +59,8 @@ public final class Main {
                 config.tzeroEndpoint(), signer, AcquirerServiceGrpc::newBlockingStub);
 
         // Inbound: the callbacks t-0 pushes to you (§7, §11, §13, §15).
-        // ProviderServer verifies every inbound signature against NETWORK_PUBLIC_KEY.
-        ProviderServer server = startCallbackServer(config, t0);
+        // Every inbound signature is verified against NETWORK_PUBLIC_KEY.
+        UsdtPayServer server = startCallbackServer(config);
 
         // ──────────────────────────────────────────────────────────────────
         // Phase 2 — price a sale, then open an intent for it.
@@ -60,10 +69,20 @@ public final class Main {
         // trip. Move it behind your POS integration once it works.
         // ──────────────────────────────────────────────────────────────────
 
-        // TODO: Step 2.1 — replace the hardcoded currency and amount with a real sale.
-        GetPaymentQuote.fetch(t0.stub())
+        // TODO: Step 2.1 — replace the demo sale with a real one from your POS. One
+        //       sale is one currency, one amount and one paymentRef: quote and intent
+        //       must describe the same sale or you price one thing and charge another.
+        String localCurrency = "COP";
+        var localAmount = Decimals.of("100000.00");
+        // paymentRef is the idempotency key for §4. It belongs to the sale, so mint it
+        // when the sale is created and persist it — a fresh id on a retry opens a
+        // second intent for one sale.
+        String paymentRef = UUID.randomUUID().toString();
+
+        GetPaymentQuote.fetch(t0.stub(), localCurrency, localAmount).value()
                 // TODO: Step 2.2 — render the returned qrOptions as QR codes on the POS.
-                .ifPresent(quoteId -> CreatePaymentIntent.create(t0.stub(), quoteId));
+                .ifPresent(quote -> CreatePaymentIntent.create(
+                        t0.stub(), paymentRef, localAmount, quote.getQuoteId()));
 
         // TODO: Step 2.3 — deploy this service and give the t-0 team its base URL,
         //       so the Phase 3 callbacks can reach you.
@@ -72,6 +91,13 @@ public final class Main {
     }
 
     private static Config loadConfig() {
+        // Dotenv reads .env from the process working directory, so run the binary
+        // from the directory holding your .env. Say where we looked — otherwise a
+        // .env one directory up looks exactly like a .env that is not filled in.
+        Path env = Path.of(".env").toAbsolutePath();
+        if (!Files.exists(env)) {
+            log.info("No .env at {} — taking configuration from the environment instead", env);
+        }
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
         String privateKey = dotenv.get("PRIVATE_KEY");
@@ -91,19 +117,22 @@ public final class Main {
                     "Ask the t-0 team for the network public key and put it in .env.");
         }
 
+        // Checked here so a typo reports as configuration rather than as a stack
+        // trace out of the signature verifier when the first callback arrives.
+        if (!NETWORK_PUBLIC_KEY_PATTERN.matcher(networkPublicKey).matches()) {
+            throw new ConfigurationException(
+                    "NETWORK_PUBLIC_KEY is not a valid uncompressed secp256k1 public key",
+                    "Expected 130 hex characters (65 bytes), optionally 0x-prefixed; got "
+                            + networkPublicKey.length() + " characters.");
+        }
+
         return new Config(privateKey, networkPublicKey, endpoint, port);
     }
 
-    /**
-     * ProviderServer comes from the provider SDK — it is the signed gRPC transport,
-     * not the provider protocol. It hosts whatever services you give it.
-     */
-    private static ProviderServer startCallbackServer(
-            Config config,
-            BlockingNetworkClient<AcquirerServiceGrpc.AcquirerServiceBlockingStub> t0) {
+    private static UsdtPayServer startCallbackServer(Config config) {
         try {
-            ProviderServer server = ProviderServer.create(config.port(), config.networkPublicKey())
-                    .withService(new AcquirerCallbackHandler(t0.stub()))
+            UsdtPayServer server = UsdtPayServer.create(config.port(), config.networkPublicKey())
+                    .withService(new AcquirerCallbackHandler())
                     .start();
 
             log.info("Callback server listening on port {}", server.getPort());
@@ -114,7 +143,7 @@ public final class Main {
     }
 
     private static void waitForShutdown(
-            ProviderServer server,
+            UsdtPayServer server,
             BlockingNetworkClient<AcquirerServiceGrpc.AcquirerServiceBlockingStub> t0) {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             log.info("Shutting down");

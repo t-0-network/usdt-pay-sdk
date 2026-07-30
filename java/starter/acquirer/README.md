@@ -18,8 +18,12 @@ says what every field means.
 
 ```bash
 cp .env.example .env      # then fill in PRIVATE_KEY and NETWORK_PUBLIC_KEY
-cd ../.. && ./gradlew :starter:acquirer:installDist
-./starter/acquirer/build/install/acquirer/bin/acquirer
+
+# Build from the java/ root — the starter compiles against the local :sdk project.
+(cd ../.. && ./gradlew :starter:acquirer:installDist)
+
+# Run from here: .env is read from the working directory.
+./build/install/acquirer/bin/acquirer
 ```
 
 It prints your public key, starts the callback server, and runs one demo sale
@@ -52,9 +56,11 @@ Your settlement mode is fixed at onboarding and decides which half you need.
 
 ### Phase 2 — quote → intent
 
-1. **2.1** Replace the hardcoded `COP 100000.00` in `GetPaymentQuote.java` with a
-   real sale. In USDt mode drop §3 and go straight to §4 with your own rate.
-2. **2.2** In `CreatePaymentIntent.java`, use your own order id as `paymentRef` and
+1. **2.1** Replace the demo sale in `Main.java` — currency, amount and `paymentRef`
+   are declared there once and handed to both calls, because a quote and an intent
+   that disagree price one thing and charge another. In USDt mode drop §3 and go
+   straight to §4 with your own rate.
+2. **2.2** Mint `paymentRef` when the sale is created rather than at call time, and
    persist the returned `paymentIntentId` against the sale. Render each
    `qrOptions[].renderablePayload` as a QR image **as-is** — it is chain-native, and
    rebuilding it from the address and the amount is how you end up with a QR that
@@ -100,9 +106,24 @@ repeat under a key you already hold is a no-op you still acknowledge.
 | §13 `SettlementCompleted` | `settlementId` |
 | §15 `PaymentExpired` | `paymentIntentId` |
 
+Scope the key **per callback**, not globally: §7 and §15 are both keyed on
+`paymentIntentId`, so one shared `processed(key)` table collides an intent's expiry
+with its authorization and drops one of them.
+
 The same discipline applies to what you send: §4 is keyed on your `paymentRef` and
 §12 on the pair `(lpId, bankTransferRef)`. Retry with the original key and identical
 content — a fresh key on a retry opens a second intent for one sale.
+
+Every call in `internal/` returns an `Outcome`, which is what tells you which of the
+three you got:
+
+| Outcome | What it means | What to do |
+|---|---|---|
+| `Accepted` | t-0 committed it | record it, move on |
+| `Rejected` | t-0 refuses this payload | fix the fields, resend the **same** key |
+| `Unknown` | no answer; it may or may not have committed | retry the **same** key, unchanged |
+
+`outcome.shouldRetry()` is true only for `Unknown`.
 
 ## Layout
 
@@ -115,7 +136,9 @@ src/main/java/network/t0/pay/acquirer/
     ├── GetPaymentQuote.java             # §3
     ├── CreatePaymentIntent.java         # §4
     ├── SettlementReceived.java          # §12
-    └── Decimals.java                    # unscaled × 10^exponent ↔ BigDecimal
+    ├── Outcome.java                     # accepted / rejected / unknown
+    ├── Decimals.java                    # unscaled × 10^exponent ↔ BigDecimal
+    └── Times.java                       # protobuf Timestamp ↔ Instant
 ```
 
 ## Docker

@@ -3,6 +3,7 @@ package network.t0.pay.issuer.handler;
 import com.google.protobuf.Timestamp;
 import io.grpc.stub.StreamObserver;
 import network.t0.pay.issuer.internal.Decimals;
+import network.t0.pay.issuer.internal.Times;
 import network.t0.pay.proto.tzero.v1.pay.Blockchain;
 import network.t0.pay.proto.tzero.v1.pay.CreatePaymentInstructionsRequest;
 import network.t0.pay.proto.tzero.v1.pay.CreatePaymentInstructionsResponse;
@@ -37,7 +38,7 @@ public class IssuerCallbackHandler extends IssuerCallbackServiceGrpc.IssuerCallb
                 request.getPaymentIntentId(),
                 request.getAcquirerId(),
                 Decimals.format(request.getAmountUsdt()),
-                request.getExpiresAt());
+                Times.format(request.getExpiresAt()));
 
         // TODO: Step 2.1 — look up paymentIntentId first and return the existing
         //       reservation if you have one; only then take fresh addresses from the pool.

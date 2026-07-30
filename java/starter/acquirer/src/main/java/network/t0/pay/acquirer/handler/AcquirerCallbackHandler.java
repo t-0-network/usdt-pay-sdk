@@ -4,7 +4,6 @@ import io.grpc.stub.StreamObserver;
 import network.t0.pay.proto.tzero.v1.pay.AcquirerPaymentExpiredRequest;
 import network.t0.pay.proto.tzero.v1.pay.AcquirerPaymentExpiredResponse;
 import network.t0.pay.proto.tzero.v1.pay.AcquirerCallbackServiceGrpc;
-import network.t0.pay.proto.tzero.v1.pay.AcquirerServiceGrpc;
 import network.t0.pay.proto.tzero.v1.pay.PaymentAuthorizedRequest;
 import network.t0.pay.proto.tzero.v1.pay.PaymentAuthorizedResponse;
 import network.t0.pay.proto.tzero.v1.pay.SettlementCompletedRequest;
@@ -12,6 +11,7 @@ import network.t0.pay.proto.tzero.v1.pay.SettlementCompletedResponse;
 import network.t0.pay.proto.tzero.v1.pay.SettlementInitiatedRequest;
 import network.t0.pay.proto.tzero.v1.pay.SettlementInitiatedResponse;
 import network.t0.pay.acquirer.internal.Decimals;
+import network.t0.pay.acquirer.internal.Times;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,16 +33,14 @@ import org.slf4j.LoggerFactory;
  * </ul>
  * A repeat delivery under a key you have already written is a no-op that you
  * still acknowledge.
+ *
+ * <p>Scope the key <b>per callback</b>, not globally: §7 and §15 are both keyed on
+ * {@code paymentIntentId}, so a single {@code processed(key)} table collides the
+ * expiry of an intent with its authorization and silently drops one of them.
  */
 public class AcquirerCallbackHandler extends AcquirerCallbackServiceGrpc.AcquirerCallbackServiceImplBase {
 
     private static final Logger log = LoggerFactory.getLogger(AcquirerCallbackHandler.class);
-
-    private final AcquirerServiceGrpc.AcquirerServiceBlockingStub t0;
-
-    public AcquirerCallbackHandler(AcquirerServiceGrpc.AcquirerServiceBlockingStub t0) {
-        this.t0 = t0;
-    }
 
     /**
      * §7 — the sale is approved and the Issuer is now obligated to settle it.
@@ -57,7 +55,7 @@ public class AcquirerCallbackHandler extends AcquirerCallbackServiceGrpc.Acquire
                 request.getPaymentIntentId(),
                 request.getPaymentRef(),
                 request.getUsdtOnChain().getOnChainTxHash(),
-                request.getApprovedAt());
+                Times.format(request.getApprovedAt()));
 
         // TODO: Step 3.1 — dedup on paymentIntentId, mark the sale authorized, tell
         //       the POS. Write it before returning; the ack stops the retries.
@@ -87,7 +85,7 @@ public class AcquirerCallbackHandler extends AcquirerCallbackServiceGrpc.Acquire
         // TODO: Step 3.2 — dedup on fiatSettlementId, then record (lpId, bankTransferRef)
         //       as a transfer to watch for on the bank statement.
         // TODO: Step 4.1 — when reconciliation matches it, call
-        //       SettlementReceived.confirm(t0, lpId, bankTransferRef, ...) — §12.
+        //       SettlementReceived.confirm(stub, lpId, bankTransferRef, ...) — §12.
 
         responseObserver.onNext(SettlementInitiatedResponse.getDefaultInstance());
         responseObserver.onCompleted();
@@ -127,7 +125,7 @@ public class AcquirerCallbackHandler extends AcquirerCallbackServiceGrpc.Acquire
         log.info("§15 expired: intent={} sale={} at {}",
                 request.getPaymentIntentId(),
                 request.getPaymentRef(),
-                request.getExpiredAt());
+                Times.format(request.getExpiredAt()));
 
         // TODO: Step 3.4 — dedup on paymentIntentId, cancel the pending sale, take the
         //       QR off the POS.

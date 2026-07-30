@@ -1,0 +1,9 @@
+# The build context is the repository root, so keep host build output — and any
+# .env a starter picked up — out of the context and the build cache.
+.git
+.gitignore
+**/build/
+**/.gradle/
+**/.env
+.idea
+.DS_Store

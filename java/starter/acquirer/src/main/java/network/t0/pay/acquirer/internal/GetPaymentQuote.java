@@ -1,14 +1,14 @@
 package network.t0.pay.acquirer.internal;
 
 import io.grpc.StatusRuntimeException;
-import network.t0.pay.proto.tzero.v1.common.Decimal;
 import network.t0.pay.proto.tzero.v1.pay.AcquirerServiceGrpc;
+import network.t0.pay.proto.tzero.v1.pay.Decimal;
 import network.t0.pay.proto.tzero.v1.pay.GetPaymentQuoteRequest;
 import network.t0.pay.proto.tzero.v1.pay.GetPaymentQuoteResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.OptionalLong;
+import java.util.concurrent.TimeUnit;
 
 /**
  * §3 GetPaymentQuote — prices an upcoming fiat sale against your LP's standing
@@ -16,25 +16,29 @@ import java.util.OptionalLong;
  * pass the rate straight to §4.
  *
  * <p>Stateless lookup, no idempotency key: it always returns the current standing
- * quote. The returned quoteId is what §4 references.
+ * quote, so an {@link Outcome.Unknown} here is safe to retry as often as you like.
+ * The returned quoteId is what §4 references.
  */
 public final class GetPaymentQuote {
 
     private static final Logger log = LoggerFactory.getLogger(GetPaymentQuote.class);
 
-    /**
-     * @return t-0's quoteId when a standing quote covers the sale, empty otherwise
-     */
-    public static OptionalLong fetch(AcquirerServiceGrpc.AcquirerServiceBlockingStub t0) {
-        // TODO: Step 2.1 — take currency and amount from the sale on the POS.
-        String localCurrency = "COP";
-        Decimal localAmount = Decimals.of("100000.00");
+    /** A quote is only useful while the customer is still standing there. */
+    private static final int TIMEOUT_SECONDS = 5;
+
+    public static Outcome<GetPaymentQuoteResponse.Success> fetch(
+            AcquirerServiceGrpc.AcquirerServiceBlockingStub t0,
+            String localCurrency,
+            Decimal localAmount) {
 
         try {
-            GetPaymentQuoteResponse response = t0.getPaymentQuote(GetPaymentQuoteRequest.newBuilder()
-                    .setLocalCurrency(localCurrency)
-                    .setLocalAmount(localAmount)
-                    .build());
+            // Deadline on every call: the stub handed out by BlockingNetworkClient
+            // carries none, so a stalled t-0 blocks this thread indefinitely.
+            GetPaymentQuoteResponse response = t0.withDeadlineAfter(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                    .getPaymentQuote(GetPaymentQuoteRequest.newBuilder()
+                            .setLocalCurrency(localCurrency)
+                            .setLocalAmount(localAmount)
+                            .build());
 
             switch (response.getResultCase()) {
                 case SUCCESS -> {
@@ -45,24 +49,26 @@ public final class GetPaymentQuote {
                             localCurrency,
                             Decimals.format(success.getAmountUsdt()),
                             Decimals.format(success.getFxRate()),
-                            success.getExpiresAt());
-                    return OptionalLong.of(success.getQuoteId());
+                            Times.format(success.getExpiresAt()));
+                    return new Outcome.Accepted<>(success);
                 }
                 case FAILURE -> {
                     // QUOTE_UNAVAILABLE — your LP is not quoting this currency right now.
                     // AMOUNT_OUT_OF_RANGE — no standing quote's per-sale bounds cover it.
                     // TODO: Step 2.1 — tell the POS the sale cannot be priced.
+                    String reason = response.getFailure().getReason().name();
                     log.warn("No quote for {} {}: {}",
-                            Decimals.format(localAmount), localCurrency,
-                            response.getFailure().getReason());
+                            Decimals.format(localAmount), localCurrency, reason);
+                    return new Outcome.Rejected<>(reason);
                 }
-                default -> log.warn("GetPaymentQuote returned no result variant");
+                default -> {
+                    return new Outcome.Rejected<>("response carried no result variant");
+                }
             }
         } catch (StatusRuntimeException e) {
-            log.error("GetPaymentQuote failed: {}", e.getStatus(), e);
+            log.error("GetPaymentQuote failed: {}", e.getStatus());
+            return new Outcome.Unknown<>(e.getStatus().toString());
         }
-
-        return OptionalLong.empty();
     }
 
     private GetPaymentQuote() {

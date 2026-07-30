@@ -1,15 +1,15 @@
 package network.t0.pay.acquirer.internal;
 
-import com.google.protobuf.Timestamp;
 import io.grpc.StatusRuntimeException;
-import network.t0.pay.proto.tzero.v1.common.Decimal;
 import network.t0.pay.proto.tzero.v1.pay.AcquirerServiceGrpc;
+import network.t0.pay.proto.tzero.v1.pay.Decimal;
 import network.t0.pay.proto.tzero.v1.pay.SettlementReceivedRequest;
 import network.t0.pay.proto.tzero.v1.pay.SettlementReceivedResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import java.util.concurrent.TimeUnit;
 
 /**
  * §12 SettlementReceived — you are the oracle for the bank leg. Fiat mode only.
@@ -19,13 +19,16 @@ import java.time.Instant;
  * reference to watch for, and the intent only reaches SETTLED on your §12.
  *
  * <p>Idempotency key: the pair (lpId, bankTransferRef) — bankTransferRef is minted
- * by the LP and unique only per LP. Retry with the same pair until t-0 answers.
+ * by the LP and unique only per LP. On {@link Outcome#shouldRetry()} resend the
+ * same pair with identical content.
  */
 public final class SettlementReceived {
 
     private static final Logger log = LoggerFactory.getLogger(SettlementReceived.class);
 
-    public static void confirm(
+    private static final int TIMEOUT_SECONDS = 10;
+
+    public static Outcome<SettlementReceivedResponse.Accepted> confirm(
             AcquirerServiceGrpc.AcquirerServiceBlockingStub t0,
             long lpId,
             String bankTransferRef,
@@ -38,30 +41,32 @@ public final class SettlementReceived {
                 .setBankTransferRef(bankTransferRef)
                 .setLocalCurrency(localCurrency)
                 .setAmountReceived(amountReceived)
-                .setReceivedAt(Timestamp.newBuilder()
-                        .setSeconds(receivedAt.getEpochSecond())
-                        .setNanos(receivedAt.getNano())
-                        .build())
+                .setReceivedAt(Times.from(receivedAt))
                 .build();
 
         try {
-            SettlementReceivedResponse response = t0.settlementReceived(request);
+            SettlementReceivedResponse response =
+                    t0.withDeadlineAfter(TIMEOUT_SECONDS, TimeUnit.SECONDS).settlementReceived(request);
 
             switch (response.getResultCase()) {
-                case ACCEPTED -> log.info("Settlement {} from LP {} confirmed: {} {}",
-                        bankTransferRef, lpId, Decimals.format(amountReceived), localCurrency);
-                case REJECTED ->
-                        // AMOUNT_MISMATCH / UNKNOWN_TRANSFER / CURRENCY_MISMATCH.
-                        // A rejection is an acknowledgment — stop retrying. It does not consume
-                        // the key: correct the fields and resend the same (lpId, ref) pair.
-                        log.warn("Settlement {} from LP {} rejected: {}",
-                                bankTransferRef, lpId, response.getRejected().getReason());
-                default -> log.warn("SettlementReceived returned no result variant");
+                case ACCEPTED -> {
+                    log.info("Settlement {} from LP {} confirmed: {} {}",
+                            bankTransferRef, lpId, Decimals.format(amountReceived), localCurrency);
+                    return new Outcome.Accepted<>(response.getAccepted());
+                }
+                case REJECTED -> {
+                    // AMOUNT_MISMATCH / UNKNOWN_TRANSFER / CURRENCY_MISMATCH.
+                    String reason = response.getRejected().getReason().name();
+                    log.warn("Settlement {} from LP {} rejected: {}", bankTransferRef, lpId, reason);
+                    return new Outcome.Rejected<>(reason);
+                }
+                default -> {
+                    return new Outcome.Rejected<>("response carried no result variant");
+                }
             }
         } catch (StatusRuntimeException e) {
-            // TODO: Step 4.2 — no acknowledgment means retry with backoff, same key,
-            //       identical content. Drive it off your durable record, not this catch block.
-            log.error("SettlementReceived failed for {}: {}", bankTransferRef, e.getStatus(), e);
+            log.error("SettlementReceived failed for {}: {}", bankTransferRef, e.getStatus());
+            return new Outcome.Unknown<>(e.getStatus().toString());
         }
     }
 

@@ -2,6 +2,7 @@ package network.t0.pay.lp.handler;
 
 import io.grpc.stub.StreamObserver;
 import network.t0.pay.lp.internal.Decimals;
+import network.t0.pay.lp.internal.Times;
 import network.t0.pay.proto.tzero.v1.pay.ExecuteQuoteRequest;
 import network.t0.pay.proto.tzero.v1.pay.ExecuteQuoteResponse;
 import network.t0.pay.proto.tzero.v1.pay.LpCallbackServiceGrpc;
@@ -40,7 +41,7 @@ public class LpCallbackHandler extends LpCallbackServiceGrpc.LpCallbackServiceIm
                 Decimals.format(request.getAmountUsdt()),
                 request.getQuoteId(),
                 request.getQuoteRef(),
-                request.getExecutedAt());
+                Times.format(request.getExecutedAt()));
 
         // TODO: Step 3.1 — dedup on executionId and write the obligation down before
         //       returning: acquirerId, localAmount, amountUsdt.

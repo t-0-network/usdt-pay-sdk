@@ -1,11 +1,26 @@
 syntax = "proto3";
 
-// MODELING DRAFT — not yet wired into any buf module.
-// Eventual home: proto/tzero/v1/pay/types.proto (new independent `pay` service).
+// Types shared across the pay contract's three role edges.
 
 package tzero.v1.pay;
 
 import "buf/validate/validate.proto";
+
+/**
+ * Fixed-point monetary amount: unscaled * 10^exponent, so 123.45 is
+ * unscaled=12345, exponent=-2. Local to the pay contract — `pay` is an
+ * independent service and deliberately shares no types with `tzero.v1.common`,
+ * so a participant's generated code carries exactly one Decimal and one
+ * Blockchain.
+ */
+message Decimal {
+  int64 unscaled = 10;
+
+  int32 exponent = 20 [(buf.validate.field).int32 = {
+    gte: -8
+    lte: 8
+  }];
+}
 
 /**
  * On-chain network a USDt leg moves over. Local to the pay contract.

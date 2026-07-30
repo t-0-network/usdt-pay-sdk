@@ -33,11 +33,14 @@ git clone git@github.com:t-0-network/usdt-pay-sdk.git
 cd usdt-pay-sdk/java
 ./gradlew build                                  # SDK + all three starters
 
-cp starter/acquirer/.env.example starter/acquirer/.env
+./gradlew :starter:acquirer:installDist
+
+cd starter/acquirer
+cp .env.example .env
 # fill in PRIVATE_KEY (openssl rand -hex 32) and NETWORK_PUBLIC_KEY (from the t-0 team)
 
-./gradlew :starter:acquirer:installDist
-./starter/acquirer/build/install/acquirer/bin/acquirer
+# Run from this directory — .env is read from the working directory.
+./build/install/acquirer/bin/acquirer
 ```
 
 Then work through that starter's README — it is a numbered path from "prints my
@@ -47,8 +50,10 @@ public key" to "settled a real sale".
 
 ```
 proto/tzero/v1/          protocol definitions, snapshot-synced from the t-0 backend
-├── common/common.proto  Decimal and friends
 └── pay/                 acquirer.proto, issuer.proto, lp.proto, types.proto
+                         (self-contained: the pay contract shares no types with
+                          tzero.v1.common, so your generated code carries exactly
+                          one Decimal and one Blockchain)
 
 java/                    Java 17 SDK + one starter project per role
 ├── sdk/                 network.t-0:usdt-pay-sdk-java — generated stubs for all three roles
