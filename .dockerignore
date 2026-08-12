@@ -4,6 +4,9 @@
 .gitignore
 **/build/
 **/.gradle/
+**/node_modules/
+**/dist/
+node/sdk/lib/
 **/.env
 .idea
 .DS_Store

@@ -1,0 +1,12 @@
+version: v2
+plugins:
+  # Pinned. Bump this together with the @bufbuild/protobuf range in package.json —
+  # generated code and runtime have to agree on a major version.
+  - remote: buf.build/bufbuild/es:v2.12.0
+    out: src/gen
+    include_imports: true
+    opt:
+      - target=ts
+      - import_extension=js
+inputs:
+  - directory: proto
