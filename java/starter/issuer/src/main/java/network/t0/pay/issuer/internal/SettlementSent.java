@@ -29,6 +29,11 @@ public final class SettlementSent {
 
     private static final Logger log = LoggerFactory.getLogger(SettlementSent.class);
 
+    /**
+     * Longer than the 10s default Main installs: the transfer is already broadcast, so
+     * it is worth waiting rather than turning a settlement that landed into an
+     * {@link Outcome.Unknown} you have to reconcile.
+     */
     private static final int TIMEOUT_SECONDS = 15;
 
     public static Outcome<SettlementSentResponse.Accepted> report(

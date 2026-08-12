@@ -51,9 +51,11 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
+// One JDK builds this, whatever the developer happens to have on PATH.
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 application {

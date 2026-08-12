@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.util.concurrent.TimeUnit;
 
 /**
  * §14 PaymentExpired — the reservation closed with no valid payment and you have
@@ -23,8 +22,6 @@ public final class PaymentExpired {
 
     private static final Logger log = LoggerFactory.getLogger(PaymentExpired.class);
 
-    private static final int TIMEOUT_SECONDS = 10;
-
     public static Outcome<IssuerPaymentExpiredResponse.Accepted> report(
             IssuerServiceGrpc.IssuerServiceBlockingStub t0,
             long paymentIntentId,
@@ -36,8 +33,7 @@ public final class PaymentExpired {
                 .build();
 
         try {
-            IssuerPaymentExpiredResponse response =
-                    t0.withDeadlineAfter(TIMEOUT_SECONDS, TimeUnit.SECONDS).paymentExpired(request);
+            IssuerPaymentExpiredResponse response = t0.paymentExpired(request);
 
             switch (response.getResultCase()) {
                 case ACCEPTED -> {

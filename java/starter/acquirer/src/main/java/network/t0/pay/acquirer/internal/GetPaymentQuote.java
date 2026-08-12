@@ -32,8 +32,8 @@ public final class GetPaymentQuote {
             Decimal localAmount) {
 
         try {
-            // Deadline on every call: the stub handed out by BlockingNetworkClient
-            // carries none, so a stalled t-0 blocks this thread indefinitely.
+            // Tighter than the 10s default Main installs: a deadline set here lands on
+            // the CallOptions, and CallDeadline leaves a call that already has one alone.
             GetPaymentQuoteResponse response = t0.withDeadlineAfter(TIMEOUT_SECONDS, TimeUnit.SECONDS)
                     .getPaymentQuote(GetPaymentQuoteRequest.newBuilder()
                             .setLocalCurrency(localCurrency)

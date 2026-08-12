@@ -25,14 +25,33 @@ public final class Decimals {
         BigDecimal scaled = value.scale() > MAX_EXPONENT ? value.stripTrailingZeros() : value;
         int exponent = -scaled.scale();
 
+        // The mirror case: a round magnitude carried as a negative scale — 1E+9, or
+        // anything the caller already stripped — is representable once the zeros go
+        // back in. 1E+9 is unscaled=10, exponent=8, not exponent=9.
+        if (exponent > MAX_EXPONENT) {
+            scaled = scaled.setScale(-MAX_EXPONENT);
+            exponent = -scaled.scale();
+        }
+
         if (exponent < MIN_EXPONENT || exponent > MAX_EXPONENT) {
             throw new IllegalArgumentException(
                     "%s needs exponent %d, outside the contract's [%d, %d] — round it first"
                             .formatted(value.toPlainString(), exponent, MIN_EXPONENT, MAX_EXPONENT));
         }
 
+        long unscaled;
+        try {
+            unscaled = scaled.unscaledValue().longValueExact();
+        } catch (ArithmeticException e) {
+            // Reported the same way as an out-of-range exponent: the caller gave a
+            // number this contract cannot carry, and the javadoc promises one type.
+            throw new IllegalArgumentException(
+                    "%s does not fit the contract's 64-bit unscaled value"
+                            .formatted(value.toPlainString()));
+        }
+
         return Decimal.newBuilder()
-                .setUnscaled(scaled.unscaledValue().longValueExact())
+                .setUnscaled(unscaled)
                 .setExponent(exponent)
                 .build();
     }

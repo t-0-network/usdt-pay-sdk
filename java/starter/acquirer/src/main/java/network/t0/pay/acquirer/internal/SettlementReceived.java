@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.util.concurrent.TimeUnit;
 
 /**
  * §12 SettlementReceived — you are the oracle for the bank leg. Fiat mode only.
@@ -25,8 +24,6 @@ import java.util.concurrent.TimeUnit;
 public final class SettlementReceived {
 
     private static final Logger log = LoggerFactory.getLogger(SettlementReceived.class);
-
-    private static final int TIMEOUT_SECONDS = 10;
 
     public static Outcome<SettlementReceivedResponse.Accepted> confirm(
             AcquirerServiceGrpc.AcquirerServiceBlockingStub t0,
@@ -45,8 +42,7 @@ public final class SettlementReceived {
                 .build();
 
         try {
-            SettlementReceivedResponse response =
-                    t0.withDeadlineAfter(TIMEOUT_SECONDS, TimeUnit.SECONDS).settlementReceived(request);
+            SettlementReceivedResponse response = t0.settlementReceived(request);
 
             switch (response.getResultCase()) {
                 case ACCEPTED -> {

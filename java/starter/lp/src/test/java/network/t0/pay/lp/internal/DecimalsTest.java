@@ -27,6 +27,29 @@ class DecimalsTest {
     }
 
     @Test
+    void keepsRoundMagnitudesCarriedAsANegativeScale() {
+        // 1E+9 has scale -9, so it looks like exponent 9 — out of range — but it is
+        // exactly representable as unscaled=10, exponent=8.
+        Decimal wire = Decimals.of(new BigDecimal("1E+9"));
+
+        assertEquals(10L, wire.getUnscaled());
+        assertEquals(8, wire.getExponent());
+        assertEquals("1000000000", Decimals.format(wire));
+
+        // The realistic route in: the caller stripped the zeros themselves. Compared
+        // by value, not by BigDecimal.equals, which also compares scale.
+        assertEquals("1000000000",
+                Decimals.format(Decimals.of(new BigDecimal("1000000000").stripTrailingZeros())));
+    }
+
+    @Test
+    void refusesMagnitudesTooLargeForTheUnscaledLong() {
+        // Putting the zeros back would overflow the wire's int64 unscaled value.
+        // Reported as IllegalArgumentException, as the javadoc promises.
+        assertThrows(IllegalArgumentException.class, () -> Decimals.of(new BigDecimal("1E+30")));
+    }
+
+    @Test
     void refusesValuesTheContractCannotCarry() {
         // A quotient carries far more precision than the wire allows; the caller has
         // to decide how to round rather than have it silently truncated.

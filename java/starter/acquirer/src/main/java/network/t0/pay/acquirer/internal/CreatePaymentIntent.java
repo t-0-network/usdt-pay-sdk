@@ -9,11 +9,10 @@ import network.t0.pay.proto.tzero.v1.pay.QrOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * §4 CreatePaymentIntent — opens an intent for a sale. t-0 calls the Issuer inline
- * and returns the QR options the customer picks from.
+ * and returns the QR options the customer picks from, which makes this the slowest
+ * call on the POS path — it runs on the default 10s deadline.
  *
  * <p>Idempotency key: {@code idempotencyKey}, unique per acquirer. Mint it when the
  * sale is created and store it with the sale — <em>not</em> here. On
@@ -27,9 +26,6 @@ import java.util.concurrent.TimeUnit;
 public final class CreatePaymentIntent {
 
     private static final Logger log = LoggerFactory.getLogger(CreatePaymentIntent.class);
-
-    /** t-0 calls the Issuer inline, so this is the slowest call on the POS path. */
-    private static final int TIMEOUT_SECONDS = 10;
 
     /**
      * @param paymentRef     your sale id, echoed on §7 and §15
@@ -58,8 +54,7 @@ public final class CreatePaymentIntent {
                 .build();
 
         try {
-            CreatePaymentIntentResponse response =
-                    t0.withDeadlineAfter(TIMEOUT_SECONDS, TimeUnit.SECONDS).createPaymentIntent(request);
+            CreatePaymentIntentResponse response = t0.createPaymentIntent(request);
 
             switch (response.getResultCase()) {
                 case SUCCESS -> {

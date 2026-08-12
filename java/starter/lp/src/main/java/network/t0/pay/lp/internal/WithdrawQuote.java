@@ -7,8 +7,6 @@ import network.t0.pay.proto.tzero.v1.pay.WithdrawQuoteResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * §2 WithdrawQuote — takes one standing quote out of the Order Book before it
  * expires.
@@ -22,15 +20,12 @@ public final class WithdrawQuote {
 
     private static final Logger log = LoggerFactory.getLogger(WithdrawQuote.class);
 
-    private static final int TIMEOUT_SECONDS = 10;
-
     public static Outcome<WithdrawQuoteResponse.Success> withdraw(
             LpServiceGrpc.LpServiceBlockingStub t0, long quoteId) {
         try {
-            WithdrawQuoteResponse response = t0.withDeadlineAfter(TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                    .withdrawQuote(WithdrawQuoteRequest.newBuilder()
-                            .setQuoteId(quoteId)
-                            .build());
+            WithdrawQuoteResponse response = t0.withdrawQuote(WithdrawQuoteRequest.newBuilder()
+                    .setQuoteId(quoteId)
+                    .build());
 
             switch (response.getResultCase()) {
                 case SUCCESS -> {

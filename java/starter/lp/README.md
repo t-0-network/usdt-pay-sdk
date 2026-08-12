@@ -6,13 +6,15 @@ authorized, and settle the fiat over bank rails on your own initiative.
 Fiat settlement mode only. If your acquirer settles in USDt there is no LP in the
 flow at all.
 
-Section references (§1, §8, …) point at the QR Payment API spec (`qr_api.md`) —
-ask the t-0 team for the current copy. This README says what to build; the spec
-says what every field means.
+The §-numbers (§1, §8, …) are shorthand for the endpoints; the table below maps each
+to its RPC name. This README says what to build — for what every field and decline
+code means, see the
+[LP API reference](https://usdt-pay-docs.t-0.network/docs/integration-guidance/api-reference/pay_lp/).
 
 ## Prerequisites
 
-- Java 17+
+- Java 21+. If your JDK is older the Gradle build still works — it provisions a 21
+  toolchain on its own — but the binary it produces needs a 21 runtime.
 - A secp256k1 private key. Any 32 random bytes will do: `openssl rand -hex 32`.
 - The t-0 network public key, from the t-0 team.
 

@@ -3,7 +3,7 @@
 #
 #   docker build -f java/starter/acquirer/Dockerfile -t usdt-pay-acquirer .
 #
-FROM eclipse-temurin:17-jdk-noble AS build
+FROM eclipse-temurin:21-jdk-noble AS build
 
 WORKDIR /src
 COPY . .
@@ -11,7 +11,7 @@ COPY . .
 WORKDIR /src/java
 RUN ./gradlew :starter:acquirer:installDist --no-daemon
 
-FROM eclipse-temurin:17-jre-noble
+FROM eclipse-temurin:21-jre-noble
 
 WORKDIR /app
 COPY --from=build /src/java/starter/acquirer/build/install/acquirer/ ./

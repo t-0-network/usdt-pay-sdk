@@ -21,15 +21,30 @@ dependencies {
 
     // javax.annotation for generated gRPC code
     compileOnly("javax.annotation:javax.annotation-api:1.3.2")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+tasks.withType<Test> {
+    useJUnitPlatform()
+}
+
+// One JDK builds everything, whatever the developer happens to have on PATH.
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
+
+    // The published jar stays consumable on 17. `release` (unlike source/target
+    // compatibility) checks calls against the Java 17 API too, so a 21-only method
+    // fails the build here instead of at a customer's runtime. 17 is also where
+    // provider-sdk-java itself is compiled.
+    options.release = 17
 }
 
 // The protos under ../../proto are a snapshot synced from the backend, not code

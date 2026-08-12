@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.util.concurrent.TimeUnit;
 
 /**
  * §6 PaymentReceived — the customer's transfer is final on-chain and KYT-cleared.
@@ -27,8 +26,6 @@ import java.util.concurrent.TimeUnit;
 public final class PaymentReceived {
 
     private static final Logger log = LoggerFactory.getLogger(PaymentReceived.class);
-
-    private static final int TIMEOUT_SECONDS = 10;
 
     public static Outcome<PaymentReceivedResponse.Accepted> report(
             IssuerServiceGrpc.IssuerServiceBlockingStub t0,
@@ -51,8 +48,7 @@ public final class PaymentReceived {
                 .build();
 
         try {
-            PaymentReceivedResponse response =
-                    t0.withDeadlineAfter(TIMEOUT_SECONDS, TimeUnit.SECONDS).paymentReceived(request);
+            PaymentReceivedResponse response = t0.paymentReceived(request);
 
             switch (response.getResultCase()) {
                 case ACCEPTED -> {

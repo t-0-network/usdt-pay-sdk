@@ -4,13 +4,15 @@ You own the merchant relationship. Your POS asks you to price a sale, you open a
 payment intent with t-0, you show the customer a QR, and you learn from t-0's
 callbacks whether the sale was authorized and when it settled.
 
-Section references (§3, §7, …) point at the QR Payment API spec (`qr_api.md`) —
-ask the t-0 team for the current copy. This README says what to build; the spec
-says what every field means.
+The §-numbers (§3, §7, …) are shorthand for the endpoints; the table below maps each
+to its RPC name. This README says what to build — for what every field and decline
+code means, see the
+[acquirer API reference](https://usdt-pay-docs.t-0.network/docs/integration-guidance/api-reference/pay_acquirer/).
 
 ## Prerequisites
 
-- Java 17+
+- Java 21+. If your JDK is older the Gradle build still works — it provisions a 21
+  toolchain on its own — but the binary it produces needs a 21 runtime.
 - A secp256k1 private key. Any 32 random bytes will do: `openssl rand -hex 32`.
 - The t-0 network public key, from the t-0 team.
 

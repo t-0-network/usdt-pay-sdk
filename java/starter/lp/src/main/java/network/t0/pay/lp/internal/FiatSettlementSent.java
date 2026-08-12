@@ -30,6 +30,11 @@ public final class FiatSettlementSent {
 
     private static final Logger log = LoggerFactory.getLogger(FiatSettlementSent.class);
 
+    /**
+     * Longer than the 10s default Main installs: the money already left your bank, so
+     * it is worth waiting rather than turning a transfer that landed into an
+     * {@link Outcome.Unknown} you have to reconcile.
+     */
     private static final int TIMEOUT_SECONDS = 15;
 
     public static Outcome<FiatSettlementSentResponse.Accepted> report(

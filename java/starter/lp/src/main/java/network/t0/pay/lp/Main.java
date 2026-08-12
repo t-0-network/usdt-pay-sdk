@@ -1,6 +1,7 @@
 package network.t0.pay.lp;
 
 import io.github.cdimascio.dotenv.Dotenv;
+import network.t0.pay.client.CallDeadline;
 import network.t0.pay.lp.handler.LpCallbackHandler;
 import network.t0.pay.lp.internal.PublishQuote;
 import network.t0.pay.lp.internal.WithdrawQuote;
@@ -25,7 +26,10 @@ import java.util.concurrent.atomic.AtomicLong;
  * Liquidity Provider starter for the t-0 QR payment flow.
  *
  * <p>Work through the numbered TODOs in order; the README explains each phase.
- * Section references such as §1 point at the QR Payment API spec (`qr_api.md`).
+ * Numbers such as §1 are shorthand for the endpoints — the README maps them to RPC
+ * names, and the
+ * <a href="https://usdt-pay-docs.t-0.network/docs/integration-guidance/api-reference/pay_lp/">LP
+ * API reference</a> documents every field.
  */
 public final class Main {
 
@@ -63,8 +67,12 @@ public final class Main {
         // TODO: Step 1.2 — send this public key to the t-0 team so they can verify your calls.
 
         // Outbound: everything you call on t-0 (§1, §2, §10).
+        // CallDeadline bounds every call at 10s. A call that needs a different
+        // deadline sets one at its own call site and this steps aside — see §10.
         var t0 = BlockingNetworkClient.create(
-                config.tzeroEndpoint(), signer, LpServiceGrpc::newBlockingStub);
+                config.tzeroEndpoint(), signer,
+                channel -> LpServiceGrpc.newBlockingStub(channel)
+                        .withInterceptors(new CallDeadline(Duration.ofSeconds(10))));
 
         // Inbound: the one callback t-0 pushes to you (§8).
         // Every inbound signature is verified against NETWORK_PUBLIC_KEY.
@@ -142,8 +150,10 @@ public final class Main {
                     "Ask the t-0 team for the network public key and put it in .env.");
         }
 
-        // Checked here so a typo reports as configuration rather than as a stack
-        // trace out of the signature verifier when the first callback arrives.
+        // Checked here so a typo reports as configuration, with somewhere to go for
+        // the right value. The signature verifier does reject a malformed key on its
+        // own, but not until the callback server starts and only as an
+        // IllegalArgumentException about hex length.
         if (!NETWORK_PUBLIC_KEY_PATTERN.matcher(networkPublicKey).matches()) {
             throw new ConfigurationException(
                     "NETWORK_PUBLIC_KEY is not a valid uncompressed secp256k1 public key",

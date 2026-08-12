@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 /**
  * §1 PublishQuote — pushes one immutable standing quote into t-0's Order Book.
@@ -25,8 +24,6 @@ import java.util.concurrent.TimeUnit;
 public final class PublishQuote {
 
     private static final Logger log = LoggerFactory.getLogger(PublishQuote.class);
-
-    private static final int TIMEOUT_SECONDS = 10;
 
     public static Outcome<PublishQuoteResponse.Success.PublishedQuote> publish(
             LpServiceGrpc.LpServiceBlockingStub t0, Duration validity) {
@@ -51,8 +48,7 @@ public final class PublishQuote {
                 .build();
 
         try {
-            PublishQuoteResponse response =
-                    t0.withDeadlineAfter(TIMEOUT_SECONDS, TimeUnit.SECONDS).publishQuote(request);
+            PublishQuoteResponse response = t0.publishQuote(request);
 
             switch (response.getResultCase()) {
                 case SUCCESS -> {

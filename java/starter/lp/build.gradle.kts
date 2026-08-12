@@ -45,15 +45,22 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    // Lets a test stand up a fake t-0 in memory and hand the helper a real stub.
+    // The generated stubs are final with private constructors, so they cannot be
+    // subclassed or mocked — an in-process server is how you fake this side.
+    testImplementation("io.grpc:grpc-inprocess:1.81.0")
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
 }
 
+// One JDK builds this, whatever the developer happens to have on PATH.
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 application {

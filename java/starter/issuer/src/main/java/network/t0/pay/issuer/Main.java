@@ -1,6 +1,7 @@
 package network.t0.pay.issuer;
 
 import io.github.cdimascio.dotenv.Dotenv;
+import network.t0.pay.client.CallDeadline;
 import network.t0.pay.issuer.handler.IssuerCallbackHandler;
 import network.t0.pay.proto.tzero.v1.pay.IssuerServiceGrpc;
 import network.t0.sdk.crypto.Signer;
@@ -12,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -19,7 +21,10 @@ import java.util.regex.Pattern;
  * Issuer starter for the t-0 QR payment flow.
  *
  * <p>Work through the numbered TODOs in order; the README explains each phase.
- * Section references such as §6 point at the QR Payment API spec (`qr_api.md`).
+ * Numbers such as §6 are shorthand for the endpoints — the README maps them to RPC
+ * names, and the
+ * <a href="https://usdt-pay-docs.t-0.network/docs/integration-guidance/api-reference/pay_issuer/">issuer
+ * API reference</a> documents every field.
  */
 public final class Main {
 
@@ -50,8 +55,12 @@ public final class Main {
         // TODO: Step 1.2 — send this public key to the t-0 team so they can verify your calls.
 
         // Outbound: everything you call on t-0 (§6, §9, §14).
+        // CallDeadline bounds every call at 10s. A call that needs a different
+        // deadline sets one at its own call site and this steps aside — see §9.
         var t0 = BlockingNetworkClient.create(
-                config.tzeroEndpoint(), signer, IssuerServiceGrpc::newBlockingStub);
+                config.tzeroEndpoint(), signer,
+                channel -> IssuerServiceGrpc.newBlockingStub(channel)
+                        .withInterceptors(new CallDeadline(Duration.ofSeconds(10))));
 
         // Inbound: the one callback t-0 pushes to you (§5).
         // Every inbound signature is verified against NETWORK_PUBLIC_KEY.
@@ -104,8 +113,10 @@ public final class Main {
                     "Ask the t-0 team for the network public key and put it in .env.");
         }
 
-        // Checked here so a typo reports as configuration rather than as a stack
-        // trace out of the signature verifier when the first callback arrives.
+        // Checked here so a typo reports as configuration, with somewhere to go for
+        // the right value. The signature verifier does reject a malformed key on its
+        // own, but not until the callback server starts and only as an
+        // IllegalArgumentException about hex length.
         if (!NETWORK_PUBLIC_KEY_PATTERN.matcher(networkPublicKey).matches()) {
             throw new ConfigurationException(
                     "NETWORK_PUBLIC_KEY is not a valid uncompressed secp256k1 public key",
