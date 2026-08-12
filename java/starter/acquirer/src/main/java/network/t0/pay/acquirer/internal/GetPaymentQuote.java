@@ -54,7 +54,6 @@ public final class GetPaymentQuote {
                 }
                 case FAILURE -> {
                     // QUOTE_UNAVAILABLE — your LP is not quoting this currency right now.
-                    // AMOUNT_OUT_OF_RANGE — no standing quote's per-sale bounds cover it.
                     // TODO: Step 2.1 — tell the POS the sale cannot be priced.
                     String reason = response.getFailure().getReason().name();
                     log.warn("No quote for {} {}: {}",

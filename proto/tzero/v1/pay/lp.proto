@@ -15,7 +15,7 @@ import "tzero/v1/pay/common.proto";
  * its self-initiated fiat settlements. Fiat mode only.
  */
 service LpService {
-  /** Pushes one immutable standing quote into t-0's Order Book; multi-consumable while it stands. */
+  /** Pushes immutable standing quotes into t-0's Order Book, at most one per currency per call; each is multi-consumable while it stands. */
   rpc PublishQuote(PublishQuoteRequest) returns (PublishQuoteResponse) {
     option idempotency_level = IDEMPOTENT;
   }
@@ -45,47 +45,44 @@ service LpCallbackService {
 // ── LpService ────────────────────────────────────────────────────────
 
 message PublishQuoteRequest {
-  /** LP's identifier for this quote; idempotency key, unique per LP. */
-  string quote_ref = 10 [(buf.validate.field).string = {
-    min_len: 1
-    max_len: 64
+  /**
+   * Standing quotes to publish in one call, at most one per currency, each
+   * under its own quoteRef. The batch is atomic: one invalid quote declines
+   * the whole call and consumes no quoteRef.
+   */
+  repeated Quote quotes = 10 [(buf.validate.field).repeated = {
+    min_items: 1
+    max_items: 100
   }];
 
-  /** ISO 4217 currency the quote prices (e.g. COP). */
-  string local_currency = 20 [(buf.validate.field).string = {
-    len: 3
-    pattern: "^[A-Z]{3}$"
-  }];
+  message Quote {
+    /** LP's identifier for this quote; idempotency key, unique per LP. */
+    string quote_ref = 10 [(buf.validate.field).string = {
+      min_len: 1
+      max_len: 64
+    }];
 
-  /** Rate committed, in units of local_currency per 1 USDt. */
-  Decimal fx_rate = 30 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).cel = {
-      message: "fx_rate must be greater than zero"
-      expression: "this.unscaled > 0"
-    }
-  ];
+    /** ISO 4217 currency the quote prices (e.g. COP). */
+    string local_currency = 20 [(buf.validate.field).string = {
+      len: 3
+      pattern: "^[A-Z]{3}$"
+    }];
 
-  /** Smallest single sale this quote may price, in USDt (domain rule: at least 0.01). */
-  Decimal min_amount_usdt = 40 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).cel = {
-      message: "min_amount_usdt must be greater than zero"
-      expression: "this.unscaled > 0"
-    }
-  ];
+    /** Rate committed, in units of local_currency per 1 USDt. */
+    Decimal fx_rate = 30 [
+      (buf.validate.field).required = true,
+      (buf.validate.field).cel = {
+        message: "fx_rate must be greater than zero"
+        expression: "this.unscaled > 0"
+      }
+    ];
 
-  /** Largest single sale this quote may price, in USDt (domain rule: at least min_amount_usdt). */
-  Decimal max_amount_usdt = 50 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).cel = {
-      message: "max_amount_usdt must be greater than zero"
-      expression: "this.unscaled > 0"
-    }
-  ];
-
-  /** Moment the quote stops standing, on t-0's clock. */
-  google.protobuf.Timestamp expires_at = 60 [(buf.validate.field).timestamp.gt_now = true];
+    /**
+     * Moment the quote stops standing, on t-0's clock. Validity bounds are a
+     * business decline (VALIDITY_INVALID), not request validation.
+     */
+    google.protobuf.Timestamp expires_at = 40 [(buf.validate.field).required = true];
+  }
 }
 
 message PublishQuoteResponse {
@@ -96,8 +93,16 @@ message PublishQuoteResponse {
   }
 
   message Success {
-    /** t-0's id for the standing quote, used everywhere downstream. */
-    uint64 quote_id = 10 [(buf.validate.field).uint64.gt = 0];
+    /** One entry per published quote, in request order. */
+    repeated PublishedQuote quotes = 10 [(buf.validate.field).repeated = {min_items: 1}];
+
+    message PublishedQuote {
+      /** Echo of the quote's quoteRef. */
+      string quote_ref = 10 [(buf.validate.field).string = {min_len: 1}];
+
+      /** t-0's id for the standing quote, used everywhere downstream. */
+      uint64 quote_id = 20 [(buf.validate.field).uint64.gt = 0];
+    }
   }
 
   message Failure {
@@ -105,11 +110,8 @@ message PublishQuoteResponse {
 
     enum Reason {
       REASON_UNSPECIFIED = 0;
-      // The quote's currency is not supported.
-      REASON_CURRENCY_UNSUPPORTED = 10;
-      // min/max bounds are not well-formed.
-      REASON_LIMITS_INVALID = 20;
-      // expires_at is in the past, too short to be usable, or beyond the max window.
+      // A quote's expires_at is in the past, too short to be usable, or beyond
+      // the max window; the whole batch is declined.
       REASON_VALIDITY_INVALID = 30;
     }
   }

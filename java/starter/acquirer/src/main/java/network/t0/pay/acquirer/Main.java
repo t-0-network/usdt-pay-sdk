@@ -74,15 +74,17 @@ public final class Main {
         //       must describe the same sale or you price one thing and charge another.
         String localCurrency = "COP";
         var localAmount = Decimals.of("100000.00");
-        // paymentRef is the idempotency key for §4. It belongs to the sale, so mint it
-        // when the sale is created and persist it — a fresh id on a retry opens a
-        // second intent for one sale.
+        // paymentRef identifies the sale in your own ledger; t-0 echoes it on §7 and
+        // §15 and does not require it to be unique.
         String paymentRef = UUID.randomUUID().toString();
+        // idempotencyKey is the key for §4. Mint it with the sale and persist it — a
+        // fresh key on a retry opens a second intent for one sale.
+        String idempotencyKey = UUID.randomUUID().toString();
 
         GetPaymentQuote.fetch(t0.stub(), localCurrency, localAmount).value()
                 // TODO: Step 2.2 — render the returned qrOptions as QR codes on the POS.
                 .ifPresent(quote -> CreatePaymentIntent.create(
-                        t0.stub(), paymentRef, localAmount, quote.getQuoteId()));
+                        t0.stub(), paymentRef, idempotencyKey, localAmount, quote.getQuoteId()));
 
         // TODO: Step 2.3 — deploy this service and give the t-0 team its base URL,
         //       so the Phase 3 callbacks can reach you.

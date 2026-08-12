@@ -57,17 +57,20 @@ right now is a currency it cannot sell in — t-0 declines §3 with
 The starter publishes a fresh quote every 30 seconds, withdraws the one it
 replaces, and withdraws the last one on shutdown.
 
-1. **2.1** Replace the hardcoded `COP` rate and bounds in `PublishQuote.java` with
-   your own pricing. Mint `quoteRef` from your pricing run and persist it, so a
-   retry after a lost response reuses it instead of publishing a duplicate.
+1. **2.1** Replace the hardcoded `COP` rate in `PublishQuote.java` with your own
+   pricing. Mint `quoteRef` from your pricing run and persist it, so a retry after a
+   lost response reuses it instead of publishing a duplicate.
 2. **2.2** Keep the shutdown withdrawal. A standing quote left behind keeps t-0
    pricing sales you are no longer around to execute.
 
 A standing quote is **immutable and multi-consumable**: any number of sales can
-execute against it between `minAmountUsdt` and `maxAmountUsdt` while it stands. It
-is not a per-sale offer — price it as a rate you are happy to be held to
-repeatedly. You change a price by publishing a new quote and withdrawing the old
-one, never by amending one.
+execute against it while it stands. It is not a per-sale offer — price it as a rate
+you are happy to be held to repeatedly. You change a price by publishing a new quote
+and withdrawing the old one, never by amending one.
+
+`PublishQuote` takes a batch — at most one quote per currency per call, each under
+its own `quoteRef`, and the batch is atomic: one invalid quote declines the whole
+call and consumes no `quoteRef`. The starter publishes a batch of one.
 
 ### Phase 3 — take the obligation
 

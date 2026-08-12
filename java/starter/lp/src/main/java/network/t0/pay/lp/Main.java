@@ -78,8 +78,8 @@ public final class Main {
         // already accepted against a withdrawn quote stay binding.
         // ──────────────────────────────────────────────────────────────────
 
-        // TODO: Step 2.1 — replace the hardcoded currency, rate and bounds with your
-        //       own pricing.
+        // TODO: Step 2.1 — replace the hardcoded currency and rate with your own
+        //       pricing.
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.scheduleAtFixedRate(
                 () -> refreshStandingQuote(t0),
