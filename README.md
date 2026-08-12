@@ -50,7 +50,7 @@ public key" to "settled a real sale".
 
 ```
 proto/tzero/v1/          protocol definitions, snapshot-synced from the t-0 backend
-└── pay/                 acquirer.proto, issuer.proto, lp.proto, types.proto
+└── pay/                 acquirer.proto, issuer.proto, lp.proto, common.proto
                          (self-contained: the pay contract shares no types with
                           tzero.v1.common, so your generated code carries exactly
                           one Decimal and one Blockchain)

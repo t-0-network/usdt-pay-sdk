@@ -15,9 +15,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * §1 PublishQuote — pushes one immutable standing quote into t-0's Order Book.
  *
- * <p>Multi-consumable while it stands: any number of sales can execute against it
- * between min and max. It is not a per-sale offer, so price it as a rate you are
- * happy to be held to repeatedly until it expires or you withdraw it (§2).
+ * <p>Multi-consumable while it stands: any number of sales can execute against it.
+ * It is not a per-sale offer, so price it as a rate you are happy to be held to
+ * repeatedly until it expires or you withdraw it (§2).
  *
  * <p>Idempotency key: {@code quoteRef}, your own id, unique per LP. Retrying with
  * the same ref returns the original quoteId; a new ref publishes a second quote.
@@ -28,7 +28,7 @@ public final class PublishQuote {
 
     private static final int TIMEOUT_SECONDS = 10;
 
-    public static Outcome<PublishQuoteResponse.Success> publish(
+    public static Outcome<PublishQuoteResponse.Success.PublishedQuote> publish(
             LpServiceGrpc.LpServiceBlockingStub t0, Duration validity) {
         // TODO: Step 2.1 — mint quoteRef from your own pricing run and persist it with
         //       the quote, so a retry after a lost response reuses it instead of
@@ -37,15 +37,17 @@ public final class PublishQuote {
 
         Instant expiresAt = Instant.now().plus(validity);
 
+        // A batch of one: this starter quotes a single currency. The call takes at
+        // most one quote per currency and is atomic — one invalid quote declines
+        // the whole batch.
         PublishQuoteRequest request = PublishQuoteRequest.newBuilder()
-                .setQuoteRef(quoteRef)
-                // TODO: Step 2.1 — your currency, your rate, your per-sale bounds.
-                .setLocalCurrency("COP")
-                // Rate is local currency per 1 USDt.
-                .setFxRate(Decimals.of("4100.00"))
-                .setMinAmountUsdt(Decimals.of("1.00"))
-                .setMaxAmountUsdt(Decimals.of("5000.00"))
-                .setExpiresAt(Times.from(expiresAt))
+                .addQuotes(PublishQuoteRequest.Quote.newBuilder()
+                        .setQuoteRef(quoteRef)
+                        // TODO: Step 2.1 — your currency, your rate.
+                        .setLocalCurrency("COP")
+                        // Rate is local currency per 1 USDt.
+                        .setFxRate(Decimals.of("4100.00"))
+                        .setExpiresAt(Times.from(expiresAt)))
                 .build();
 
         try {
@@ -54,12 +56,15 @@ public final class PublishQuote {
 
             switch (response.getResultCase()) {
                 case SUCCESS -> {
+                    // One quote in, one entry back, in request order.
+                    PublishQuoteResponse.Success.PublishedQuote published =
+                            response.getSuccess().getQuotes(0);
                     log.info("§1 published quote {} (ref {}), standing until {}",
-                            response.getSuccess().getQuoteId(), quoteRef, expiresAt);
-                    return new Outcome.Accepted<>(response.getSuccess());
+                            published.getQuoteId(), quoteRef, expiresAt);
+                    return new Outcome.Accepted<>(published);
                 }
                 case FAILURE -> {
-                    // CURRENCY_UNSUPPORTED / LIMITS_INVALID / VALIDITY_INVALID.
+                    // VALIDITY_INVALID.
                     String reason = response.getFailure().getReason().name();
                     log.warn("§1 declined for ref {}: {}", quoteRef, reason);
                     return new Outcome.Rejected<>(reason);

@@ -15,11 +15,14 @@ import java.util.concurrent.TimeUnit;
  * §4 CreatePaymentIntent — opens an intent for a sale. t-0 calls the Issuer inline
  * and returns the QR options the customer picks from.
  *
- * <p>Idempotency key: {@code paymentRef}, your own sale id, unique per acquirer.
- * Mint it when the sale is created and store it with the sale — <em>not</em> here.
- * On {@link Outcome.Unknown} resend the same paymentRef with identical content and
- * t-0 replays the original result; a fresh id per attempt opens a second intent for
- * one sale.
+ * <p>Idempotency key: {@code idempotencyKey}, unique per acquirer. Mint it when the
+ * sale is created and store it with the sale — <em>not</em> here. On
+ * {@link Outcome.Unknown} resend the same key with identical content and t-0 replays
+ * the original result; a fresh key per attempt opens a second intent for one sale.
+ *
+ * <p>{@code paymentRef} is your sale's correlation ref, echoed back on §7 and §15.
+ * It need not be unique, and it is not the key: retrying a <em>declined</em> sale
+ * takes a fresh idempotencyKey under the same paymentRef.
  */
 public final class CreatePaymentIntent {
 
@@ -29,17 +32,20 @@ public final class CreatePaymentIntent {
     private static final int TIMEOUT_SECONDS = 10;
 
     /**
-     * @param paymentRef your sale id, stable across retries of the same sale
-     * @param quoteId    the standing quote from §3 — it carries the currency and the rate
+     * @param paymentRef     your sale id, echoed on §7 and §15
+     * @param idempotencyKey the retry identity, stable across retries of this call
+     * @param quoteId        the standing quote from §3 — it carries the currency and the rate
      */
     public static Outcome<CreatePaymentIntentResponse.Success> create(
             AcquirerServiceGrpc.AcquirerServiceBlockingStub t0,
             String paymentRef,
+            String idempotencyKey,
             Decimal localAmount,
             long quoteId) {
 
         CreatePaymentIntentRequest request = CreatePaymentIntentRequest.newBuilder()
                 .setPaymentRef(paymentRef)
+                .setIdempotencyKey(idempotencyKey)
                 .setLocalAmount(localAmount)
                 .setFiatSettlement(CreatePaymentIntentRequest.FiatSettlementTerms.newBuilder()
                         .setQuoteId(quoteId)
@@ -90,7 +96,7 @@ public final class CreatePaymentIntent {
                 }
             }
         } catch (StatusRuntimeException e) {
-            // You do not know whether t-0 opened the intent. Retry the same paymentRef.
+            // You do not know whether t-0 opened the intent. Retry the same idempotencyKey.
             log.error("CreatePaymentIntent failed for sale {}: {}", paymentRef, e.getStatus());
             return new Outcome.Unknown<>(e.getStatus().toString());
         }

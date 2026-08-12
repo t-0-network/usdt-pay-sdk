@@ -60,8 +60,10 @@ Your settlement mode is fixed at onboarding and decides which half you need.
    are declared there once and handed to both calls, because a quote and an intent
    that disagree price one thing and charge another. In USDt mode drop §3 and go
    straight to §4 with your own rate.
-2. **2.2** Mint `paymentRef` when the sale is created rather than at call time, and
-   persist the returned `paymentIntentId` against the sale. Render each
+2. **2.2** Mint `paymentRef` and `idempotencyKey` when the sale is created rather
+   than at call time, and persist the returned `paymentIntentId` against the sale.
+   `paymentRef` is your sale's correlation ref — t-0 echoes it on §7 and §15 and does
+   not require it to be unique; `idempotencyKey` is what §4 is keyed on. Render each
    `qrOptions[].renderablePayload` as a QR image **as-is** — it is chain-native, and
    rebuilding it from the address and the amount is how you end up with a QR that
    pays the wrong thing.
@@ -110,9 +112,11 @@ Scope the key **per callback**, not globally: §7 and §15 are both keyed on
 `paymentIntentId`, so one shared `processed(key)` table collides an intent's expiry
 with its authorization and drops one of them.
 
-The same discipline applies to what you send: §4 is keyed on your `paymentRef` and
-§12 on the pair `(lpId, bankTransferRef)`. Retry with the original key and identical
-content — a fresh key on a retry opens a second intent for one sale.
+The same discipline applies to what you send: §4 is keyed on your `idempotencyKey`
+and §12 on the pair `(lpId, bankTransferRef)`. Retry with the original key and
+identical content — a fresh key on a retry opens a second intent for one sale.
+Retrying a *declined* sale is the other case: that takes a fresh `idempotencyKey`
+under the same `paymentRef`.
 
 Every call in `internal/` returns an `Outcome`, which is what tells you which of the
 three you got:
