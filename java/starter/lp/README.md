@@ -60,8 +60,10 @@ The starter publishes a fresh quote every 30 seconds, withdraws the one it
 replaces, and withdraws the last one on shutdown.
 
 1. **2.1** Replace the hardcoded `COP` rate in `PublishQuote.java` with your own
-   pricing. Mint `quoteRef` from your pricing run and persist it, so a retry after a
-   lost response reuses it instead of publishing a duplicate.
+   pricing. Mint `quoteRef` from your pricing run and persist it — it is a parameter
+   of `publish(...)`, minted in `Main.refreshStandingQuote`, precisely so that a retry
+   after a lost response resends the same ref instead of publishing a duplicate at the
+   same price.
 2. **2.2** Keep the shutdown withdrawal. A standing quote left behind keeps t-0
    pricing sales you are no longer around to execute.
 

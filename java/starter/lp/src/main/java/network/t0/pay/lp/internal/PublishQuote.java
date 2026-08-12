@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.UUID;
 
 /**
  * §1 PublishQuote — pushes one immutable standing quote into t-0's Order Book.
@@ -20,17 +19,21 @@ import java.util.UUID;
  *
  * <p>Idempotency key: {@code quoteRef}, your own id, unique per LP. Retrying with
  * the same ref returns the original quoteId; a new ref publishes a second quote.
+ * It is a parameter rather than minted here on purpose — a ref this method invented
+ * would be lost the moment the call returns {@link Outcome.Unknown}, which is
+ * precisely when you need it to retry. t-0 also echoes it back on §8, so it is how
+ * you attribute an execution that lands before you have recorded the quoteId.
  */
 public final class PublishQuote {
 
     private static final Logger log = LoggerFactory.getLogger(PublishQuote.class);
 
+    /**
+     * @param quoteRef your id for this quote, minted and persisted by the caller and
+     *                 reused unchanged on every retry of the same publish
+     */
     public static Outcome<PublishQuoteResponse.Success.PublishedQuote> publish(
-            LpServiceGrpc.LpServiceBlockingStub t0, Duration validity) {
-        // TODO: Step 2.1 — mint quoteRef from your own pricing run and persist it with
-        //       the quote, so a retry after a lost response reuses it instead of
-        //       publishing a duplicate.
-        String quoteRef = UUID.randomUUID().toString();
+            LpServiceGrpc.LpServiceBlockingStub t0, String quoteRef, Duration validity) {
 
         Instant expiresAt = Instant.now().plus(validity);
 

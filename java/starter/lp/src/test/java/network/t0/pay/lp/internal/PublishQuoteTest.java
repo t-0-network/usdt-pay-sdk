@@ -32,6 +32,7 @@ class PublishQuoteTest {
 
     private Server server;
     private ManagedChannel channel;
+    private PublishQuoteRequest sent;
 
     /** Stands up a fake t-0 that answers publishQuote however the test says. */
     private LpServiceGrpc.LpServiceBlockingStub t0(
@@ -45,6 +46,7 @@ class PublishQuoteTest {
                     public void publishQuote(
                             PublishQuoteRequest request,
                             StreamObserver<PublishQuoteResponse> responseObserver) {
+                        sent = request;
                         answer.accept(responseObserver);
                     }
                 })
@@ -78,11 +80,16 @@ class PublishQuoteTest {
         });
 
         Outcome<PublishQuoteResponse.Success.PublishedQuote> outcome =
-                PublishQuote.publish(t0, Duration.ofSeconds(90));
+                PublishQuote.publish(t0, "quote-ref-1", Duration.ofSeconds(90));
 
         assertInstanceOf(Outcome.Accepted.class, outcome);
         assertEquals(4242, outcome.value().orElseThrow().getQuoteId());
         assertFalse(outcome.shouldRetry());
+
+        // The caller's ref reaches the wire unchanged. It is the idempotency key, so a
+        // ref invented inside publish() would be unresendable — and t-0 echoes this
+        // back on §8, which is how an early execution gets attributed.
+        assertEquals("quote-ref-1", sent.getQuotes(0).getQuoteRef());
     }
 
     @Test
@@ -96,7 +103,7 @@ class PublishQuoteTest {
         });
 
         Outcome<PublishQuoteResponse.Success.PublishedQuote> outcome =
-                PublishQuote.publish(t0, Duration.ofSeconds(90));
+                PublishQuote.publish(t0, "quote-ref-1", Duration.ofSeconds(90));
 
         assertInstanceOf(Outcome.Rejected.class, outcome);
         assertFalse(outcome.shouldRetry(), "a rejection is an acknowledgment — fix and resend, do not spin");
@@ -111,7 +118,7 @@ class PublishQuoteTest {
         var t0 = t0(observer -> observer.onError(Status.UNAVAILABLE.asRuntimeException()));
 
         Outcome<PublishQuoteResponse.Success.PublishedQuote> outcome =
-                PublishQuote.publish(t0, Duration.ofSeconds(90));
+                PublishQuote.publish(t0, "quote-ref-1", Duration.ofSeconds(90));
 
         assertInstanceOf(Outcome.Unknown.class, outcome);
         assertTrue(outcome.shouldRetry());

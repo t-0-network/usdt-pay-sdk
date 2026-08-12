@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -110,7 +111,13 @@ public final class Main {
      */
     private static void refreshStandingQuote(
             BlockingNetworkClient<LpServiceGrpc.LpServiceBlockingStub> t0) {
-        var published = PublishQuote.publish(t0.stub(), QUOTE_VALIDITY).value();
+        // TODO: Step 2.1 — mint quoteRef from your own pricing run and persist it
+        //       before you publish. It is the idempotency key: on an unanswered call
+        //       you must resend this same ref, and a fresh one publishes a second
+        //       quote at the same price. t-0 echoes it back on §8.
+        String quoteRef = UUID.randomUUID().toString();
+
+        var published = PublishQuote.publish(t0.stub(), quoteRef, QUOTE_VALIDITY).value();
         if (published.isEmpty()) {
             return;
         }
