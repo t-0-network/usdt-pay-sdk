@@ -30,8 +30,8 @@ cp .env.example .env      # then fill in PRIVATE_KEY and NETWORK_PUBLIC_KEY
 ./build/install/lp/bin/lp
 ```
 
-It prints your public key, starts the callback server, and begins refreshing a
-standing quote every 30 seconds.
+It prints your public key and starts the callback server. It does **not** publish
+quotes until you uncomment the loop in `Main.java` — see 2.1 below.
 
 ## What you implement
 
@@ -56,14 +56,18 @@ right now is a currency it cannot sell in — t-0 declines §3 with
 
 ### Phase 2 — keep a quote standing
 
-The starter publishes a fresh quote every 30 seconds, withdraws the one it
-replaces, and withdraws the last one on shutdown.
+The quote loop is written for you — publish a fresh quote every 30 seconds, withdraw
+the one it replaces, withdraw the last one on shutdown — but it ships **commented
+out**. A published quote is a live offer that any sale can execute against at
+whatever rate the code carries, so quoting is something you switch on once the rate
+is yours, not something that happens because you ran the binary.
 
 1. **2.1** Replace the hardcoded `COP` rate in `PublishQuote.java` with your own
-   pricing. Mint `quoteRef` from your pricing run and persist it — it is a parameter
-   of `publish(...)`, minted in `Main.refreshStandingQuote`, precisely so that a retry
-   after a lost response resends the same ref instead of publishing a duplicate at the
-   same price.
+   pricing, then uncomment the `scheduler.scheduleAtFixedRate(...)` call in
+   `Main.java`. Mint `quoteRef` from your pricing run and persist it — it is a
+   parameter of `publish(...)`, minted in `Main.refreshStandingQuote`, precisely so
+   that a retry after a lost response resends the same ref instead of publishing a
+   duplicate at the same price.
 2. **2.2** Keep the shutdown withdrawal. A standing quote left behind keeps t-0
    pricing sales you are no longer around to execute.
 

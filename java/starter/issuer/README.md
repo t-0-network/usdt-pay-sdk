@@ -28,8 +28,9 @@ cp .env.example .env      # then fill in PRIVATE_KEY and NETWORK_PUBLIC_KEY
 ./build/install/issuer/bin/issuer
 ```
 
-It prints your public key and starts the callback server. Nothing else happens
-until t-0 calls §5.
+It prints your public key and starts the callback server. Nothing else happens until
+t-0 calls §5 — and until you implement that handler it declines, so nobody can pay
+against addresses that are not yours.
 
 ## What you implement
 
@@ -72,8 +73,16 @@ Implement `createPaymentInstructions` in `handler/IssuerCallbackHandler.java`.
    `Failure` variant (`ADDRESS_POOL_EMPTY`, `AMOUNT_OUT_OF_RANGE`,
    `ISSUER_UNAVAILABLE`) rather than an error status.
 
-The starter ships placeholder addresses on TRON, Ethereum and BSC so you can see
-the shape of the response. Replace them before you talk to anything real.
+**As shipped, this handler declines every §5 with `ISSUER_UNAVAILABLE`.** That is
+deliberate. Whatever addresses it returns are rendered by the POS as a payable QR and
+a customer sends real USDt to them, so a starter answering with example addresses
+would hand customer money to an address you do not own. A decline costs one sale; a
+wrong address is irreversible.
+
+The response you should return sits directly below the decline, commented out, with
+the TRON/Ethereum/BSC options already shaped. Put your own deposit addresses in,
+delete the decline, and the QR flow works. The two USDt contract constants in there
+are real and stay as they are — it is the deposit addresses that must become yours.
 
 ### Phase 3 — report what you see on-chain
 

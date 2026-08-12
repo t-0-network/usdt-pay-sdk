@@ -87,12 +87,17 @@ public final class Main {
         // already accepted against a withdrawn quote stay binding.
         // ──────────────────────────────────────────────────────────────────
 
-        // TODO: Step 2.1 — replace the hardcoded currency and rate with your own
-        //       pricing.
+        // TODO: Step 2.1 — put your own currency and rate in PublishQuote, then
+        //       uncomment the loop below to start quoting.
+        //
+        // Commented out deliberately: publishing a quote is a live offer that any sale
+        // can execute against at whatever rate the code carries, and the code carries a
+        // hardcoded one. Quoting should be something you switch on, not something that
+        // happens because you ran the binary.
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.scheduleAtFixedRate(
-                () -> refreshStandingQuote(t0),
-                0, QUOTE_REFRESH_INTERVAL.toSeconds(), TimeUnit.SECONDS);
+        // scheduler.scheduleAtFixedRate(
+        //         () -> refreshStandingQuote(t0),
+        //         0, QUOTE_REFRESH_INTERVAL.toSeconds(), TimeUnit.SECONDS);
 
         // TODO: Step 4.1 — after you release a bank transfer to the acquirer, call
         //       FiatSettlementSent.report(t0.stub(), ...) — §10. Drive it off your

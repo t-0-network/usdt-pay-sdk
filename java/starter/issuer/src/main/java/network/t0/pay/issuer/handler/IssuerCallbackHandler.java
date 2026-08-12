@@ -1,6 +1,5 @@
 package network.t0.pay.issuer.handler;
 
-import com.google.protobuf.Timestamp;
 import io.grpc.stub.StreamObserver;
 import network.t0.pay.issuer.internal.Decimals;
 import network.t0.pay.issuer.internal.Times;
@@ -50,29 +49,39 @@ public class IssuerCallbackHandler extends IssuerCallbackServiceGrpc.IssuerCallb
         //       release the addresses and report §14 PaymentExpired.
         // TODO: Step 2.4 — no free addresses, or the amount is outside your range?
         //       Answer with the Failure variant (ADDRESS_POOL_EMPTY /
-        //       AMOUNT_OUT_OF_RANGE / ISSUER_UNAVAILABLE) instead of an error status.
+        //       AMOUNT_OUT_OF_RANGE / ISSUER_UNAVAILABLE) instead of an error status —
+        //       which is what the unimplemented default below already does.
 
-        BigDecimal amountUsdt = Decimals.toBigDecimal(request.getAmountUsdt());
-        Timestamp expiresAt = request.getExpiresAt();
-
-        // Placeholder addresses — swap these for real one-time addresses from your pool.
-        // One option per chain you support for this intent; the customer picks one.
-        CreatePaymentInstructionsResponse.Success success =
-                CreatePaymentInstructionsResponse.Success.newBuilder()
-                        .addQrOptions(tron("TXhVX9Xk1nHkNcVvzYd4bJmSyGCoNCoYRJ", amountUsdt))
-                        .addQrOptions(evm(Blockchain.BLOCKCHAIN_ETH, 1,
-                                "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-                                "0x8Ba1f109551bD432803012645Ac136ddd64DBA72", amountUsdt))
-                        .addQrOptions(evm(Blockchain.BLOCKCHAIN_BSC, 56,
-                                "0x55d398326f99059fF775485246999027B3197955",
-                                "0x8Ba1f109551bD432803012645Ac136ddd64DBA72", amountUsdt))
-                        .setExpiresAt(expiresAt)
-                        .build();
-
+        // Declines until you implement the steps above. Deliberate: whatever addresses
+        // this returns are rendered by the POS as a payable QR and the customer sends
+        // real USDt to them. A decline costs one sale; an address you do not control
+        // costs the customer their money, irreversibly.
         responseObserver.onNext(CreatePaymentInstructionsResponse.newBuilder()
-                .setSuccess(success)
+                .setFailure(CreatePaymentInstructionsResponse.Failure.newBuilder()
+                        .setReason(CreatePaymentInstructionsResponse.Failure.Reason
+                                .REASON_ISSUER_UNAVAILABLE))
                 .build());
         responseObserver.onCompleted();
+
+        // TODO: Step 2.3 — delete the decline above and return this instead, once the
+        //       addresses come from your own pool. One option per chain you support for
+        //       this intent; the customer picks one. The two hex constants are the real
+        //       USDt contracts on each chain and stay as they are — it is the deposit
+        //       addresses that must become yours.
+        //
+        // BigDecimal amountUsdt = Decimals.toBigDecimal(request.getAmountUsdt());
+        // responseObserver.onNext(CreatePaymentInstructionsResponse.newBuilder()
+        //         .setSuccess(CreatePaymentInstructionsResponse.Success.newBuilder()
+        //                 .addQrOptions(tron(yourTronDepositAddress, amountUsdt))
+        //                 .addQrOptions(evm(Blockchain.BLOCKCHAIN_ETH, 1,
+        //                         "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+        //                         yourEthDepositAddress, amountUsdt))
+        //                 .addQrOptions(evm(Blockchain.BLOCKCHAIN_BSC, 56,
+        //                         "0x55d398326f99059fF775485246999027B3197955",
+        //                         yourBscDepositAddress, amountUsdt))
+        //                 .setExpiresAt(request.getExpiresAt()))
+        //         .build());
+        // responseObserver.onCompleted();
     }
 
     /**
