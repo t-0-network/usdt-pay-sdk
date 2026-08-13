@@ -1,6 +1,9 @@
 plugins {
     `java-library`
     id("build.buf") version "0.11.0"
+    `maven-publish`
+    signing
+    id("com.gradleup.nmcp")
 }
 
 group = rootProject.property("group") as String
@@ -35,6 +38,10 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
+
+    // Central rejects a deployment that is missing either of these.
+    withJavadocJar()
+    withSourcesJar()
 }
 
 tasks.withType<JavaCompile> {
@@ -73,10 +80,73 @@ tasks.withType<Jar>().configureEach {
     dependsOn("bufGenerate")
 }
 
+// javadoc is not a Jar, so the wiring above misses it, and the generated-source
+// srcDir below is a bare Provider with no producer task attached. Without this it
+// fails with "package does not exist" — which -Xdoclint:none does not suppress,
+// because that is a symbol error, not a doc lint.
+tasks.named("javadoc").configure {
+    dependsOn("bufGenerate")
+}
+
 sourceSets {
     main {
         java {
             srcDir(layout.buildDirectory.dir("bufbuild/generated/gen/java"))
         }
+    }
+}
+
+// The stubs are machine-generated from protos we do not own; doc lint on them is
+// noise nobody can act on. The jar still has to exist for Central.
+tasks.withType<Javadoc>().configureEach {
+    (options as StandardJavadocDocletOptions).addStringOption("Xdoclint:none", "-quiet")
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            // The module is called `sdk`; the artifact is not. This is the coordinate
+            // the docs and the starter's standalone mode name.
+            artifactId = "usdt-pay-sdk-java"
+            from(components["java"])
+
+            pom {
+                name = "USDt Pay SDK"
+                description = "Java SDK for the t-0 USDt Pay network — generated stubs for the acquirer, issuer and LP roles"
+                url = "https://github.com/t-0-network/usdt-pay-sdk"
+
+                licenses {
+                    license {
+                        name = "MIT License"
+                        url = "https://opensource.org/licenses/MIT"
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = "t-0"
+                        name = "T-0 Network"
+                        email = "dev@t-0.network"
+                    }
+                }
+
+                scm {
+                    connection = "scm:git:git://github.com/t-0-network/usdt-pay-sdk.git"
+                    developerConnection = "scm:git:ssh://github.com/t-0-network/usdt-pay-sdk.git"
+                    url = "https://github.com/t-0-network/usdt-pay-sdk"
+                }
+            }
+        }
+    }
+}
+
+signing {
+    // Only CI has the key. A local `build` or `publishToMavenLocal` must not stop
+    // at "no signatory available".
+    val signingKey: String? = System.getenv("GPG_PRIVATE_KEY")
+    isRequired = signingKey != null
+    if (signingKey != null) {
+        useInMemoryPgpKeys(signingKey, "")
+        sign(publishing.publications["mavenJava"])
     }
 }

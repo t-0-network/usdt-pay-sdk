@@ -1,0 +1,70 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write
+
+jobs:
+  publish-java:
+    name: Publish Java
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Get version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+
+      # Central will not let you replace a version, so a tag that disagrees with
+      # gradle.properties has to fail here rather than half-way through the upload.
+      - name: Verify version matches tag
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          PKG=$(grep '^version=' java/gradle.properties | cut -d= -f2)
+          [ "$PKG" = "$VERSION" ] || { echo "::error::java/gradle.properties has $PKG, tag is v$VERSION"; exit 1; }
+          echo "java/gradle.properties version $PKG matches tag v$VERSION"
+
+      # The build gate, and also the only thing that produces usdt-pay-init.jar —
+      # publishAggregationToCentralPortal does not build the CLI.
+      - name: Build
+        working-directory: java
+        run: ./gradlew build --no-daemon
+
+      - name: Publish to Maven Central
+        working-directory: java
+        run: ./gradlew publishAggregationToCentralPortal --no-daemon
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          MAVEN_CENTRAL_USERNAME: ${{ vars.OSSRH_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+
+      # An unversioned copy alongside the versioned one, so the docs can link a URL
+      # that does not change every release.
+      - name: Upload usdt-pay-init.jar to the GitHub release
+        working-directory: java
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release view "v${VERSION}" >/dev/null 2>&1 \
+            || gh release create "v${VERSION}" --verify-tag --generate-notes
+          cp "cli/build/libs/usdt-pay-init-${VERSION}.jar" cli/build/libs/usdt-pay-init.jar
+          gh release upload "v${VERSION}" \
+            "cli/build/libs/usdt-pay-init-${VERSION}.jar" \
+            cli/build/libs/usdt-pay-init.jar --clobber

@@ -56,6 +56,20 @@ cp .env.example .env
 Then work through that starter's README — it is a numbered path from "prints my
 public key" to "settled a real sale".
 
+### Scaffold a project instead
+
+`usdt-pay-init.jar`, attached to each [release](https://github.com/t-0-network/usdt-pay-sdk/releases),
+copies a starter out of this repo into a project of your own, generates your
+secp256k1 keypair and writes it to `.env`:
+
+```bash
+java -jar usdt-pay-init.jar my-acquirer --starter acquirer
+```
+
+The scaffolded project builds against the published SDK rather than this repo's
+`:sdk`, so it is the standalone route — and it works only once the artifact is on
+Maven Central. Until then, clone.
+
 ## What is in here
 
 ```
