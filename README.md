@@ -28,10 +28,9 @@ Your mode is fixed at onboarding.
 
 ## Quick start
 
-Each starter is a numbered path from "prints my public key" to "settled a real sale".
-The acquirer's is Java, the issuer's is Node — the SDKs cover all three roles in both
-languages, so the starter you copy from is a worked example, not a constraint on what
-you build in.
+Each starter is a numbered path from "prints my public key" to "settled a real sale":
+the acquirer's in Java, the issuer's in Node — [one per role](#roadmap), and not a
+constraint on the language you build in.
 
 ### Java — the acquirer starter
 
@@ -344,15 +343,19 @@ Point `TZERO_ENDPOINT` at a sandbox only once both sides pass on their own.
 Each ecosystem is a sibling directory served by the same `proto/` at the root. Names
 and versioning are fixed so you can plan against them:
 
-| Ecosystem | Artifact | Versioning | Transport | Starters |
+| Ecosystem | Artifact | Versioning | Transport | Starter |
 |---|---|---|---|---|
 | Java | `network.t-0:usdt-pay-sdk-java` | Maven, `X.Y.Z` | grpc-java | acquirer |
 | Node | `@t-0/usdt-pay-sdk` | npm, `X.Y.Z` | Connect | issuer |
 | Go | `github.com/t-0-network/usdt-pay-sdk/go` | Git tags `go/vX.Y.Z` | Connect | — |
 
-The remaining starters follow the same way. Both SDKs already generate code for all
-three roles, so any role can be integrated against either one today — a starter is a
-worked example, not a prerequisite.
+**One starter per role, each written once: the acquirer's is Java, the issuer's is
+Node.** The LP's follows.
+
+That mapping is about where the worked example lives, not about what you may build
+in. Every SDK generates code for all three roles, so an issuer on Java and an
+acquirer on Node are both first-class — read the starter for your role, in whichever
+language it happens to be, and write yours in the one you deploy.
 
 Until 1.0 neither artifact is published. Clone this repo: the Java starter builds
 against the local `:sdk` project and the Node starter against the `node/` workspace.
