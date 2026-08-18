@@ -36,8 +36,7 @@ prints it again. Do not overwrite it from `.env.example`.
 
 - **Node 22 or newer.**
 - **The t-0 network public key**, from the t-0 team. The project reads it as
-  `NETWORK_PUBLIC_KEY` and refuses to start without it, so start that conversation
-  before you scaffold.
+  `NETWORK_PUBLIC_KEY` and will not start without it.
 
 ## After scaffolding
 
