@@ -52,10 +52,12 @@ export const unknown = (detail: string): Outcome<never> => ({
 
 /**
  * A response whose `result` oneof is empty — a contract change this build does not
- * know about. Reported as rejected rather than retried: resending would get the same
- * unreadable answer.
+ * know about. This is unknown, not rejected: an older SDK cannot tell whether t-0
+ * committed the operation, so the only safe follow-up is to retry the same
+ * idempotency key after updating the SDK.
  */
-export const noResultVariant = (): Outcome<never> => rejected("response carried no result variant");
+export const noResultVariant = (): Outcome<never> =>
+  unknown("response carried an unrecognised result variant");
 
 /**
  * A thrown call, classified. Transport failures are `unknown` — the call may still
