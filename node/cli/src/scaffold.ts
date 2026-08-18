@@ -93,9 +93,23 @@ function deRepoReadme(targetDir: string, role: string): void {
 
   let content = readFileSync(path, "utf8");
 
+  // The whole "Run it" block, in one replacement rather than line by line. The first
+  // line of the in-repo version is `cp .env.example .env`, and following it in a
+  // scaffolded project overwrites the .env this CLI just wrote — destroying the only
+  // copy of the generated private key, whose public half the user has already sent to
+  // the t-0 team. The scaffold test asserts neither line survives here.
   content = content.replace(
-    "# Install and build from node/ — the starter compiles against the local sdk workspace.\n(cd ../.. && npm install && npm run build)",
-    "npm install && npm run build",
+    "cp .env.example .env      # then fill in PRIVATE_KEY and NETWORK_PUBLIC_KEY\n" +
+      "\n# Install and build from node/ — the starter compiles against the local sdk workspace.\n" +
+      "(cd ../.. && npm install && npm run build)",
+    "# .env already exists and holds the PRIVATE_KEY generated for you. Do not\n" +
+      "# overwrite it — add NETWORK_PUBLIC_KEY, which the t-0 team gives you.\n" +
+      "\nnpm install && npm run build",
+  );
+
+  content = content.replace(
+    "- A secp256k1 private key. Any 32 random bytes will do: `openssl rand -hex 32`.",
+    "- Your secp256k1 private key — already generated, in `.env`.",
   );
 
   content = content.replace(

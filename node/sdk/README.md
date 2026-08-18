@@ -4,7 +4,8 @@ TypeScript SDK for the **t-0 QR payment flow** — the contract under
 `proto/tzero/v1/pay/`. Generated Connect clients and servers for all three roles,
 over a transport that signs what you send and verifies what arrives.
 
-Start from a role's starter rather than from here: [`node/starter/issuer`](../starter/issuer).
+Start from a role's starter rather than from here:
+[`node/starter/issuer`](https://github.com/t-0-network/usdt-pay-sdk/tree/master/node/starter/issuer).
 
 ## Install
 
@@ -12,8 +13,10 @@ Start from a role's starter rather than from here: [`node/starter/issuer`](../st
 npm install @t-0/usdt-pay-sdk
 ```
 
-Before 1.0 the package is not published. Clone this repository and let the starters
-resolve it through the `node/` npm workspace, which is what they are set up to do.
+Scaffolding a project with
+[`@t-0/usdt-pay-starter-ts`](https://www.npmjs.com/package/@t-0/usdt-pay-starter-ts)
+adds this dependency for you. Working inside a clone of the repo instead? The starters
+resolve the SDK through the `node/` npm workspace, so no install is needed.
 
 ## Serving the callbacks t-0 pushes to you
 

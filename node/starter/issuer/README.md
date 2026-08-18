@@ -190,6 +190,7 @@ src/
 test/
 ├── callback_server.test.ts     # §5 declines; a call t-0 did not sign never lands
 ├── decimals.test.ts
+├── outcome.test.ts
 └── settlement_sent.test.ts     # all three outcomes against a fake t-0
 ```
 

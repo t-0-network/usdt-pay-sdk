@@ -133,6 +133,13 @@ describe("scaffold", () => {
     const readme = readFileSync(join(target, "README.md"), "utf8");
     assert.doesNotMatch(readme, /cd \.\.\/\.\./, "no repo-relative cd left in the README");
     assert.doesNotMatch(readme, /-f starter\/issuer\/Dockerfile/);
+
+    // The one that loses data if it regresses: .env already holds the generated
+    // private key, and the in-repo README's first run step overwrites it from the
+    // blank example. The public half has already been sent to t-0 by then.
+    assert.doesNotMatch(readme, /cp \.env\.example \.env/, "would destroy the generated key");
+    assert.doesNotMatch(readme, /openssl rand -hex 32/, "the key is already generated");
+    assert.match(readme, /Do not\n# overwrite it/);
   });
 
   it("carries the example but never a real .env or build output", () => {

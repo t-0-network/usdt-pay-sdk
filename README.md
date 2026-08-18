@@ -14,8 +14,8 @@ Pick yours and go straight to its starter.
 
 | You are | You do | Start here |
 |---|---|---|
-| **Acquirer** | Own the merchant. Price the sale, open the intent, show the QR, learn when it settles. | [`java/starter/acquirer`](java/starter/acquirer) |
-| **Issuer** | Reserve deposit addresses, watch the chain for the customer's USDt, settle on-chain. | [`node/starter/issuer`](node/starter/issuer) |
+| **Acquirer** | Own the merchant. Price the sale, open the intent, show the QR, learn when it settles. | [Quick start — Java](#java--the-acquirer-starter) |
+| **Issuer** | Reserve deposit addresses, watch the chain for the customer's USDt, settle on-chain. | [Quick start — Node](#node--the-issuer-starter) |
 | **Liquidity Provider** | Price USDt↔local fiat, take the per-sale obligation, settle fiat over bank rails. | Starter not published yet — see [Roadmap](#roadmap) |
 
 Not sure which you are? The acquirer talks to the POS, the issuer talks to the
@@ -28,9 +28,60 @@ Your mode is fixed at onboarding.
 
 ## Quick start
 
-Each starter is a numbered path from "prints my public key" to "settled a real sale":
-the acquirer's in Java, the issuer's in Node — [one per role](#roadmap), and not a
-constraint on the language you build in.
+Two routes to a working project. The choice is the same in both languages:
+
+| | **Scaffold** | **Clone** |
+|---|---|---|
+| What you get | a standalone project of your own, pinning the published SDK | this repo, the starter building against the local SDK |
+| Keys | generated for you, written to `.env` | you generate and fill them in |
+| When the contract moves | you bump the SDK deliberately | you `git pull` and follow it |
+| Pick it when | you are starting your own service | **recommended before 1.0** — the contract still moves and you want to track it |
+
+Either way you end up in the same place: a starter whose README is a numbered path
+from "prints my public key" to "settled a real sale".
+
+### Node — the issuer starter
+
+Node 22 or newer.
+
+**Scaffold:**
+
+```bash
+npx @t-0/usdt-pay-starter-ts my-issuer issuer
+
+cd my-issuer
+# add NETWORK_PUBLIC_KEY to .env — the t-0 team gives you this.
+# Your PRIVATE_KEY is already there; do not overwrite .env from the example.
+npm install
+npm start
+```
+
+**Clone:**
+
+```bash
+git clone git@github.com:t-0-network/usdt-pay-sdk.git
+cd usdt-pay-sdk/node
+npm install && npm run build                     # SDK + the issuer starter
+
+cd starter/issuer
+cp .env.example .env
+# fill in PRIVATE_KEY (openssl rand -hex 32) and NETWORK_PUBLIC_KEY (from the t-0 team)
+
+# Run from this directory — .env is read from the working directory.
+npm start
+```
+
+Either way, a working start prints your public key and then blocks on the callback
+server:
+
+```
+Issuer public key: 0x04…
+Callback server listening on port 8080
+```
+
+Send that public key to the t-0 team — they cannot call you until they have it. Then
+work through [`node/starter/issuer/README.md`](node/starter/issuer/README.md), which
+walks the integration phase by phase.
 
 ### Java — the acquirer starter
 
@@ -43,6 +94,19 @@ allow that, install a 21 JDK yourself and the resolver stays out of the way — 
 the starter back on 17: change `JavaLanguageVersion.of(21)` to `of(17)` in its
 `build.gradle.kts` and the `eclipse-temurin:21-*` tags in its `Dockerfile`. Nothing in
 the starter code uses a language feature newer than 17.
+
+**Scaffold** — with `usdt-pay-init.jar`, attached to each
+[release](https://github.com/t-0-network/usdt-pay-sdk/releases):
+
+```bash
+java -jar usdt-pay-init.jar my-acquirer acquirer
+
+cd my-acquirer
+# add NETWORK_PUBLIC_KEY to .env; PRIVATE_KEY is already there.
+./gradlew installDist
+```
+
+**Clone:**
 
 ```bash
 git clone git@github.com:t-0-network/usdt-pay-sdk.git
@@ -59,49 +123,19 @@ cp .env.example .env
 ./build/install/acquirer/bin/acquirer
 ```
 
-Then work through that starter's README — it is a numbered path from "prints my
-public key" to "settled a real sale".
+Then work through [`java/starter/acquirer/README.md`](java/starter/acquirer/README.md)
+— the same numbered path, for the acquirer's half of the flow.
 
-### Node — the issuer starter
+### Both generators take the same arguments
 
-Node 22 or newer.
-
-```bash
-git clone git@github.com:t-0-network/usdt-pay-sdk.git
-cd usdt-pay-sdk/node
-npm install && npm run build                     # SDK + the issuer starter
-
-cd starter/issuer
-cp .env.example .env
-# fill in PRIVATE_KEY (openssl rand -hex 32) and NETWORK_PUBLIC_KEY (from the t-0 team)
-
-# Run from this directory — .env is read from the working directory.
-npm start
+```
+usdt-pay-init.jar    [project-name] <role>
+usdt-pay-starter-ts  [project-name] <role>
 ```
 
-### Scaffold a project instead
-
-Each platform ships one generator and you tell it which role to scaffold. It copies
-that starter out of this repo into a project of your own, generates your secp256k1
-keypair and writes it to `.env`. Run either without a role to see what it carries.
-
-Java — `usdt-pay-init.jar`, attached to each
-[release](https://github.com/t-0-network/usdt-pay-sdk/releases):
-
-```bash
-java -jar usdt-pay-init.jar my-acquirer acquirer
-```
-
-Node — `@t-0/usdt-pay-starter-ts`, on npm:
-
-```bash
-npx @t-0/usdt-pay-starter-ts my-issuer issuer
-```
-
-Either way the scaffolded project builds against the published SDK rather than this
-repo's local one, so this is the standalone route. The Java project takes the SDK
-version explicitly, e.g. `./gradlew build -PusdtPaySdkVersion=<version>`; the Node one
-carries a `^` pin already.
+The role is required and comes last, with no default — acquirer, issuer and lp are
+different integrations. Run either with no role and it lists the ones it carries. Omit
+the project name and it asks.
 
 ## What is in here
 
@@ -384,11 +418,24 @@ in. Every SDK generates code for all three roles, so an issuer on Java and an
 acquirer on Node are both first-class — read the starter for your role, in whichever
 language it happens to be, and write yours in the one you deploy.
 
-Both artifacts are published — `network.t-0:usdt-pay-sdk-java` on Maven Central and
-`@t-0/usdt-pay-sdk` on npm. Before 1.0 the recommended route is still to clone this
-repo: the Java starter then builds against the local `:sdk` project and the Node
-starter against the `node/` workspace, so you follow the SDK as it moves. See
-[docs/RELEASE_AND_PUBLISH.md](docs/RELEASE_AND_PUBLISH.md) for how releases are cut.
+Both SDKs are published — `network.t-0:usdt-pay-sdk-java` on Maven Central,
+`@t-0/usdt-pay-sdk` on npm — alongside the two generators. See
+[docs/RELEASE_AND_PUBLISH.md](docs/RELEASE_AND_PUBLISH.md) for how a release is cut.
+
+## Staying current on 0.x
+
+The contract moves before 1.0, so pick up changes deliberately rather than by
+surprise:
+
+- **Cloned?** `git pull`, rebuild, and read the release notes for the tag you moved
+  to. Your starter follows the SDK in the same commit.
+- **Scaffolded?** Your project pins the SDK — `@t-0/usdt-pay-sdk` in `package.json`,
+  `usdtPaySdkVersion` in `gradle.properties`. Raise it, read the release notes for
+  every version you skipped, and rebuild. To see what changed in the starter itself,
+  scaffold a throwaway project at the new version and diff it against yours.
+
+Releases are listed at
+[github.com/t-0-network/usdt-pay-sdk/releases](https://github.com/t-0-network/usdt-pay-sdk/releases).
 
 ## License
 
