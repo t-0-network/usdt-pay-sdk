@@ -5,7 +5,7 @@ One generator for the whole Node side — pick the role you are integrating as. 
 analog is `usdt-pay-init.jar`, which works the same way.
 
 ```bash
-npx @t-0/usdt-pay-starter-ts my-issuer --starter issuer
+npx @t-0/usdt-pay-starter-ts my-issuer issuer
 ```
 
 That creates `./my-issuer` from the issuer starter, generates your secp256k1 keypair,
@@ -13,21 +13,24 @@ writes it into `.env`, and prints the public half — which is what you send to 
 team, since they cannot accept your calls until they have it.
 
 ```
-Usage: usdt-pay-starter-ts [project-name] --starter <role> [options]
+Usage: usdt-pay-starter-ts [project-name] <role>
 
 Options:
-  -s, --starter <role>   Required. Which role to scaffold.
   -d, --directory <dir>  Where to create the project (defaults to the current directory)
       --no-color         Disable colored output
   -h, --help             Show this help
   -V, --version          Show the version
 ```
 
-Omit the project name and it asks. `--starter` is **required**, and running without it
-lists what this package carries — issuer, acquirer and lp are different integrations,
-and which one you get should not be inferred. A default would also be a contract that
-changes under you: it would mean "issuer" today and, once an acquirer starter is added,
-"acquirer", because the role list is sorted.
+The role comes **last** and is **required**; run without it and it lists what this
+package carries. Omit the project name and it asks — `npx @t-0/usdt-pay-starter-ts
+issuer` is enough to get going.
+
+There is no default role on purpose. Issuer, acquirer and lp are different
+integrations, and a default would be a contract that changes under you: it would mean
+"issuer" today and "acquirer" once an acquirer starter is added, because the role list
+is sorted. Swapping the two arguments fails loudly rather than scaffolding something
+you did not ask for.
 
 The scaffolded project pins `@t-0/usdt-pay-sdk` at the same version as this package —
 they are released together — and is not a workspace member of anything, so

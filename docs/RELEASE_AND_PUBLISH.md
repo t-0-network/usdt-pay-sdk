@@ -47,7 +47,7 @@ platform, with the role as a parameter**, not one generator per role:
 | Platform | Generator | Role selection | Starter source | Packed by |
 |---|---|---|---|---|
 | Java | `usdt-pay-init.jar`, a Release asset | `--starter <role>` | every `java/starter/*`, live Gradle subprojects | `processResources` at build time |
-| Node | `@t-0/usdt-pay-starter-ts` on npm | `--starter <role>` | every `node/starter/*`, live npm workspace members | `node/cli` `prepack` at pack/publish time |
+| Node | `@t-0/usdt-pay-starter-ts` on npm | trailing `<role>` | every `node/starter/*`, live npm workspace members | `node/cli` `prepack` at pack/publish time |
 | Go | *(later)* | | | |
 
 In both, **the template listing is the role set** — `templates/<role>` in the jar,
@@ -55,12 +55,17 @@ In both, **the template listing is the role set** — `templates/<role>` in the 
 `java/starter/` or `node/starter/`; there is no registry to update in either generator, and
 no second initializer to write.
 
-On the Node side `--starter` is **required**, with no default even when only one starter is
+On the Node side the role is a **required trailing positional** —
+`usdt-pay-starter-ts [project-name] <role>` — with no default even when only one starter is
 packed. Issuer, acquirer and lp are different integrations, and a default would be a contract
-that changes underneath callers: the role list is sorted, so a bare invocation means `issuer`
-today and would mean `acquirer` the day an acquirer starter is added. Anything scripted against
-it would change role without a character changing. `usdt-pay-init.jar` still auto-selects when it
-carries exactly one starter — worth aligning when a second Java starter lands.
+that changes underneath callers: the role list is sorted, so a bare invocation would mean
+`issuer` today and `acquirer` the day an acquirer starter is added, changing role without a
+character changing. Because the role cannot be omitted, a lone positional is unambiguously the
+role and the project name is prompted for.
+
+The Java CLI still spells it `--starter <role>` and still auto-selects when the jar carries
+exactly one starter. Worth aligning with the Node form when a second Java starter lands; until
+then the two generators differ in surface, not in contract.
 
 The starters themselves stay live, tested projects rather than being forked into template copies.
 `node/cli/template/` is **generated and git-ignored** — `prepack` deletes and recreates it from

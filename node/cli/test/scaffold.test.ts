@@ -63,7 +63,7 @@ describe("scaffold", () => {
     );
   });
 
-  it("requires --starter rather than defaulting to one", () => {
+  it("requires the role, as the last positional, and never guesses it", () => {
     // Not a style preference: availableStarters() sorts, so a default would silently
     // change role the day a starter sorting before the current one is added.
     const cli = join(packageRoot, "bin", "cli.js");
@@ -77,14 +77,26 @@ describe("scaffold", () => {
       }
     };
 
-    const bare = run(["some-project", "--no-color"]);
+    const bare = run(["--no-color"]);
     assert.equal(bare.code, 1);
-    assert.match(bare.err, /--starter is required\. Available: issuer/);
+    assert.match(bare.err, /A role is required, and comes last\. Available: issuer/);
+
+    // A name with no role reads the name as the role and fails — which is the point:
+    // it never quietly scaffolds whichever role happens to sort first.
+    const nameOnly = run(["some-project", "--no-color"]);
+    assert.equal(nameOnly.code, 1);
+    assert.match(nameOnly.err, /No starter named 'some-project'/);
     assert.ok(!existsSync(join(workdir, "some-project")), "nothing scaffolded");
 
-    const wrong = run(["some-project", "--starter", "not-a-role", "--no-color"]);
-    assert.equal(wrong.code, 1);
-    assert.match(wrong.err, /No starter named 'not-a-role'\. Available: issuer/);
+    // Swapping the two positionals fails loudly rather than scaffolding a project
+    // named after a role.
+    const swapped = run(["issuer", "some-project", "--no-color"]);
+    assert.equal(swapped.code, 1);
+    assert.match(swapped.err, /No starter named 'some-project'/);
+
+    const tooMany = run(["a", "b", "c", "--no-color"]);
+    assert.equal(tooMany.code, 1);
+    assert.match(tooMany.err, /Too many arguments/);
   });
 
   it("writes a named project with a usable .env and no stray secrets", () => {

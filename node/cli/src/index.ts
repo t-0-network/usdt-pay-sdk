@@ -41,12 +41,15 @@ function version(): string {
 
 function usage(): string {
   return [
-    "Usage: usdt-pay-starter-ts [project-name] --starter <role> [options]",
+    "Usage: usdt-pay-starter-ts [project-name] <role>",
     "",
     "Creates a USDt Pay project in TypeScript from one of the starters this package carries.",
+    `Roles: ${availableStarters(templateDir).join(", ")}`,
+    "",
+    "The role is required and comes last. Give the project name before it, or omit the",
+    "name and you will be asked for it.",
     "",
     "Options:",
-    `  -s, --starter <role>   Required. Which role to scaffold: ${availableStarters(templateDir).join(", ")}`,
     "  -d, --directory <dir>  Where to create the project (defaults to the current directory)",
     "      --no-color         Disable colored output",
     "  -h, --help             Show this help",
@@ -61,9 +64,8 @@ interface Args {
 }
 
 function parseArgs(argv: string[]): Args {
-  let projectName = "";
   let directory = process.cwd();
-  let starter = "";
+  const positional: string[] = [];
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -79,13 +81,6 @@ function parseArgs(argv: string[]): Args {
       case "--no-color":
         useColor = false;
         break;
-      case "-s":
-      case "--starter": {
-        const value = argv[++i];
-        if (!value) fail("--starter needs a role");
-        starter = value;
-        break;
-      }
       case "-d":
       case "--directory": {
         const value = argv[++i];
@@ -95,12 +90,22 @@ function parseArgs(argv: string[]): Args {
       }
       default:
         if (arg.startsWith("-")) fail(`Unknown option '${arg}'.\n\n${usage()}`);
-        if (projectName) fail(`Unexpected argument '${arg}' — the project name was already given as '${projectName}'.`);
-        projectName = arg;
+        positional.push(arg);
     }
   }
 
-  return { projectName, directory, starter };
+  // The role is required, so a lone positional can only be it — there is nothing else
+  // it could have been. With two, the name comes first and the role last.
+  switch (positional.length) {
+    case 0:
+      return { projectName: "", directory, starter: "" };
+    case 1:
+      return { projectName: "", directory, starter: positional[0] };
+    case 2:
+      return { projectName: positional[0], directory, starter: positional[1] };
+    default:
+      fail(`Too many arguments: ${positional.join(" ")}\n\n${usage()}`);
+  }
 }
 
 async function ask(question: string): Promise<string> {
@@ -116,14 +121,14 @@ async function ask(question: string): Promise<string> {
  * Required, deliberately — issuer, acquirer and lp are different integrations, and
  * which one you get is not something to infer.
  *
- * Defaulting it would be a contract that changes under you. With one starter packed,
- * a bare invocation would silently mean "issuer"; the day an acquirer starter lands,
- * `availableStarters` sorts and that same invocation means "acquirer" instead. Anything
- * scripted against it would switch roles without a single character changing.
+ * Defaulting it would be a contract that changes under you: with one starter packed a
+ * bare invocation would silently mean "issuer", and the day an acquirer starter lands
+ * it would mean "acquirer", because `availableStarters` sorts. Anything scripted
+ * against it would switch roles without a single character changing.
  */
 function resolveStarter(starters: string[], requested: string): string {
   if (!requested) {
-    fail(`--starter is required. Available: ${starters.join(", ")}`);
+    fail(`A role is required, and comes last. Available: ${starters.join(", ")}`);
   }
   const role = requested.trim().toLowerCase();
   if (!starters.includes(role)) {

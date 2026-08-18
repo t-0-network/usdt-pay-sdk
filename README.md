@@ -81,9 +81,9 @@ npm start
 
 ### Scaffold a project instead
 
-Each platform ships one generator, and `--starter` picks the role. It copies that
-starter out of this repo into a project of your own, generates your secp256k1 keypair
-and writes it to `.env`. Run it without `--starter` to see the roles on offer.
+Each platform ships one generator and you tell it which role to scaffold. It copies
+that starter out of this repo into a project of your own, generates your secp256k1
+keypair and writes it to `.env`. Run either without a role to see what it carries.
 
 Java — `usdt-pay-init.jar`, attached to each
 [release](https://github.com/t-0-network/usdt-pay-sdk/releases):
@@ -95,7 +95,7 @@ java -jar usdt-pay-init.jar my-acquirer --starter acquirer
 Node — `@t-0/usdt-pay-starter-ts`, on npm:
 
 ```bash
-npx @t-0/usdt-pay-starter-ts my-issuer --starter issuer
+npx @t-0/usdt-pay-starter-ts my-issuer issuer
 ```
 
 Either way the scaffolded project builds against the published SDK rather than this
