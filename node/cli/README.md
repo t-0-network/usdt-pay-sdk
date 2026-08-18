@@ -2,7 +2,7 @@
 
 Scaffolds a [USDt Pay](https://usdt-pay-docs.t-0.network/) integration in TypeScript.
 One generator for the whole Node side — pick the role you are integrating as. The Java
-analog is `usdt-pay-init.jar`, which works the same way.
+analog is `usdt-pay-init.jar`, which takes the same arguments.
 
 ```bash
 npx @t-0/usdt-pay-starter-ts my-issuer issuer

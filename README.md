@@ -89,7 +89,7 @@ Java — `usdt-pay-init.jar`, attached to each
 [release](https://github.com/t-0-network/usdt-pay-sdk/releases):
 
 ```bash
-java -jar usdt-pay-init.jar my-acquirer --starter acquirer
+java -jar usdt-pay-init.jar my-acquirer acquirer
 ```
 
 Node — `@t-0/usdt-pay-starter-ts`, on npm:

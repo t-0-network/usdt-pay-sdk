@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -31,17 +32,18 @@ public class InitCommand implements Callable<Integer> {
     private static final String RED = "\u001B[31m";
     private static final String RESET = "\u001B[0m";
 
+    // [project-name] <role>, the same shape the Node generator takes. The role is
+    // required and comes last; because it cannot be omitted, a lone argument can only
+    // be the role and the project name is asked for instead.
     @Parameters(
-        index = "0",
-        description = "Project name (also the directory name)",
-        defaultValue = ""
+        paramLabel = "[project-name] <role>",
+        arity = "0..2",
+        description = "Project name (also the directory name), then the role to scaffold."
     )
-    private String projectName;
+    private List<String> args = new ArrayList<>();
 
-    @Option(
-        names = {"-s", "--starter"},
-        description = "Which role to scaffold. Omit to pick from the starters this jar carries."
-    )
+    private String projectName = "";
+
     private String starter;
 
     @Option(
@@ -74,6 +76,15 @@ public class InitCommand implements Callable<Integer> {
             if (starters.isEmpty()) {
                 printError("This jar carries no starters — it was built wrong.");
                 return 1;
+            }
+
+            // The role is required, so a lone argument can only be it — there is
+            // nothing else it could have been. With two, the name comes first.
+            if (args.size() == 1) {
+                starter = args.get(0);
+            } else if (args.size() == 2) {
+                projectName = args.get(0);
+                starter = args.get(1);
             }
 
             String role = resolveStarter(starters);
@@ -125,45 +136,28 @@ public class InitCommand implements Callable<Integer> {
         }
     }
 
-    /** @return the chosen role, or null when the caller named one that does not exist */
-    private String resolveStarter(List<String> starters) throws IOException {
-        if (starter != null) {
-            String requested = starter.trim().toLowerCase();
-            if (starters.contains(requested)) {
-                return requested;
-            }
+    /**
+     * Required, deliberately — acquirer, issuer and lp are different integrations, and
+     * which one you get is not something to infer.
+     *
+     * <p>Defaulting it would be a contract that changes under you: with one starter in
+     * the jar a bare invocation would silently mean that role, and adding a second
+     * starter would change what the same command does. Anything scripted against it
+     * would switch roles without a character changing.
+     *
+     * @return the chosen role, or null when it is missing or names one that does not exist
+     */
+    private String resolveStarter(List<String> starters) {
+        if (starter == null || starter.trim().isEmpty()) {
+            printError("A role is required, and comes last. Available: " + String.join(", ", starters));
+            return null;
+        }
+        String requested = starter.trim().toLowerCase();
+        if (!starters.contains(requested)) {
             printError("No starter named '" + starter + "'. Available: " + String.join(", ", starters));
             return null;
         }
-
-        // One starter and no preference stated is not a question worth asking.
-        if (starters.size() == 1) {
-            return starters.get(0);
-        }
-
-        println("");
-        println("Select a starter:");
-        for (int i = 0; i < starters.size(); i++) {
-            println("  " + color(BLUE, (i + 1) + ")") + " " + starters.get(i));
-        }
-        println("");
-        System.out.print("Enter choice [1]: ");
-        System.out.flush();
-
-        String input = readLine();
-        if (input == null || input.trim().isEmpty()) {
-            return starters.get(0);
-        }
-        try {
-            int choice = Integer.parseInt(input.trim());
-            if (choice >= 1 && choice <= starters.size()) {
-                return starters.get(choice - 1);
-            }
-        } catch (NumberFormatException ignored) {
-            // falls through to the same error
-        }
-        printError("Invalid choice.");
-        return null;
+        return requested;
     }
 
     private String readLine() throws IOException {
