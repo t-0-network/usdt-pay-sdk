@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -18,10 +19,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class TemplateExtractorTest {
 
+    /**
+     * Spelled out rather than asserted non-empty. The listing is the CLI's role menu,
+     * and `usdt-pay-init.jar my-acquirer acquirer` is a published invocation — a role
+     * appearing, vanishing or being renamed is an API change, so it has to be made
+     * here deliberately instead of following whatever `processResources` happened to
+     * copy.
+     */
     @Test
-    void carriesAtLeastOneStarter() throws IOException {
-        assertFalse(TemplateExtractor.availableStarters().isEmpty(),
-                "the jar's /templates listing is the CLI's role menu");
+    void carriesExactlyTheDeclaredStarters() throws IOException {
+        assertEquals(List.of("acquirer"), TemplateExtractor.availableStarters());
     }
 
     @Test

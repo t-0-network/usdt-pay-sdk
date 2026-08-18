@@ -295,35 +295,37 @@ jobs:
 
           ERRORS=0
 
-          # One template per role, and the listing is the role set — so the roles are
-          # discovered from the tarball rather than hardcoded here. Adding a starter
-          # must not require editing this workflow.
-          ROLES=$(printf '%s\n' "$FILES" | sed -n 's#^template/\([^/]*\)/.*#\1#p' | sort -u)
-          if [ -z "$ROLES" ]; then
-            echo "::error::the tarball carries no template/<role>/ at all"
+          # Space-separated and sorted. The role set is a published contract —
+          # `npx @t-0/usdt-pay-starter-ts <name> <role>` is in every README — so a role
+          # appearing, vanishing or being renamed is a CLI API change, and it has to be
+          # made here deliberately. Deriving the list from the tarball instead would
+          # only ever confirm the tarball matches itself: it catches an empty
+          # template/ and nothing else, and says nothing the day a second role lands.
+          EXPECTED_ROLES='issuer'
+
+          ROLES=$(printf '%s\n' "$FILES" | sed -n 's#^template/\([^/]*\)/.*#\1#p' | sort -u | tr '\n' ' ' | sed 's/ *$//')
+          echo "roles in tarball: ${ROLES:-(none)}"
+          if [ "$ROLES" != "$EXPECTED_ROLES" ]; then
+            echo "::error::tarball carries roles '${ROLES:-(none)}', expected '$EXPECTED_ROLES' — if that change is intended, update EXPECTED_ROLES in this workflow"
             ERRORS=$((ERRORS + 1))
           fi
-          echo "roles in tarball:"
-          printf '%s\n' "$ROLES"
 
+          # Driven by the expected list, not the tarball's: a role missing from the
+          # tarball has to fail here too, not slip through because nothing iterated
+          # over it. Also why this is a plain `for` and no longer a heredoc-fed
+          # `while` — there is no subshell to lose the ERRORS increments in.
+          #
           # gitignore is undotted on purpose — npm drops a nested .gitignore from the
           # tarball, and the CLI restores the name when it scaffolds. Its absence
           # would mean scaffolded projects commit their own .env.
-          #
-          # Heredoc rather than a pipe into `while`: a pipe would run the loop in a
-          # subshell and every ERRORS increment would be discarded, turning this whole
-          # check green no matter what it found.
-          while IFS= read -r ROLE; do
-            [ -n "$ROLE" ] || continue
+          for ROLE in $EXPECTED_ROLES; do
             for REQUIRED in '.env.example' 'gitignore' 'package.json'; do
               if ! printf '%s\n' "$FILES" | grep -qx "template/$ROLE/$REQUIRED"; then
                 echo "::error::template/$ROLE/$REQUIRED is missing from the tarball"
                 ERRORS=$((ERRORS + 1))
               fi
             done
-          done <<ROLE_LIST
-          $ROLES
-          ROLE_LIST
+          done
 
           # Anything env-ish other than the examples, any credential-shaped file, any
           # installed tree. Matched as patterns, not exact names: .env.local and
