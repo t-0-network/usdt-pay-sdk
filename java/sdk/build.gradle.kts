@@ -27,10 +27,23 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    // Reads the signature vectors. grpc already drags gson onto the runtime classpath, but
+    // a transitive dependency of a library we do not control is not one to compile against.
+    testImplementation("com.google.code.gson:gson:2.13.2")
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+sourceSets {
+    test {
+        // The vectors are shared with the Node suite and with whoever writes the Go one, so
+        // the tests read the repo's copy rather than a duplicate. As a declared input it also
+        // makes an edited fixture re-run the tests instead of leaving them up to date.
+        resources.srcDir(rootProject.file("../vectors"))
+    }
 }
 
 // One JDK builds everything, whatever the developer happens to have on PATH.

@@ -1,0 +1,10 @@
+{
+  // `npm run typecheck` uses this so the tests are typechecked too. The build config
+  // leaves them out — lib/ ships src/ only.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts"]
+}

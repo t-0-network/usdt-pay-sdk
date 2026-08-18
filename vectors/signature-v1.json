@@ -1,0 +1,245 @@
+{
+  "version": 1,
+  "scheme": {
+    "digest": "keccak256(payload || uint64le(timestampMs))",
+    "signature": "secp256k1 ECDSA over the 32-byte digest, RFC 6979 deterministic k (HMAC-SHA256), low-S, r[32] || s[32] || v[1]",
+    "headers": {
+      "publicKey": "X-Public-Key",
+      "signature": "X-Signature",
+      "timestamp": "X-Signature-Timestamp"
+    },
+    "windowMs": 60000,
+    "encoding": "Every hex value in this file is 0x-prefixed and lowercase; timestampMs and nowMs are decimal milliseconds since the epoch."
+  },
+  "keys": {
+    "network": {
+      "privateKey": "0x1111111111111111111111111111111111111111111111111111111111111111",
+      "publicKey": "0x044f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1"
+    },
+    "impostor": {
+      "privateKey": "0x2222222222222222222222222222222222222222222222222222222222222222",
+      "publicKey": "0x04466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f276728176c3c6431f8eeda4538dc37c865e2784f3a9e77d044f33e407797e1278a"
+    }
+  },
+  "trustedKey": "network",
+  "message": {
+    "type": "tzero.v1.pay.CreatePaymentInstructionsRequest",
+    "fields": {
+      "paymentIntentId": "1001",
+      "acquirerId": "7",
+      "amountUsdt": {
+        "unscaled": "1000",
+        "exponent": -2
+      },
+      "expiresAt": "2099-01-01T00:00:00Z"
+    }
+  },
+  "signing": [
+    {
+      "name": "connect-proto",
+      "framing": "unframed",
+      "contentType": "application/proto",
+      "payload": "0x50e907a00107f2010f50e807a001feffffffffffffffff01c202060880c794950f",
+      "timestampMs": 1735689600000,
+      "digest": "0xfad5a30b1a9d599ef2052e3ea63e1fa0ea3046ef3a3d07460ec5290ca5ce5571",
+      "signature": "0x2da34d29a3323192d6a7328e8ef5ec01247a2e642b44da8fdd914e4ca0ab3e4764cf2a97cfa474fbf30db7e5de612397d07b4169d31c190b37f68a6c8db222c300",
+      "note": "A Connect unary body: the serialized request, nothing around it."
+    },
+    {
+      "name": "connect-json",
+      "framing": "unframed",
+      "contentType": "application/json",
+      "payload": "0x7b227061796d656e74496e74656e744964223a2231303031222c2261637175697265724964223a2237222c22616d6f756e7455736474223a7b22756e7363616c6564223a2231303030222c226578706f6e656e74223a2d327d2c22657870697265734174223a22323039392d30312d30315430303a30303a30305a227d",
+      "timestampMs": 1735689600000,
+      "digest": "0x19117a4478add805e3ed7771f8ab2a6e787608c8377cbd996dc90a1253e296ba",
+      "signature": "0x4b74c7a5b1f6ce61450d9d42bf04265bda0d7e46900eac6f1bb22d1b5541bbba3d5525727a463db21e9ecabc795ef266b2d4fef55fce7b8400affae0b275372b01",
+      "note": "The same request as JSON — what the Node SDK's client puts on the wire. The payload is the body bytes, whatever the codec."
+    },
+    {
+      "name": "grpc-framed",
+      "framing": "grpc",
+      "contentType": "application/grpc+proto",
+      "payload": "0x000000002150e907a00107f2010f50e807a001feffffffffffffffff01c202060880c794950f",
+      "timestampMs": 1735689600000,
+      "digest": "0x48d873cde68cf2a0874e202b88ffdad96941ab8070a69c48fd34323078769c71",
+      "signature": "0x7e0687f6b8ba894646101b7019569f98f1ad1f561d1780432919faeef23ee5f1449a77f60957e98e26c73d7a13051fdd312d28d9e5d3ca839100572f0b3ad6fb01",
+      "note": "The on-wire gRPC body: 0x00 || uint32be(length) || message. t-0 signs this when it calls a provider over gRPC."
+    },
+    {
+      "name": "empty-payload",
+      "framing": "unframed",
+      "contentType": "application/proto",
+      "payload": "0x",
+      "timestampMs": 1735689600000,
+      "digest": "0x42872377ccc9f6b2a57efc8c725cff66528062e2e09b414c25f1d26714564ba6",
+      "signature": "0x9bb27e168f8e3b4a3500da0682dee6a8392d82d5d499b49cfa057787fd27754f5c88b20ab148fa2a566662e803d7825ee5c16bfb96eda1c55aef61872fc278b001",
+      "note": "A request with no body: the digest is over the timestamp alone."
+    },
+    {
+      "name": "leading-zero-r",
+      "framing": "unframed",
+      "contentType": "application/proto",
+      "payload": "0x50e907a00107f2010f50e807a001feffffffffffffffff01c202060880c794950f",
+      "timestampMs": 1735689600022,
+      "digest": "0x043016baca35781efcdb2b3ce147a8706633bd8d31ecb4898e03f82cbd73b39d",
+      "signature": "0x00776b8ee2c6d0e79c51d70ed557accc2e78373932077674309b2351c523039d5ca65a684165a446fdd33b7aae7d46a6ef81000dc306c55a51c2a0b51ac8204b00",
+      "note": "The r component starts with a zero byte, so it only matches if the signer pads both components to a fixed 32 bytes."
+    }
+  ],
+  "verification": [
+    {
+      "name": "valid",
+      "check": "signature",
+      "payload": "0x50e907a00107f2010f50e807a001feffffffffffffffff01c202060880c794950f",
+      "timestampMs": 1735689600000,
+      "publicKey": "0x044f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1",
+      "signature": "0x2da34d29a3323192d6a7328e8ef5ec01247a2e642b44da8fdd914e4ca0ab3e4764cf2a97cfa474fbf30db7e5de612397d07b4169d31c190b37f68a6c8db222c300",
+      "accept": true,
+      "note": "The signature from the connect-proto signing vector, presented by the key t-0 is known by."
+    },
+    {
+      "name": "valid-64-byte-signature",
+      "check": "signature",
+      "payload": "0x50e907a00107f2010f50e807a001feffffffffffffffff01c202060880c794950f",
+      "timestampMs": 1735689600000,
+      "publicKey": "0x044f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1",
+      "signature": "0x2da34d29a3323192d6a7328e8ef5ec01247a2e642b44da8fdd914e4ca0ab3e4764cf2a97cfa474fbf30db7e5de612397d07b4169d31c190b37f68a6c8db222c3",
+      "accept": true,
+      "note": "The same signature without the recovery byte. Every verifier takes 64 or 65 bytes and ignores v."
+    },
+    {
+      "name": "clock-ahead-by-the-whole-window",
+      "check": "timestamp",
+      "payload": "0x50e907a00107f2010f50e807a001feffffffffffffffff01c202060880c794950f",
+      "timestampMs": 1735689600000,
+      "nowMs": 1735689660000,
+      "publicKey": "0x044f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1",
+      "signature": "0x2da34d29a3323192d6a7328e8ef5ec01247a2e642b44da8fdd914e4ca0ab3e4764cf2a97cfa474fbf30db7e5de612397d07b4169d31c190b37f68a6c8db222c300",
+      "accept": true,
+      "note": "Exactly at the edge, and the edge is inclusive."
+    },
+    {
+      "name": "clock-behind-by-the-whole-window",
+      "check": "timestamp",
+      "payload": "0x50e907a00107f2010f50e807a001feffffffffffffffff01c202060880c794950f",
+      "timestampMs": 1735689600000,
+      "nowMs": 1735689540000,
+      "publicKey": "0x044f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1",
+      "signature": "0x2da34d29a3323192d6a7328e8ef5ec01247a2e642b44da8fdd914e4ca0ab3e4764cf2a97cfa474fbf30db7e5de612397d07b4169d31c190b37f68a6c8db222c300",
+      "accept": true,
+      "note": "The same edge on the other side."
+    },
+    {
+      "name": "stale-timestamp",
+      "check": "timestamp",
+      "payload": "0x50e907a00107f2010f50e807a001feffffffffffffffff01c202060880c794950f",
+      "timestampMs": 1735689600000,
+      "nowMs": 1735689660001,
+      "publicKey": "0x044f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1",
+      "signature": "0x2da34d29a3323192d6a7328e8ef5ec01247a2e642b44da8fdd914e4ca0ab3e4764cf2a97cfa474fbf30db7e5de612397d07b4169d31c190b37f68a6c8db222c300",
+      "accept": false,
+      "reason": "invalid_argument",
+      "note": "One millisecond past the window. The signature is still good — replay protection is what refuses it."
+    },
+    {
+      "name": "wrong-key",
+      "check": "signature",
+      "payload": "0x50e907a00107f2010f50e807a001feffffffffffffffff01c202060880c794950f",
+      "timestampMs": 1735689600000,
+      "publicKey": "0x044f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1",
+      "signature": "0xdeeac118fefe64892baf56bf39b4bc6930e4d9c420927792b3a0c215b519ff8c7be616fb8594240d2bfe7e41877a0b210651b262fd0192f808f10741de5321b801",
+      "accept": false,
+      "reason": "unauthenticated",
+      "note": "Signed by a key t-0 does not know, presented under t-0's public key: the signature does not verify."
+    },
+    {
+      "name": "unknown-signer",
+      "check": "identity",
+      "payload": "0x50e907a00107f2010f50e807a001feffffffffffffffff01c202060880c794950f",
+      "timestampMs": 1735689600000,
+      "publicKey": "0x04466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f276728176c3c6431f8eeda4538dc37c865e2784f3a9e77d044f33e407797e1278a",
+      "signature": "0xdeeac118fefe64892baf56bf39b4bc6930e4d9c420927792b3a0c215b519ff8c7be616fb8594240d2bfe7e41877a0b210651b262fd0192f808f10741de5321b801",
+      "accept": false,
+      "reason": "unauthenticated",
+      "note": "A signature that verifies — against the wrong key. Refused because the presented key is not the trusted one, before any curve arithmetic."
+    },
+    {
+      "name": "tampered-payload",
+      "check": "signature",
+      "payload": "0x50ea07a00107f2010f50e807a001feffffffffffffffff01c202060880c794950f",
+      "timestampMs": 1735689600000,
+      "publicKey": "0x044f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1",
+      "signature": "0x2da34d29a3323192d6a7328e8ef5ec01247a2e642b44da8fdd914e4ca0ab3e4764cf2a97cfa474fbf30db7e5de612397d07b4169d31c190b37f68a6c8db222c300",
+      "accept": false,
+      "reason": "unauthenticated",
+      "note": "payment_intent_id changed from 1001 to 1002 after signing. Still a valid message; no longer the signed one."
+    },
+    {
+      "name": "malformed-signature",
+      "check": "signature",
+      "payload": "0x50e907a00107f2010f50e807a001feffffffffffffffff01c202060880c794950f",
+      "timestampMs": 1735689600000,
+      "publicKey": "0x044f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1",
+      "signature": "0xdeadbeef",
+      "accept": false,
+      "reason": "unauthenticated",
+      "note": "Valid hex, impossible length."
+    },
+    {
+      "name": "zero-signature",
+      "check": "signature",
+      "payload": "0x50e907a00107f2010f50e807a001feffffffffffffffff01c202060880c794950f",
+      "timestampMs": 1735689600000,
+      "publicKey": "0x044f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1",
+      "signature": "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "accept": false,
+      "reason": "unauthenticated",
+      "note": "r = s = 0. A verifier that skips the range check on r and s takes this one."
+    }
+  ],
+  "divergences": [
+    {
+      "name": "clock-behind-by-more-than-the-window",
+      "check": "timestamp",
+      "payload": "0x50e907a00107f2010f50e807a001feffffffffffffffff01c202060880c794950f",
+      "timestampMs": 1735689600000,
+      "nowMs": 1735689539999,
+      "publicKey": "0x044f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1",
+      "signature": "0x2da34d29a3323192d6a7328e8ef5ec01247a2e642b44da8fdd914e4ca0ab3e4764cf2a97cfa474fbf30db7e5de612397d07b4169d31c190b37f68a6c8db222c300",
+      "behaviour": {
+        "java": "reject",
+        "node": "accept",
+        "go": "reject"
+      },
+      "note": "A timestamp further in the future than the window allows. Java and Go compare |now - timestamp|; the Node provider only measures how far in the past the timestamp is, so it takes this."
+    },
+    {
+      "name": "high-s-signature",
+      "check": "signature",
+      "payload": "0x50e907a00107f2010f50e807a001feffffffffffffffff01c202060880c794950f",
+      "timestampMs": 1735689600000,
+      "publicKey": "0x044f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1",
+      "signature": "0x2da34d29a3323192d6a7328e8ef5ec01247a2e642b44da8fdd914e4ca0ab3e479b30d568305b8b040cf2481a219edc66ea339b7cdc2c873087dbd42042841e7e",
+      "behaviour": {
+        "java": "accept",
+        "node": "reject",
+        "go": "accept"
+      },
+      "note": "The malleated twin of the valid signature (s replaced by n - s). Node's curve library refuses a non-canonical s; the Java and Go verifiers do not look."
+    },
+    {
+      "name": "public-key-header-without-0x",
+      "check": "identity",
+      "payload": "0x50e907a00107f2010f50e807a001feffffffffffffffff01c202060880c794950f",
+      "timestampMs": 1735689600000,
+      "publicKey": "044f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1",
+      "signature": "0x2da34d29a3323192d6a7328e8ef5ec01247a2e642b44da8fdd914e4ca0ab3e4764cf2a97cfa474fbf30db7e5de612397d07b4169d31c190b37f68a6c8db222c300",
+      "behaviour": {
+        "java": "accept",
+        "node": "accept",
+        "go": "reject"
+      },
+      "note": "The published spec calls the 0x prefix optional. Go's header parser drops the first two characters unconditionally, so a prefixless header loses a byte and the key no longer parses. Send the prefix."
+    }
+  ]
+}

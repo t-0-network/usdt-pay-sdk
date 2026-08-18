@@ -186,6 +186,9 @@ node/                    Node SDK + a starter, as one npm workspace
 ├── sdk/                 @t-0/usdt-pay-sdk — generated Connect code for all three roles
 ├── cli/                 @t-0/usdt-pay-starter-ts — the scaffolder, on npm
 └── starter/issuer
+
+vectors/                 the request signature as fixtures — payload, timestamp,
+                         digest, signature — run by both SDKs' test suites
 ```
 
 Both SDKs generate their code from `proto/` with [buf](https://buf.build), and they
@@ -427,6 +430,9 @@ Point `TZERO_ENDPOINT` at a sandbox only once both sides pass on their own.
   the field-level [API reference](https://usdt-pay-docs.t-0.network/docs/integration-guidance/api-reference/),
   [request authentication](https://usdt-pay-docs.t-0.network/docs/integration-guidance/protocol/authentication/)
   and [idempotency](https://usdt-pay-docs.t-0.network/docs/integration-guidance/idempotency/).
+- Implementing the signing yourself, in a language with no SDK yet? [`vectors/`](vectors/)
+  is the scheme as fixtures: what to hash, what to sign, and the cases a verifier has to
+  refuse.
 - The `§N` numbers in the code and READMEs here are this repo's own shorthand for the
   endpoints, used so comments can point at a call without restating its semantics.
   Each starter README opens with a table mapping its numbers to RPC names, and the RPC
