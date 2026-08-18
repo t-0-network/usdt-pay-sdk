@@ -1,0 +1,7 @@
+version: v2
+modules:
+  # `proto` is a symlink to the repository root's proto/ — buf requires a module
+  # path inside the workspace, and the pay snapshot lives one level up.
+  - path: proto
+deps:
+  - buf.build/bufbuild/protovalidate

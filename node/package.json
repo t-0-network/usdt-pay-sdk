@@ -1,0 +1,14 @@
+{
+  "name": "usdt-pay-sdk-node",
+  "private": true,
+  "description": "npm workspace holding the pay SDK and the per-role starters (the analog of java/settings.gradle.kts)",
+  "workspaces": [
+    "sdk",
+    "starter/issuer"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  }
+}

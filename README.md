@@ -15,7 +15,7 @@ Pick yours and go straight to its starter.
 | You are | You do | Start here |
 |---|---|---|
 | **Acquirer** | Own the merchant. Price the sale, open the intent, show the QR, learn when it settles. | [`java/starter/acquirer`](java/starter/acquirer) |
-| **Issuer** | Reserve deposit addresses, watch the chain for the customer's USDt, settle on-chain. | Starter not published yet — see [Roadmap](#roadmap) |
+| **Issuer** | Reserve deposit addresses, watch the chain for the customer's USDt, settle on-chain. | [`node/starter/issuer`](node/starter/issuer) |
 | **Liquidity Provider** | Price USDt↔local fiat, take the per-sale obligation, settle fiat over bank rails. | Starter not published yet — see [Roadmap](#roadmap) |
 
 Not sure which you are? The acquirer talks to the POS, the issuer talks to the
@@ -27,6 +27,12 @@ LP, gets its USDt straight from the issuer, and skips §3, §11 and §12 entirel
 Your mode is fixed at onboarding.
 
 ## Quick start
+
+Each starter is a numbered path from "prints my public key" to "settled a real sale":
+the acquirer's in Java, the issuer's in Node — [one per role](#roadmap), and not a
+constraint on the language you build in.
+
+### Java — the acquirer starter
 
 The starters build and run on **Java 21**. If your JDK is older the build still
 works — Gradle provisions a 21 toolchain itself — but the binary needs a 21 runtime.
@@ -56,6 +62,23 @@ cp .env.example .env
 Then work through that starter's README — it is a numbered path from "prints my
 public key" to "settled a real sale".
 
+### Node — the issuer starter
+
+Node 22 or newer.
+
+```bash
+git clone git@github.com:t-0-network/usdt-pay-sdk.git
+cd usdt-pay-sdk/node
+npm install && npm run build                     # SDK + the issuer starter
+
+cd starter/issuer
+cp .env.example .env
+# fill in PRIVATE_KEY (openssl rand -hex 32) and NETWORK_PUBLIC_KEY (from the t-0 team)
+
+# Run from this directory — .env is read from the working directory.
+npm start
+```
+
 ### Scaffold a project instead
 
 `usdt-pay-init.jar`, attached to each [release](https://github.com/t-0-network/usdt-pay-sdk/releases),
@@ -82,11 +105,17 @@ proto/tzero/v1/          protocol definitions, snapshot-synced from the t-0 back
 java/                    Java SDK (built on 21, consumable on 17) + a starter
 ├── sdk/                 network.t-0:usdt-pay-sdk-java — generated stubs for all three roles
 └── starter/acquirer
+
+node/                    Node SDK + a starter, as one npm workspace
+├── sdk/                 @t-0/usdt-pay-sdk — generated Connect code for all three roles
+└── starter/issuer
 ```
 
-The Java stubs are **generated at build time** by [buf](https://buf.build) and are
-not committed. `./gradlew build` regenerates them; nothing under `gen/` or `build/`
-belongs in git.
+Both SDKs generate their code from `proto/` with [buf](https://buf.build), and they
+keep it differently. Java generates at build time: `./gradlew build` regenerates the
+stubs, and nothing under `gen/` or `build/` belongs in git. Node checks its generated
+code in under `node/sdk/src/gen/`, so nobody needs buf installed to build a starter;
+`npm run buf:generate` refreshes it after a proto sync.
 
 ## Before you write code
 
@@ -113,8 +142,12 @@ code — is the API reference:
 
 ## Calling t-0
 
-All 15 endpoints are unary request/response — nothing in this protocol streams. That
-is why the starters use the blocking stub everywhere, and why you probably should too.
+All 15 endpoints are unary request/response — nothing in this protocol streams.
+
+### Java
+
+Every endpoint being unary is why the starters use the blocking stub everywhere, and
+why you probably should too.
 
 **Blocking is the primary path, and on Java 21+ it is also the scalable one.** A
 blocking gRPC call parks on `LockSupport.park` inside grpc's `ThreadlessExecutor`,
@@ -143,7 +176,7 @@ the acquirer starter gives §3 a shorter one at the call site.
 like the built-in knob for this. As of provider-sdk-java 1.1.25 it is not: the
 argument is accepted and never read.
 
-### If you need non-blocking
+#### If you need non-blocking
 
 `FutureNetworkClient` is the reference non-blocking client — same signing, same
 endpoint. Every RPC is unary, so each call hands back one `ListenableFuture`:
@@ -182,7 +215,7 @@ you do not have to wonder: it buys nothing for this protocol. `StreamObserver` i
 shape streaming needs, and collecting a single response through
 `onNext`/`onError`/`onCompleted` is strictly more work than reading a future.
 
-### If you want the compiler to enforce the failure path
+#### If you want the compiler to enforce the failure path
 
 `newBlockingV2Stub` is the same blocking call with a *checked* exception — its methods
 `throws StatusException`, so forgetting to handle a failed call is a compile error
@@ -202,10 +235,34 @@ exception cannot escape a lambda — the acquirer demo's `.ifPresent(quote -> �
 need a try/catch inside every one. Take V2 if you would rather the compiler enforced
 it than a return type.
 
+### Node
+
+Every call is an `await` that returns the response message, and the deadline rides
+along as a per-call option:
+
+```ts
+const t0 = createUsdtPayClient(endpoint, privateKeyHex, IssuerService);
+const response = await t0.paymentReceived(request, { timeoutMs: 10_000 });
+```
+
+A Connect timeout is a duration evaluated per call, so there is nothing to install
+where the client is built and each call site picks its own — which is how the issuer
+starter gives §9 more room than the rest.
+
+`endpoint` is required. The provider client this delegates to defaults to a different
+t-0 API, and a pay participant that omitted it would sign perfectly valid requests
+and send them to the wrong host.
+
 ## Testing your integration
 
 You do not need t-0 to reach you, or a running server, to test the half of this that
 holds your logic. Both directions stub cleanly.
+
+The inbound test worth writing first is redelivery: call your handler **twice** with
+the same dedup key and assert your own store holds one row. That is the at-least-once
+contract, and it is the one that costs money to get wrong.
+
+### Java
 
 **Inbound — your callback handler is a plain object.** It extends a generated
 `*ImplBase`, so a test constructs it and calls the method directly, asserting on what
@@ -223,10 +280,6 @@ new AcquirerCallbackHandler().paymentAuthorized(
 
 assertEquals(1, responses.size());
 ```
-
-The test worth writing first is redelivery: call the handler **twice** with the same
-request and assert your own store holds one row. That is the at-least-once contract,
-and it is the one that costs money to get wrong.
 
 **Outbound — fake t-0, not the stub.** The generated stubs are `final` with private
 constructors, so they cannot be subclassed or mocked. Stand a fake service up in
@@ -257,6 +310,37 @@ works this out for all three outcomes — copy its shape. Write the one above fi
 the `Outcome.Unknown` branch, which a happy-path test against a sandbox never reaches and
 which decides whether you open a second intent for one sale by accident.
 
+### Node
+
+**Inbound — boot the real callback server on port 0.** It costs a few milliseconds
+and puts signing, verification and response validation in the loop, so the test
+exercises what t-0 will:
+
+```ts
+const server = await createUsdtPayServer(0, publicKeyFromPrivateKey(networkKey), (r) => {
+  r.service(IssuerCallbackService, issuerCallbackHandler);
+});
+const t0 = createUsdtPayClient(`http://127.0.0.1:${(server.address() as AddressInfo).port}`,
+                               networkKey, IssuerCallbackService);
+```
+
+**Outbound — fake t-0 in memory.** `createRouterTransport` from `@connectrpc/connect`
+stands a service up with no socket, and the helper takes a real client pointed at it:
+
+```ts
+const t0 = createClient(IssuerService, createRouterTransport(({ service }) => {
+  service(IssuerService, {
+    async settlementSent() { throw new ConnectError("t-0 is down", Code.Unavailable); },
+  } as ServiceImpl<typeof IssuerService>);
+}));
+
+assert.equal((await reportSettlementSent(t0, settlement)).shouldRetry, true);
+```
+
+`node/starter/issuer/test/` works both out — `settlement_sent.test.ts` covers all
+three outcomes, `callback_server.test.ts` the inbound side. Write the `unknown` one
+first, for the same reason as in Java.
+
 Point `TZERO_ENDPOINT` at a sandbox only once both sides pass on their own.
 
 ## Documentation
@@ -273,23 +357,25 @@ Point `TZERO_ENDPOINT` at a sandbox only once both sides pass on their own.
 
 ## Roadmap
 
-Go and Node SDKs land as sibling directories — `go/` and `node/` — served by the
-same `proto/` at the root. Names and versioning are fixed now so you can plan
-against them:
+Each ecosystem is a sibling directory served by the same `proto/` at the root. Names
+and versioning are fixed so you can plan against them:
 
-| Ecosystem | Artifact | Versioning | Transport |
-|---|---|---|---|
-| Java | `network.t-0:usdt-pay-sdk-java` | Maven, `X.Y.Z` | grpc-java |
-| Go | `github.com/t-0-network/usdt-pay-sdk/go` | Git tags `go/vX.Y.Z` | Connect |
-| Node | `@t-0/usdt-pay-sdk` | npm, `X.Y.Z` | Connect |
+| Ecosystem | Artifact | Versioning | Transport | Starter |
+|---|---|---|---|---|
+| Java | `network.t-0:usdt-pay-sdk-java` | Maven, `X.Y.Z` | grpc-java | acquirer |
+| Node | `@t-0/usdt-pay-sdk` | npm, `X.Y.Z` | Connect | issuer |
+| Go | `github.com/t-0-network/usdt-pay-sdk/go` | Git tags `go/vX.Y.Z` | Connect | — |
 
-Neither the Go nor the Node code exists yet. Until 1.0 the Java artifact is not
-published either — clone this repo and let the starter build against the local
-`:sdk` project.
+**One starter per role, each written once: the acquirer's is Java, the issuer's is
+Node.** The LP's follows.
 
-The issuer and LP starters follow the same way. The SDK already generates stubs for
-all three roles, so both roles can be integrated against it today — the starter is a
-worked example, not a prerequisite.
+That mapping is about where the worked example lives, not about what you may build
+in. Every SDK generates code for all three roles, so an issuer on Java and an
+acquirer on Node are both first-class — read the starter for your role, in whichever
+language it happens to be, and write yours in the one you deploy.
+
+Until 1.0 neither artifact is published. Clone this repo: the Java starter builds
+against the local `:sdk` project and the Node starter against the `node/` workspace.
 
 ## License
 

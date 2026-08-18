@@ -1,0 +1,7 @@
+# The build context is node/, so keep host build output — and any .env a starter
+# picked up — out of the context and the build cache.
+**/node_modules/
+**/dist/
+**/lib/
+**/.env
+.DS_Store
