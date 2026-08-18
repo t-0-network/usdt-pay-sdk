@@ -1,22 +1,197 @@
 name: Publish
 
+# Stage 2 of 2, triggered by the tag release.yaml pushes. Never run this by hand:
+# every registry it touches is immutable. See docs/RELEASE_AND_PUBLISH.md.
+
 on:
   push:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+"
 
+# Release writes go through the App token, npm through OIDC. No job needs write here.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  publish-java:
-    name: Publish Java
+  # --- Build gate: ci.yaml's two jobs, minus `npm audit`. Deliberate — post-tag, an
+  # advisory published in the minutes between tag and publish would strand a tagged
+  # release that cannot be re-cut without a dependency bump. Pre-tag it still blocks. ---
+  build-java:
+    name: Build Java
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0
+          show-progress: false
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: true
+
+      - name: Build
+        working-directory: java
+        run: ./gradlew build --no-daemon
+
+  build-node:
+    name: Build Node
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          show-progress: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: node/package-lock.json
+
+      - name: Install
+        working-directory: node
+        run: npm ci
+
+      - name: Build
+        working-directory: node
+        run: npm run build
+
+      - name: Typecheck
+        working-directory: node
+        run: npm run typecheck
+
+      - name: Test
+        working-directory: node
+        run: npm test
+
+  publish-node:
+    name: Publish Node
+    needs: [build-java, build-node]
+    # npm rejects --provenance from self-hosted runners.
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          show-progress: false
+
+      # First, before anything irreversible: npm returns 422 "Only public source
+      # repositories are supported" for provenance from a private repo — and it does
+      # so *after* the build, from a job running in parallel with publish-java.
+      - name: Preflight — repository must be public
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PRIVATE=$(gh api "repos/${GITHUB_REPOSITORY}" --jq .private)
+          [ "$PRIVATE" = "false" ] || {
+            echo "::error::${GITHUB_REPOSITORY} is private; npm rejects --provenance from private source repositories"
+            exit 1
+          }
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: node/package-lock.json
+        # No registry-url on purpose: that wires up a NODE_AUTH_TOKEN path which must
+        # not exist here. Auth is OIDC via the package's trusted publisher.
+
+      # Node 22 bundles npm 10.x, which has no OIDC support at all. Pinned to the 11
+      # major rather than @latest: a future npm 12 could raise its Node floor above 22
+      # and break this job on a day nobody touched the repo.
+      - name: Upgrade npm for trusted publishing
+        run: |
+          npm install -g npm@^11.5.1
+          NPM_VERSION=$(npm -v)
+          echo "npm $NPM_VERSION"
+          printf '11.5.1\n%s\n' "$NPM_VERSION" | sort -V -C || {
+            echo "::error::npm $NPM_VERSION < 11.5.1, trusted publishing unsupported"
+            exit 1
+          }
+
+      - name: Verify version matches tag
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          PKG=$(node -p "require('./node/sdk/package.json').version")
+          [ "$PKG" = "$VERSION" ] || { echo "::error::node/sdk/package.json has $PKG, tag is v$VERSION"; exit 1; }
+          echo "node/sdk/package.json version $PKG matches tag v$VERSION"
+
+      # The lockfile lives at the workspace root, not in sdk/.
+      - name: Install
+        working-directory: node
+        run: npm ci
+
+      - name: Build
+        working-directory: node
+        run: |
+          npm run build -w sdk
+          npm run typecheck -w sdk
+
+      # Two lines so no future refactor can point the publish step at the private
+      # workspace root or at usdt-pay-issuer-starter. npm refuses "private": true
+      # anyway, but an explicit assert is what makes this reviewable.
+      - name: Verify the package about to be published
+        working-directory: node/sdk
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          PRIVATE=$(node -p "String(require('./package.json').private)")
+          [ "$NAME" = "@t-0/usdt-pay-sdk" ] || { echo "::error::expected @t-0/usdt-pay-sdk, got $NAME"; exit 1; }
+          [ "$PRIVATE" = "undefined" ] || { echo "::error::$NAME is marked private"; exit 1; }
+
+      - name: Pack (dry run)
+        working-directory: node/sdk
+        run: npm pack --dry-run
+
+      - name: Publish to npm
+        working-directory: node/sdk
+        run: npm publish --provenance --access public
+
+  publish-java:
+    name: Publish Java
+    needs: [build-java, build-node]
+    runs-on: ubuntu-latest
+    steps:
+      # Secrets cannot be read in `if:`, so this is a run step. It exists because the
+      # alternative is finding out deep inside a Central deployment, after the parallel
+      # npm publish has already gone out and become unrecallable.
+      - name: Preflight — Maven Central credentials present
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ vars.OSSRH_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        run: |
+          ERRORS=0
+          [ -n "$MAVEN_CENTRAL_USERNAME" ] || { echo "::error::vars.OSSRH_USERNAME is empty"; ERRORS=$((ERRORS + 1)); }
+          [ -n "$MAVEN_CENTRAL_PASSWORD" ] || { echo "::error::secrets.OSSRH_PASSWORD is empty"; ERRORS=$((ERRORS + 1)); }
+          [ -n "$GPG_PRIVATE_KEY" ]        || { echo "::error::secrets.GPG_PRIVATE_KEY is empty"; ERRORS=$((ERRORS + 1)); }
+          [ "$ERRORS" -eq 0 ] || exit 1
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.CI_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: usdt-pay-sdk
+          permission-contents: write
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          show-progress: false
 
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -34,8 +209,9 @@ jobs:
       # Central will not let you replace a version, so a tag that disagrees with
       # gradle.properties has to fail here rather than half-way through the upload.
       - name: Verify version matches tag
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
           PKG=$(grep '^version=' java/gradle.properties | cut -d= -f2)
           [ "$PKG" = "$VERSION" ] || { echo "::error::java/gradle.properties has $PKG, tag is v$VERSION"; exit 1; }
           echo "java/gradle.properties version $PKG matches tag v$VERSION"
@@ -56,14 +232,27 @@ jobs:
 
       # An unversioned copy alongside the versioned one, so the docs can link a URL
       # that does not change every release.
+      #
+      # Known limitation, documented rather than fixed: this sits *after* the
+      # non-idempotent Central publish, so if only the upload fails, a job re-run dies
+      # earlier at Central's duplicate-version rejection and never gets here. Recovery
+      # is a manual `gh release upload` — see docs/RELEASE_AND_PUBLISH.md.
       - name: Upload usdt-pay-init.jar to the GitHub release
         working-directory: java
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
+          # Poll rather than create immediately: release.yaml creates the Release
+          # seconds after pushing the tag that started this run.
+          for _ in $(seq 1 30); do
+            gh release view "v${VERSION}" >/dev/null 2>&1 && break
+            sleep 10
+          done
+          # Same non-atomic race as in release.yaml; the trailing view closes it.
           gh release view "v${VERSION}" >/dev/null 2>&1 \
-            || gh release create "v${VERSION}" --verify-tag --generate-notes
+            || gh release create "v${VERSION}" --verify-tag --generate-notes --title "${VERSION}" \
+            || gh release view "v${VERSION}" >/dev/null
           cp "cli/build/libs/usdt-pay-init-${VERSION}.jar" cli/build/libs/usdt-pay-init.jar
           gh release upload "v${VERSION}" \
             "cli/build/libs/usdt-pay-init-${VERSION}.jar" \

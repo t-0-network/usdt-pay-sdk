@@ -1,0 +1,238 @@
+name: Release
+
+# Stage 1 of 2. Bumps every version site, commits, tags and creates the GitHub
+# Release. Publishes nothing — the tag push triggers publish.yaml, which does.
+# See docs/RELEASE_AND_PUBLISH.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type (ignored for the very first release)"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+# Every write here goes through the GitHub App token: checkout, push and
+# `gh release create`. GITHUB_TOKEN never needs more than read.
+permissions:
+  contents: read
+
+jobs:
+  # --- Build gate: identical to ci.yaml. A release must not be cut from a red tree. ---
+  build-java:
+    name: Build Java
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          show-progress: false
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: true
+
+      - name: Build
+        working-directory: java
+        run: ./gradlew build --no-daemon
+
+  build-node:
+    name: Build Node
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          show-progress: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: node/package-lock.json
+
+      - name: Install
+        working-directory: node
+        run: npm ci
+
+      - name: Build
+        working-directory: node
+        run: npm run build
+
+      - name: Typecheck
+        working-directory: node
+        run: npm run typecheck
+
+      - name: Test
+        working-directory: node
+        run: npm test
+
+      # Pre-tag, a fresh advisory should block the release. publish.yaml deliberately
+      # omits this step — post-tag it would strand an already-tagged release.
+      - name: Audit runtime dependencies
+        working-directory: node
+        run: npm audit --omit=dev --audit-level=high
+
+  release:
+    name: Create Release
+    needs: [build-java, build-node]
+    runs-on: ubuntu-latest
+    # A dispatch against a feature branch must not be able to tag.
+    if: github.ref == 'refs/heads/master'
+    steps:
+      # permission-contents is not decoration: without an explicit permission-*,
+      # the minted token inherits every permission the installation holds org-wide.
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.CI_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: usdt-pay-sdk
+          permission-contents: write
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          # Tags are the input to the version calculation below.
+          fetch-depth: 0
+
+      # This job rewrites node/package-lock.json, so it must not run on whatever npm
+      # the runner image happens to ship — that would commit lockfile format churn.
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Calculate version
+        id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          # `|| true`: with zero tags grep exits 1, which under pipefail would abort
+          # the step before the first-release branch below is ever reached.
+          LATEST=$(git tag -l 'v[0-9]*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n1 || true)
+
+          if [ -z "$LATEST" ]; then
+            # No tags: the tree's version IS the first release. Bumping would ship
+            # v0.1.1 and skip 0.1.0 entirely, so the bump input is ignored here.
+            VERSION=$(grep '^version=' java/gradle.properties | cut -d= -f2)
+            echo "::notice::First release — shipping the tree version $VERSION, bump input ignored"
+          else
+            IFS='.' read -r MAJOR MINOR PATCH <<< "${LATEST#v}"
+            case "$BUMP" in
+              major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+              minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+              patch) PATCH=$((PATCH + 1)) ;;
+              *) echo "::error::unknown bump '$BUMP'"; exit 1 ;;
+            esac
+            VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          fi
+
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Release version: ${VERSION}"
+
+      # Nothing hand-edits the lockfile: npm regenerates it from the corrected pin.
+      - name: Update Node versions
+        working-directory: node
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          # --allow-same-version: the initial release is a no-op bump, not an error.
+          #
+          # --no-workspaces-update is load-bearing. Without it `npm version -w` does an
+          # implicit workspace reify; at that instant sdk is already at the new version
+          # while the starter still pins ^OLD, the workspace link no longer satisfies the
+          # pin, and npm goes to the registry — where @t-0/usdt-pay-sdk@^OLD may not exist.
+          # That 404s after both package.json files were already rewritten.
+          npm version "$VERSION" --no-git-tag-version --allow-same-version --no-workspaces-update \
+            -w sdk -w starter/issuer
+
+          # Before the lockfile regen below, so the lockfile is built against the
+          # already-corrected pin rather than the stale one.
+          npm pkg set "dependencies.@t-0/usdt-pay-sdk=^$VERSION" -w starter/issuer
+
+          npm install --package-lock-only
+
+      - name: Update Java version
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: sed -i "s/^version=.*/version=${VERSION}/" java/gradle.properties
+
+      - name: Validate updated files
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          ERRORS=0
+          check() { # <label> <actual> <expected>
+            if [ "$2" != "$3" ]; then
+              echo "::error::$1 mismatch: expected $3, got $2"
+              ERRORS=$((ERRORS + 1))
+            fi
+          }
+
+          check "java/gradle.properties" \
+            "$(grep '^version=' java/gradle.properties | cut -d= -f2)" "$VERSION"
+          check "node/sdk/package.json .version" \
+            "$(node -p "require('./node/sdk/package.json').version")" "$VERSION"
+          check "node/starter/issuer/package.json .version" \
+            "$(node -p "require('./node/starter/issuer/package.json').version")" "$VERSION"
+          check "node/starter/issuer/package.json SDK pin" \
+            "$(node -p "require('./node/starter/issuer/package.json').dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
+          check "package-lock.json packages.sdk.version" \
+            "$(node -p "require('./node/package-lock.json').packages['sdk'].version")" "$VERSION"
+          check "package-lock.json packages['starter/issuer'].version" \
+            "$(node -p "require('./node/package-lock.json').packages['starter/issuer'].version")" "$VERSION"
+          check "package-lock.json starter SDK pin" \
+            "$(node -p "require('./node/package-lock.json').packages['starter/issuer'].dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
+
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "::error::$ERRORS version validation(s) failed — nothing pushed"
+            exit 1
+          fi
+          echo "All version sites agree on $VERSION"
+
+      # Plain git rather than an auto-commit action. On the initial release every site
+      # already reads the target version, so the diff is empty and an auto-commit action
+      # would skip both the commit *and* the tag — a green run that released nothing.
+      # --allow-empty keeps one code path for both cases.
+      - name: Commit, tag and push
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name  "t-0-ci[bot]"
+          git config user.email "222030753+t-0-ci[bot]@users.noreply.github.com"
+          git add -A
+          git commit --allow-empty -m "Release $VERSION"
+          git tag "v$VERSION"
+          # --atomic: without it the branch ref can land while the tag push fails, and a
+          # re-dispatch would then bump from the old latest tag against a master that
+          # already carries the bump commit — a double bump.
+          git push --atomic origin HEAD:master "v$VERSION"
+
+      # `view || create` alone is not atomic: publish.yaml (already running against the
+      # tag we just pushed) can create the Release in the gap and take this job down.
+      # The trailing view treats "already exists" as success.
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release view "v$VERSION" >/dev/null 2>&1 \
+            || gh release create "v$VERSION" --verify-tag --generate-notes --title "$VERSION" \
+            || gh release view "v$VERSION" >/dev/null

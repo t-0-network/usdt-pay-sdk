@@ -90,8 +90,8 @@ java -jar usdt-pay-init.jar my-acquirer --starter acquirer
 ```
 
 The scaffolded project builds against the published SDK rather than this repo's
-`:sdk`, so it is the standalone route — and it works only once the artifact is on
-Maven Central. Until then, clone.
+`:sdk`, so it is the standalone route — pass the SDK version explicitly, e.g.
+`./gradlew build -PusdtPaySdkVersion=<version>`.
 
 ## What is in here
 
@@ -374,8 +374,11 @@ in. Every SDK generates code for all three roles, so an issuer on Java and an
 acquirer on Node are both first-class — read the starter for your role, in whichever
 language it happens to be, and write yours in the one you deploy.
 
-Until 1.0 neither artifact is published. Clone this repo: the Java starter builds
-against the local `:sdk` project and the Node starter against the `node/` workspace.
+Both artifacts are published — `network.t-0:usdt-pay-sdk-java` on Maven Central and
+`@t-0/usdt-pay-sdk` on npm. Before 1.0 the recommended route is still to clone this
+repo: the Java starter then builds against the local `:sdk` project and the Node
+starter against the `node/` workspace, so you follow the SDK as it moves. See
+[docs/RELEASE_AND_PUBLISH.md](docs/RELEASE_AND_PUBLISH.md) for how releases are cut.
 
 ## License
 
