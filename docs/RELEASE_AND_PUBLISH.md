@@ -115,16 +115,24 @@ Dispatch input `bump` — `patch` (default) / `minor` / `major`.
       this repo, `permission-contents: write`). Every write in the job uses it; `GITHUB_TOKEN`
       stays read-only. The token is also what pushes to protected `master` — the org ruleset
       `default-branch-protection` grants the t-0-ci App `bypass_mode: always`.
-   2. **Calculate version.** With no tags yet, the tree's own version *is* the release and the
+   2. **Check both npm packages exist**, the same bootstrap gate `publish.yaml`'s `preflight`
+      carries — but ahead of the tag. Failing on the publish side instead would leave a public
+      tag and a Release with no artifacts behind it, and the intuitive recovery (re-dispatch)
+      would compute the *next* version and strand that tag empty forever. The recovery from a
+      publish-side stop is always **Re-run failed jobs** on that run, never a re-dispatch.
+   3. **Calculate version.** With no tags yet, the tree's own version *is* the release and the
       `bump` input is ignored — otherwise the first release would ship `0.1.1` and skip `0.1.0`.
-      With tags, the latest `vX.Y.Z` is parsed and incremented.
-   3. **Bump.** Node via `npm version … --no-workspaces-update -w sdk -w cli -w starter/issuer`,
+      With tags, the latest `vX.Y.Z` is parsed and incremented. This branch reads
+      `java/gradle.properties` verbatim, so that version must be a plain `X.Y.Z` — a `-SNAPSHOT`
+      suffix would tag something `publish.yaml`'s tag filter does not match, and the publish would
+      never fire.
+   4. **Bump.** Node via `npm version … --no-workspaces-update -w sdk -w cli -w starter/issuer`,
       then `npm pkg set` for the two SDK pins, then `npm install --package-lock-only`. Java via
       `sed` on `gradle.properties`. Nothing hand-edits the lockfile.
-   4. **Validate** every site in the table above, lockfile entries included. Any mismatch fails
+   5. **Validate** every site in the table above, lockfile entries included. Any mismatch fails
       *before* the push.
-   5. **Commit, tag, push** with plain git and `--allow-empty` / `--atomic` (see below).
-   6. **Create the GitHub Release**, idempotently.
+   6. **Commit, tag, push** with plain git and `--allow-empty` / `--atomic` (see below).
+   7. **Create the GitHub Release**, idempotently.
 
 ### Two flags that look cosmetic and are not
 
@@ -156,23 +164,45 @@ preflight     build-java     build-node
      \             |             /
       \------------+------------/
                    |
-        +----------+----------+
-        |                     |
-  publish-node-sdk       publish-java
-        |
-  publish-node-starter
+           publish-node-sdk
+                   |
+         publish-node-starter
+                   |
+              publish-java
 ```
 
-Every publish job `needs:` both build jobs — nothing publishes until everything builds — and the
-shared **`preflight`** job.
+Nothing publishes until everything builds and the shared **`preflight`** job passes.
 
-`preflight` checks *both* registries' prerequisites in one place: the repository is public
-(`gh api repos/$GITHUB_REPOSITORY --jq .private` = `false`, which npm provenance requires) and
-`vars.OSSRH_USERNAME` / `secrets.OSSRH_PASSWORD` / `secrets.GPG_PRIVATE_KEY` are all non-empty.
+`preflight` checks *both* registries' prerequisites in one place:
+
+- the repository is public (`gh api repos/$GITHUB_REPOSITORY --jq .private` = `false`, which npm
+  provenance requires);
+- `vars.OSSRH_USERNAME` / `secrets.OSSRH_PASSWORD` / `secrets.GPG_PRIVATE_KEY` are all non-empty;
+- both npm packages already exist on the registry — a trusted publisher can only be attached to a
+  package that exists, so this is the [bootstrap](#before-the-first-release) having happened.
+  Necessary, not sufficient: it cannot see whether the trusted publisher is actually configured.
+  The job order covers the rest.
 
 That it is *shared* is the point. Per-job preflights would let `publish-java` spend the Maven
 Central version while `publish-node` was still failing its visibility check — and a spent Central
 version cannot be un-spent. A prerequisite missing for either registry now stops both.
+
+### `publish-java` runs last, not in parallel
+
+Both registries are immutable, but they are not equally recoverable, and the risk of failing is
+not evenly spread between them:
+
+- **Everything fragile is on the npm side** — the OIDC exchange, the trusted-publisher config,
+  provenance's repo-visibility rule, the npm >= 11.5.1 floor. Java's side is bearer-token auth.
+- **An npm auth failure spends nothing anywhere.** It happens before the upload, so once the trust
+  config is fixed, *Re-run failed jobs* publishes the same version and the release converges with
+  no version burned.
+- **Maven Central has no unpublish, ever.** npm has deprecation and a 72-hour unpublish window.
+
+So the recoverable, likelier-to-fail registry goes first and the irreversible one goes last. Run
+in parallel, a missing trusted publisher would fail npm *while* Java spent the Central version —
+the half-release that cannot be undone. Sequenced, `publish-java` cannot start until both npm
+packages are published. The cost is a few minutes on a workflow that runs a few times a month.
 
 ### The npm packages publish from separate jobs
 
@@ -256,11 +286,34 @@ In this order. The preflights enforce it, but they enforce it by failing a run.
    merged and applied to the **prod** stack.
 
 3. **Bootstrap both npm packages.** A trusted publisher can only be configured on a package that
-   already exists, and neither `@t-0/usdt-pay-sdk` nor `@t-0/usdt-pay-starter-ts` does. For **each**
-   of the two, a `@t-0` maintainer — with explicit authorization — publishes one interactive
-   2FA-protected prerelease under a non-`latest` dist-tag (e.g. `npm publish --tag bootstrap` at
-   `0.1.0-bootstrap.0`, leaving `0.1.0` free for the automated release), then configures that
-   package's GitHub Actions trusted publisher:
+   already exists, and neither `@t-0/usdt-pay-sdk` nor `@t-0/usdt-pay-starter-ts` does. Both
+   `release.yaml` and `publish.yaml` refuse to run until they do, so this step gates the first
+   release entirely.
+
+   For **each** of the two, a `@t-0` maintainer — with explicit authorization — publishes one
+   interactive 2FA-protected prerelease under a non-`latest` dist-tag, which leaves `0.1.0` free
+   for the automated release. From `node/`:
+
+   ```bash
+   # Local and uncommitted — this version number must never reach a commit.
+   npm version 0.1.0-bootstrap.0 --no-git-tag-version --no-workspaces-update -w sdk
+   npm publish -w sdk --tag bootstrap --access public
+   git checkout -- sdk/package.json
+   ```
+
+   The scaffolder is the same, with `-w cli`. Packing it runs its `prepack` — check the file list
+   it prints and confirm it carries `template/<role>/.env.example` and no `template/<role>/.env`.
+   Its `^0.1.0` SDK pin dangles until `0.1.0` lands; harmless under a non-`latest` dist-tag.
+
+   Then attach each package's trusted publisher. From the CLI (npm >= 11.15, as the 2FA
+   maintainer):
+
+   ```bash
+   npm trust github @t-0/usdt-pay-sdk         --repo t-0-network/usdt-pay-sdk --file publish.yaml --allow-publish
+   npm trust github @t-0/usdt-pay-starter-ts  --repo t-0-network/usdt-pay-sdk --file publish.yaml --allow-publish
+   ```
+
+   or in the package's web settings, with the same values:
 
    | Field | Value |
    |---|---|
@@ -273,10 +326,16 @@ In this order. The preflights enforce it, but they enforce it by failing a run.
    The same workflow publishes both, so both trusted publishers name `publish.yaml`. Verify one
    OIDC run before revoking any token-based publish rights.
 
-   Bootstrapping the scaffolder means packing it, which runs its `prepack` — check the file list it
-   prints and confirm it carries `template/.env.example` and no `template/.env`.
+4. **Check the Java signing prerequisites**, neither of which `preflight` can see. The GPG key
+   must be **passphrase-less** — `java/sdk/build.gradle.kts` passes an empty passphrase to
+   `useInMemoryPgpKeys` — and its **public half must be on a public keyserver**
+   (`keyserver.ubuntu.com` or `keys.openpgp.org`), or Central rejects the deployment at
+   validation. Both failures are clean: they happen before publication, so nothing is spent.
 
-4. **Dispatch `release.yaml`.** The first run ignores the `bump` input and ships the tree version.
+   `OSSRH_USERNAME` / `OSSRH_PASSWORD` must be Central **Portal user tokens** for the account that
+   owns the verified `network.t-0` namespace, not legacy OSSRH credentials.
+
+5. **Dispatch `release.yaml`.** The first run ignores the `bump` input and ships the tree version.
 
 ---
 
@@ -284,16 +343,19 @@ In this order. The preflights enforce it, but they enforce it by failing a run.
 
 ### Registry publication is immutable
 
-npm and Maven Central both refuse to replace a published version. If npm succeeds and Central
-fails — or if the SDK publishes and the scaffolder does not — **a re-run cannot fix it**: the npm
-version is spent. Recovery is a new patch release,
-decided deliberately. Never re-run a publish job blind: read which registries actually got the
-artifact first.
+npm and Maven Central both refuse to replace a published version. Never re-run a publish job
+blind: read which registries actually received the artifact first.
 
-`publish-node-sdk` and `publish-java` run in parallel by design. Sequencing them would not remove
-the partial-release window, only change which registry gets stranded — which is why the fix that
-does help is the shared `preflight`, catching the likely first-release failures before either
-registry is touched.
+What a failure costs depends on where it happened, and the two cases are not the same:
+
+- **The publish never reached the registry** — an npm auth failure, or a Central *validation*
+  failure (bad signature, unreachable keyserver, wrong credentials). Nothing was spent. Fix the
+  cause and use *Re-run failed jobs* at the **same** version.
+- **The publish landed and something after it failed.** That version is spent. If the fix needs a
+  new commit, recovery is a new patch release, decided deliberately — not a re-run.
+
+The job order exists to keep the first case the likely one: see
+[`publish-java` runs last](#publish-java-runs-last-not-in-parallel).
 
 **Re-running after a partial success:** use *Re-run failed jobs*, never *Re-run all jobs* — the
 latter re-enters a publish that already succeeded and fails on the duplicate. Because each npm

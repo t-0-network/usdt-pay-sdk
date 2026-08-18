@@ -49,6 +49,24 @@ jobs:
           [ "$ERRORS" -eq 0 ] || exit 1
           echo "Maven Central credentials present"
 
+      # A trusted publisher can only be attached to a package that already exists on
+      # the registry, so the very first version of each package has to be published by
+      # hand. Until that bootstrap has happened these jobs cannot authenticate at all —
+      # and without this check the failure lands *after* publish-java has spent the
+      # version on Maven Central, which is permanent. See docs/RELEASE_AND_PUBLISH.md.
+      - name: npm packages must already exist
+        run: |
+          ERRORS=0
+          for PKG in @t-0/usdt-pay-sdk @t-0/usdt-pay-starter-ts; do
+            if npm view "$PKG" version >/dev/null 2>&1; then
+              echo "$PKG is on the registry"
+            else
+              echo "::error::$PKG does not exist on npm — run the one-time bootstrap in docs/RELEASE_AND_PUBLISH.md before releasing"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+          [ "$ERRORS" -eq 0 ] || exit 1
+
   # --- Build gate: ci.yaml's two jobs, minus `npm audit`. Deliberate — post-tag, an
   # advisory published in the minutes between tag and publish would strand a tagged
   # release that cannot be re-cut without a dependency bump. Pre-tag it still blocks. ---
@@ -327,9 +345,14 @@ jobs:
         working-directory: node/cli
         run: npm publish --provenance --access public
 
+  # Last, deliberately — not in parallel with the npm jobs. Both registries are
+  # immutable, but they are not equally recoverable: npm allows an unpublish inside 72
+  # hours, a Maven Central release never comes back. Publishing the recoverable
+  # registry first means a failure on the fragile side (OIDC, trusted publishers, repo
+  # visibility) costs nothing, instead of stranding Java at a version npm never reached.
   publish-java:
     name: Publish Java
-    needs: [preflight, build-java, build-node]
+    needs: [publish-node-starter]
     runs-on: ubuntu-latest
     steps:
       - name: Generate GitHub App token
