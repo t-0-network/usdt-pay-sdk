@@ -6,7 +6,12 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { after, before, describe, it } from "node:test";
 import { publicKeyFromPrivateKey } from "@t-0/usdt-pay-sdk";
-import { generateKeyPair, sanitizeProjectName, scaffold } from "../src/scaffold.js";
+import {
+  availableStarters,
+  generateKeyPair,
+  sanitizeProjectName,
+  scaffold,
+} from "../src/scaffold.js";
 
 const packageRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const templateDir = join(packageRoot, "template");
@@ -44,9 +49,23 @@ describe("scaffold", () => {
 
   after(() => rmSync(workdir, { recursive: true, force: true }));
 
+  it("offers every starter directory, and nothing else", () => {
+    const starters = availableStarters(templateDir);
+    // The listing IS the role set — adding node/starter/<role> is the whole change.
+    assert.ok(starters.includes("issuer"), `expected issuer in ${starters.join(", ")}`);
+    assert.deepEqual(starters, [...starters].sort());
+  });
+
+  it("refuses a role it does not carry", () => {
+    assert.throws(
+      () => scaffold(join(workdir, "nope"), "nope", "does-not-exist", packageRoot),
+      /no starter named 'does-not-exist'/,
+    );
+  });
+
   it("writes a named project with a usable .env and no stray secrets", () => {
     const target = join(workdir, "my-issuer");
-    const keyPair = scaffold(target, "my-issuer", templateDir);
+    const keyPair = scaffold(target, "my-issuer", "issuer", packageRoot);
 
     assert.equal(JSON.parse(readFileSync(join(target, "package.json"), "utf8")).name, "my-issuer");
 
@@ -65,12 +84,30 @@ describe("scaffold", () => {
     assert.equal(env.match(/^PRIVATE_KEY=/gm)?.length, 1);
   });
 
+  it("replaces the in-repo Dockerfile and README instructions", () => {
+    const target = join(workdir, "standalone");
+    scaffold(target, "standalone", "issuer", packageRoot);
+
+    // The overlay wins over the template: the in-repo Dockerfile's build context is
+    // node/, which does not exist for a scaffolded project.
+    const dockerfile = readFileSync(join(target, "Dockerfile"), "utf8");
+    assert.match(dockerfile, /Build context is this project directory/);
+    assert.doesNotMatch(dockerfile, /starter\/issuer\/Dockerfile/);
+
+    const readme = readFileSync(join(target, "README.md"), "utf8");
+    assert.doesNotMatch(readme, /cd \.\.\/\.\./, "no repo-relative cd left in the README");
+    assert.doesNotMatch(readme, /-f starter\/issuer\/Dockerfile/);
+  });
+
   it("carries the example but never a real .env or build output", () => {
     // The packed template is what gets published. A dev machine's starter directory
     // can hold live keys, so this is the assertion that matters most here.
-    assert.ok(existsSync(join(templateDir, ".env.example")));
-    assert.ok(!existsSync(join(templateDir, ".env")), "template must not ship a .env");
-    assert.ok(!existsSync(join(templateDir, "node_modules")));
-    assert.ok(!existsSync(join(templateDir, "dist")));
+    for (const role of availableStarters(templateDir)) {
+      const dir = join(templateDir, role);
+      assert.ok(existsSync(join(dir, ".env.example")), `${role}: .env.example`);
+      assert.ok(!existsSync(join(dir, ".env")), `${role}: must not ship a .env`);
+      assert.ok(!existsSync(join(dir, "node_modules")), `${role}: node_modules`);
+      assert.ok(!existsSync(join(dir, "dist")), `${role}: dist`);
+    }
   });
 });

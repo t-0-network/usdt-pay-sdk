@@ -276,20 +276,42 @@ jobs:
           echo "$FILES"
 
           ERRORS=0
-          # template/gitignore is undotted on purpose — npm drops a nested .gitignore
-          # from the tarball, and the CLI restores the name when it scaffolds. Its
-          # absence would mean scaffolded projects commit their own .env.
-          for REQUIRED in 'template/.env.example' 'template/gitignore' 'template/package.json'; do
-            if ! printf '%s\n' "$FILES" | grep -qx "$REQUIRED"; then
-              echo "::error::$REQUIRED is missing from the tarball"
-              ERRORS=$((ERRORS + 1))
-            fi
-          done
-          # Anything env-ish other than the example, any credential-shaped file, any
+
+          # One template per role, and the listing is the role set — so the roles are
+          # discovered from the tarball rather than hardcoded here. Adding a starter
+          # must not require editing this workflow.
+          ROLES=$(printf '%s\n' "$FILES" | sed -n 's#^template/\([^/]*\)/.*#\1#p' | sort -u)
+          if [ -z "$ROLES" ]; then
+            echo "::error::the tarball carries no template/<role>/ at all"
+            ERRORS=$((ERRORS + 1))
+          fi
+          echo "roles in tarball:"
+          printf '%s\n' "$ROLES"
+
+          # gitignore is undotted on purpose — npm drops a nested .gitignore from the
+          # tarball, and the CLI restores the name when it scaffolds. Its absence
+          # would mean scaffolded projects commit their own .env.
+          #
+          # Heredoc rather than a pipe into `while`: a pipe would run the loop in a
+          # subshell and every ERRORS increment would be discarded, turning this whole
+          # check green no matter what it found.
+          while IFS= read -r ROLE; do
+            [ -n "$ROLE" ] || continue
+            for REQUIRED in '.env.example' 'gitignore' 'package.json'; do
+              if ! printf '%s\n' "$FILES" | grep -qx "template/$ROLE/$REQUIRED"; then
+                echo "::error::template/$ROLE/$REQUIRED is missing from the tarball"
+                ERRORS=$((ERRORS + 1))
+              fi
+            done
+          done <<ROLE_LIST
+          $ROLES
+          ROLE_LIST
+
+          # Anything env-ish other than the examples, any credential-shaped file, any
           # installed tree. Matched as patterns, not exact names: .env.local and
           # id_rsa are just as unpublishable as .env.
           LEAKS=$(printf '%s\n' "$FILES" | grep -E '(^|/)(\.env($|\..*)|\.npmrc|\.git$|id_[a-z]+|.*\.(pem|key|p12|jks|keystore))$' \
-            | grep -v '^template/\.env\.example$' || true)
+            | grep -v '/\.env\.example$' || true)
           if [ -n "$LEAKS" ]; then
             echo "::error::these would be published: $LEAKS"
             ERRORS=$((ERRORS + 1))
@@ -299,7 +321,7 @@ jobs:
             ERRORS=$((ERRORS + 1))
           fi
           [ "$ERRORS" -eq 0 ] || exit 1
-          echo "Template carries .env.example and no secrets"
+          echo "Every template carries .env.example and no secrets"
 
       - name: Publish to npm
         working-directory: node/cli

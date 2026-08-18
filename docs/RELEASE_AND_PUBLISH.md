@@ -41,19 +41,32 @@ from `project.version` at build time (`java/cli/build.gradle.kts`), so it follow
 
 ## How the starters get published
 
-Neither starter is published as a package. Both ship *inside a generator*, and in both ecosystems
-the starter stays a live, tested project rather than being forked into a template copy:
+No starter is published as a package. Each ships *inside a generator* — **one generator per
+platform, with the role as a parameter**, not one generator per role:
 
-| Ecosystem | Generator | Starter source | Packed by |
-|---|---|---|---|
-| Java | `usdt-pay-init.jar`, a Release asset | `java/starter/acquirer`, a live Gradle subproject | `processResources` at build time |
-| Node | `@t-0/usdt-pay-starter-ts` on npm | `node/starter/issuer`, a live npm workspace member | `node/cli` `prepack` at pack/publish time |
+| Platform | Generator | Role selection | Starter source | Packed by |
+|---|---|---|---|---|
+| Java | `usdt-pay-init.jar`, a Release asset | `--starter <role>` | every `java/starter/*`, live Gradle subprojects | `processResources` at build time |
+| Node | `@t-0/usdt-pay-starter-ts` on npm | `--starter <role>` | every `node/starter/*`, live npm workspace members | `node/cli` `prepack` at pack/publish time |
+| Go | *(later)* | | | |
 
-`node/cli/template/` is **generated and git-ignored**. Editing it does nothing — `prepack` deletes
-and recreates it from `node/starter/issuer` on every pack. This is the same arrangement the Java
-side has had since the CLI existed; it means CI builds and tests exactly the code users receive.
+In both, **the template listing is the role set** — `templates/<role>` in the jar,
+`template/<role>` in the tarball. Adding a role is adding a directory under
+`java/starter/` or `node/starter/`; there is no registry to update in either generator, and
+no second initializer to write. A generator carrying exactly one starter does not ask which one.
 
-Two details in the Node packer that are not obvious:
+The starters themselves stay live, tested projects rather than being forked into template copies.
+`node/cli/template/` is **generated and git-ignored** — `prepack` deletes and recreates it from
+`node/starter/*` on every pack, so CI builds and tests exactly the code users receive.
+
+`node/cli/overlay/<role>` is the exception, and it is committed source, not generated. It holds the
+few files that cannot ship verbatim and is applied *over* the template — currently the `Dockerfile`,
+whose in-repo form takes `node/` as its build context so it can resolve the SDK workspace beside it,
+where a scaffolded project resolves the SDK from npm. `TemplateExtractor.java` has the same
+`overlay/<role>` mechanism for the same reason. The scaffolder also rewrites the starter README's
+repo-relative instructions, as `deRepoReadme` does on the Java side.
+
+Two further details in the Node packer that are not obvious:
 
 - **`.env` is excluded, `.env.example` is not.** A developer's starter directory can hold live
   keys. `publish.yaml` re-asserts this against the actual tarball listing rather than trusting the

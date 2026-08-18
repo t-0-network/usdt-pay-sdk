@@ -3,7 +3,7 @@ import { existsSync, readFileSync, rmSync } from "node:fs";
 import { createInterface } from "node:readline/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { sanitizeProjectName, scaffold } from "./scaffold.js";
+import { availableStarters, sanitizeProjectName, scaffold } from "./scaffold.js";
 
 const BLUE = "\u001b[34m";
 const GREEN = "\u001b[32m";
@@ -43,9 +43,10 @@ function usage(): string {
   return [
     "Usage: usdt-pay-starter-ts [project-name] [options]",
     "",
-    "Creates a USDt Pay issuer project in TypeScript.",
+    "Creates a USDt Pay project in TypeScript from one of the starters this package carries.",
     "",
     "Options:",
+    "  -s, --starter <role>   Which role to scaffold. Omit to pick from what is available.",
     "  -d, --directory <dir>  Where to create the project (defaults to the current directory)",
     "      --no-color         Disable colored output",
     "  -h, --help             Show this help",
@@ -56,11 +57,13 @@ function usage(): string {
 interface Args {
   projectName: string;
   directory: string;
+  starter: string;
 }
 
 function parseArgs(argv: string[]): Args {
   let projectName = "";
   let directory = process.cwd();
+  let starter = "";
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -76,6 +79,13 @@ function parseArgs(argv: string[]): Args {
       case "--no-color":
         useColor = false;
         break;
+      case "-s":
+      case "--starter": {
+        const value = argv[++i];
+        if (!value) fail("--starter needs a role");
+        starter = value;
+        break;
+      }
       case "-d":
       case "--directory": {
         const value = argv[++i];
@@ -90,16 +100,41 @@ function parseArgs(argv: string[]): Args {
     }
   }
 
-  return { projectName, directory };
+  return { projectName, directory, starter };
 }
 
-async function promptProjectName(): Promise<string> {
+async function ask(question: string): Promise<string> {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   try {
-    return await rl.question("Enter your project name: ");
+    return await rl.question(question);
   } finally {
     rl.close();
   }
+}
+
+/** Mirrors `InitCommand.resolveStarter`: never asks a question with one answer. */
+async function resolveStarter(starters: string[], requested: string): Promise<string> {
+  if (requested) {
+    const role = requested.trim().toLowerCase();
+    if (starters.includes(role)) return role;
+    fail(`No starter named '${requested}'. Available: ${starters.join(", ")}`);
+  }
+
+  if (starters.length === 1) return starters[0];
+
+  console.log("");
+  console.log("Select a starter:");
+  starters.forEach((role, i) => console.log(`  ${color(BLUE, `${i + 1})`)} ${role}`));
+  console.log("");
+
+  const input = (await ask("Enter choice [1]: ")).trim();
+  if (!input) return starters[0];
+
+  const choice = Number(input);
+  if (Number.isInteger(choice) && choice >= 1 && choice <= starters.length) {
+    return starters[choice - 1];
+  }
+  fail("Invalid choice.");
 }
 
 function header(): void {
@@ -131,11 +166,14 @@ async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   header();
 
-  if (!existsSync(templateDir)) {
-    fail("This package carries no starter — it was built wrong.");
+  const starters = availableStarters(templateDir);
+  if (starters.length === 0) {
+    fail("This package carries no starters — it was built wrong.");
   }
 
-  const raw = args.projectName || (await promptProjectName());
+  const role = await resolveStarter(starters, args.starter);
+
+  const raw = args.projectName || (await ask("Enter your project name: "));
   const projectName = sanitizeProjectName(raw);
   if (!projectName) {
     fail("Invalid project name. Use only letters, numbers, and hyphens.");
@@ -146,11 +184,11 @@ async function main(): Promise<void> {
     fail(`Directory '${targetDir}' already exists. Please choose a different name.`);
   }
 
-  info(`Creating issuer project: ${projectName}`);
+  info(`Creating ${role} project: ${projectName}`);
   let keyPair;
   try {
     info("Extracting starter...");
-    keyPair = scaffold(targetDir, projectName, templateDir);
+    keyPair = scaffold(targetDir, projectName, role, packageRoot);
     success("Starter extracted, keypair generated, environment configured");
   } catch (error) {
     // A half-written project holding a half-written .env is worse than none.
