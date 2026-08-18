@@ -53,7 +53,14 @@ platform, with the role as a parameter**, not one generator per role:
 In both, **the template listing is the role set** — `templates/<role>` in the jar,
 `template/<role>` in the tarball. Adding a role is adding a directory under
 `java/starter/` or `node/starter/`; there is no registry to update in either generator, and
-no second initializer to write. A generator carrying exactly one starter does not ask which one.
+no second initializer to write.
+
+On the Node side `--starter` is **required**, with no default even when only one starter is
+packed. Issuer, acquirer and lp are different integrations, and a default would be a contract
+that changes underneath callers: the role list is sorted, so a bare invocation means `issuer`
+today and would mean `acquirer` the day an acquirer starter is added. Anything scripted against
+it would change role without a character changing. `usdt-pay-init.jar` still auto-selects when it
+carries exactly one starter — worth aligning when a second Java starter lands.
 
 The starters themselves stay live, tested projects rather than being forked into template copies.
 `node/cli/template/` is **generated and git-ignored** — `prepack` deletes and recreates it from

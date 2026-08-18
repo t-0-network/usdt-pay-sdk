@@ -83,7 +83,7 @@ npm start
 
 Each platform ships one generator, and `--starter` picks the role. It copies that
 starter out of this repo into a project of your own, generates your secp256k1 keypair
-and writes it to `.env`. Omit `--starter` and it lists what it carries.
+and writes it to `.env`. Run it without `--starter` to see the roles on offer.
 
 Java — `usdt-pay-init.jar`, attached to each
 [release](https://github.com/t-0-network/usdt-pay-sdk/releases):

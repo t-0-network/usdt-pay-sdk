@@ -63,6 +63,30 @@ describe("scaffold", () => {
     );
   });
 
+  it("requires --starter rather than defaulting to one", () => {
+    // Not a style preference: availableStarters() sorts, so a default would silently
+    // change role the day a starter sorting before the current one is added.
+    const cli = join(packageRoot, "bin", "cli.js");
+    const run = (args: string[]) => {
+      try {
+        execFileSync("node", [cli, ...args], { cwd: workdir, encoding: "utf8", stdio: "pipe" });
+        return { code: 0, err: "" };
+      } catch (e) {
+        const error = e as { status: number; stderr: string };
+        return { code: error.status, err: error.stderr };
+      }
+    };
+
+    const bare = run(["some-project", "--no-color"]);
+    assert.equal(bare.code, 1);
+    assert.match(bare.err, /--starter is required\. Available: issuer/);
+    assert.ok(!existsSync(join(workdir, "some-project")), "nothing scaffolded");
+
+    const wrong = run(["some-project", "--starter", "not-a-role", "--no-color"]);
+    assert.equal(wrong.code, 1);
+    assert.match(wrong.err, /No starter named 'not-a-role'\. Available: issuer/);
+  });
+
   it("writes a named project with a usable .env and no stray secrets", () => {
     const target = join(workdir, "my-issuer");
     const keyPair = scaffold(target, "my-issuer", "issuer", packageRoot);

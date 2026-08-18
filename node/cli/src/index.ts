@@ -41,12 +41,12 @@ function version(): string {
 
 function usage(): string {
   return [
-    "Usage: usdt-pay-starter-ts [project-name] [options]",
+    "Usage: usdt-pay-starter-ts [project-name] --starter <role> [options]",
     "",
     "Creates a USDt Pay project in TypeScript from one of the starters this package carries.",
     "",
     "Options:",
-    "  -s, --starter <role>   Which role to scaffold. Omit to pick from what is available.",
+    `  -s, --starter <role>   Required. Which role to scaffold: ${availableStarters(templateDir).join(", ")}`,
     "  -d, --directory <dir>  Where to create the project (defaults to the current directory)",
     "      --no-color         Disable colored output",
     "  -h, --help             Show this help",
@@ -112,29 +112,24 @@ async function ask(question: string): Promise<string> {
   }
 }
 
-/** Mirrors `InitCommand.resolveStarter`: never asks a question with one answer. */
-async function resolveStarter(starters: string[], requested: string): Promise<string> {
-  if (requested) {
-    const role = requested.trim().toLowerCase();
-    if (starters.includes(role)) return role;
+/**
+ * Required, deliberately — issuer, acquirer and lp are different integrations, and
+ * which one you get is not something to infer.
+ *
+ * Defaulting it would be a contract that changes under you. With one starter packed,
+ * a bare invocation would silently mean "issuer"; the day an acquirer starter lands,
+ * `availableStarters` sorts and that same invocation means "acquirer" instead. Anything
+ * scripted against it would switch roles without a single character changing.
+ */
+function resolveStarter(starters: string[], requested: string): string {
+  if (!requested) {
+    fail(`--starter is required. Available: ${starters.join(", ")}`);
+  }
+  const role = requested.trim().toLowerCase();
+  if (!starters.includes(role)) {
     fail(`No starter named '${requested}'. Available: ${starters.join(", ")}`);
   }
-
-  if (starters.length === 1) return starters[0];
-
-  console.log("");
-  console.log("Select a starter:");
-  starters.forEach((role, i) => console.log(`  ${color(BLUE, `${i + 1})`)} ${role}`));
-  console.log("");
-
-  const input = (await ask("Enter choice [1]: ")).trim();
-  if (!input) return starters[0];
-
-  const choice = Number(input);
-  if (Number.isInteger(choice) && choice >= 1 && choice <= starters.length) {
-    return starters[choice - 1];
-  }
-  fail("Invalid choice.");
+  return role;
 }
 
 function header(): void {
@@ -171,7 +166,7 @@ async function main(): Promise<void> {
     fail("This package carries no starters — it was built wrong.");
   }
 
-  const role = await resolveStarter(starters, args.starter);
+  const role = resolveStarter(starters, args.starter);
 
   const raw = args.projectName || (await ask("Enter your project name: "));
   const projectName = sanitizeProjectName(raw);

@@ -5,30 +5,29 @@ One generator for the whole Node side — pick the role you are integrating as. 
 analog is `usdt-pay-init.jar`, which works the same way.
 
 ```bash
-npx @t-0/usdt-pay-starter-ts my-issuer
+npx @t-0/usdt-pay-starter-ts my-issuer --starter issuer
 ```
 
-That creates `./my-issuer` from the starter, generates your secp256k1 keypair, writes
-it into `.env`, and prints the public half — which is what you send to the t-0 team,
-since they cannot accept your calls until they have it.
+That creates `./my-issuer` from the issuer starter, generates your secp256k1 keypair,
+writes it into `.env`, and prints the public half — which is what you send to the t-0
+team, since they cannot accept your calls until they have it.
 
 ```
-Usage: usdt-pay-starter-ts [project-name] [options]
+Usage: usdt-pay-starter-ts [project-name] --starter <role> [options]
 
 Options:
-  -s, --starter <role>   Which role to scaffold. Omit to pick from what is available.
+  -s, --starter <role>   Required. Which role to scaffold.
   -d, --directory <dir>  Where to create the project (defaults to the current directory)
       --no-color         Disable colored output
   -h, --help             Show this help
   -V, --version          Show the version
 ```
 
-Omit the project name and it asks. Omit `--starter` and it asks too — unless this
-package carries exactly one starter, which is not a question worth asking.
-
-```bash
-npx @t-0/usdt-pay-starter-ts my-issuer --starter issuer
-```
+Omit the project name and it asks. `--starter` is **required**, and running without it
+lists what this package carries — issuer, acquirer and lp are different integrations,
+and which one you get should not be inferred. A default would also be a contract that
+changes under you: it would mean "issuer" today and, once an acquirer starter is added,
+"acquirer", because the role list is sorted.
 
 The scaffolded project pins `@t-0/usdt-pay-sdk` at the same version as this package —
 they are released together — and is not a workspace member of anything, so
