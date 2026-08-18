@@ -26,8 +26,9 @@ my-issuer/
 ```
 
 The command also generates your secp256k1 keypair, writes the private half into
-`.env`, and prints the public half. That public key is what the t-0 team registers you
-by — they cannot accept your calls until they have it.
+`.env`, and prints the public half. That public key is what t-0 registers you by —
+they cannot accept your calls until they have it. Send it to your t-0 onboarding
+contact; that exchange is where `NETWORK_PUBLIC_KEY` comes back to you.
 
 **`.env` holds the only copy of your private key.** It is gitignored, and nothing
 prints it again. Do not overwrite it from `.env.example`.
@@ -35,14 +36,15 @@ prints it again. Do not overwrite it from `.env.example`.
 ## Prerequisites
 
 - **Node 22 or newer.**
-- **The t-0 network public key**, from the t-0 team. The project reads it as
+- **The t-0 network public key** — an uncompressed secp256k1 key, `0x04…` and 130 hex
+  digits. It comes from your t-0 onboarding contact. The project reads it as
   `NETWORK_PUBLIC_KEY` and will not start without it.
 
 ## After scaffolding
 
 ```bash
 cd my-issuer
-# add NETWORK_PUBLIC_KEY to .env — the t-0 team gives you this
+# add NETWORK_PUBLIC_KEY to .env — your t-0 onboarding contact gives you this
 npm install && npm run build
 npm start
 ```
@@ -72,7 +74,9 @@ Options:
 ```
 
 The role is required and comes last; there is no default. Omit the project name and
-you will be asked for it, so `npx @t-0/usdt-pay-starter-ts issuer` is enough to start.
+you will be asked for it, so `npx @t-0/usdt-pay-starter-ts issuer` is enough to start
+**interactively** — a script or CI job has no terminal to answer the prompt and must
+pass the name.
 
 ## Working inside the SDK repo instead
 
