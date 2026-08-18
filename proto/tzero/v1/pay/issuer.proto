@@ -143,12 +143,11 @@ message SettlementSentResponse {
   }
 }
 
-// `PaymentExpired` is also a method on AcquirerCallbackService in this flat
-// package, so the request/response carry a role prefix to avoid a colliding
-// `PaymentExpiredRequest`. Interim name: buf STANDARD RPC_REQUEST_STANDARD_NAME
-// accepts only bare `PaymentExpiredRequest` or the full
-// `IssuerServicePaymentExpiredRequest`, so this short form needs a lint
-// ignore at graduation (or rename the method).
+/**
+ * PaymentExpired exists on both the acquirer and issuer edges of this flat package,
+ * so each side's request and response carry their role as a prefix. This is the
+ * issuer's.
+ */
 message IssuerPaymentExpiredRequest {
   /** Intent whose reservation expired. */
   uint64 payment_intent_id = 10 [(buf.validate.field).uint64.gt = 0];
