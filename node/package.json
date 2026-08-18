@@ -1,9 +1,10 @@
 {
   "name": "usdt-pay-sdk-node",
   "private": true,
-  "description": "npm workspace holding the pay SDK and the per-role starters (the analog of java/settings.gradle.kts)",
+  "description": "npm workspace holding the pay SDK, the scaffolder CLI and the per-role starters (the analog of java/settings.gradle.kts)",
   "workspaces": [
     "sdk",
+    "cli",
     "starter/issuer"
   ],
   "scripts": {

@@ -1,0 +1,38 @@
+{
+  "name": "@t-0/usdt-pay-starter-ts",
+  "version": "0.1.0",
+  "description": "Scaffolds a USDt Pay integration from the issuer starter (the Node analog of usdt-pay-init.jar)",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:t-0-network/usdt-pay-sdk.git"
+  },
+  "author": "New Settlement Technologies Inc.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "usdt-pay-starter-ts": "./bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "template"
+  ],
+  "dependencies": {
+    "@t-0/usdt-pay-sdk": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsx": "^4.22.3",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "prepack": "node scripts/pack-template.mjs",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "test": "node --import tsx --test test/*.test.ts"
+  }
+}

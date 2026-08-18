@@ -157,15 +157,16 @@ jobs:
           #
           # --no-workspaces-update is load-bearing. Without it `npm version -w` does an
           # implicit workspace reify; at that instant sdk is already at the new version
-          # while the starter still pins ^OLD, the workspace link no longer satisfies the
-          # pin, and npm goes to the registry — where @t-0/usdt-pay-sdk@^OLD may not exist.
-          # That 404s after both package.json files were already rewritten.
+          # while cli and the starter still pin ^OLD, the workspace links no longer
+          # satisfy those pins, and npm goes to the registry — where
+          # @t-0/usdt-pay-sdk@^OLD may not exist. That 404s after every package.json
+          # was already rewritten.
           npm version "$VERSION" --no-git-tag-version --allow-same-version --no-workspaces-update \
-            -w sdk -w starter/issuer
+            -w sdk -w cli -w starter/issuer
 
           # Before the lockfile regen below, so the lockfile is built against the
-          # already-corrected pin rather than the stale one.
-          npm pkg set "dependencies.@t-0/usdt-pay-sdk=^$VERSION" -w starter/issuer
+          # already-corrected pins rather than the stale ones.
+          npm pkg set "dependencies.@t-0/usdt-pay-sdk=^$VERSION" -w cli -w starter/issuer
 
           npm install --package-lock-only
 
@@ -190,12 +191,20 @@ jobs:
             "$(grep '^version=' java/gradle.properties | cut -d= -f2)" "$VERSION"
           check "node/sdk/package.json .version" \
             "$(node -p "require('./node/sdk/package.json').version")" "$VERSION"
+          check "node/cli/package.json .version" \
+            "$(node -p "require('./node/cli/package.json').version")" "$VERSION"
+          check "node/cli/package.json SDK pin" \
+            "$(node -p "require('./node/cli/package.json').dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
           check "node/starter/issuer/package.json .version" \
             "$(node -p "require('./node/starter/issuer/package.json').version")" "$VERSION"
           check "node/starter/issuer/package.json SDK pin" \
             "$(node -p "require('./node/starter/issuer/package.json').dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
           check "package-lock.json packages.sdk.version" \
             "$(node -p "require('./node/package-lock.json').packages['sdk'].version")" "$VERSION"
+          check "package-lock.json packages.cli.version" \
+            "$(node -p "require('./node/package-lock.json').packages['cli'].version")" "$VERSION"
+          check "package-lock.json cli SDK pin" \
+            "$(node -p "require('./node/package-lock.json').packages['cli'].dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
           check "package-lock.json packages['starter/issuer'].version" \
             "$(node -p "require('./node/package-lock.json').packages['starter/issuer'].version")" "$VERSION"
           check "package-lock.json starter SDK pin" \

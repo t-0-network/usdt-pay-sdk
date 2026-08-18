@@ -81,17 +81,26 @@ npm start
 
 ### Scaffold a project instead
 
-`usdt-pay-init.jar`, attached to each [release](https://github.com/t-0-network/usdt-pay-sdk/releases),
-copies a starter out of this repo into a project of your own, generates your
-secp256k1 keypair and writes it to `.env`:
+Each ecosystem ships a generator that copies its starter out of this repo into a
+project of your own, generates your secp256k1 keypair and writes it to `.env`.
+
+Java — `usdt-pay-init.jar`, attached to each
+[release](https://github.com/t-0-network/usdt-pay-sdk/releases):
 
 ```bash
 java -jar usdt-pay-init.jar my-acquirer --starter acquirer
 ```
 
-The scaffolded project builds against the published SDK rather than this repo's
-`:sdk`, so it is the standalone route — pass the SDK version explicitly, e.g.
-`./gradlew build -PusdtPaySdkVersion=<version>`.
+Node — `@t-0/usdt-pay-starter-ts`, on npm:
+
+```bash
+npx @t-0/usdt-pay-starter-ts my-issuer
+```
+
+Either way the scaffolded project builds against the published SDK rather than this
+repo's local one, so this is the standalone route. The Java project takes the SDK
+version explicitly, e.g. `./gradlew build -PusdtPaySdkVersion=<version>`; the Node one
+carries a `^` pin already.
 
 ## What is in here
 

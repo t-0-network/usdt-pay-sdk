@@ -6,8 +6,8 @@ Two workflows make a release. Neither does the other's job:
   site, validates them, commits, tags `vX.Y.Z` and creates the GitHub Release. **Publishes
   nothing.**
 - **[`publish.yaml`](../.github/workflows/publish.yaml)** — fires on that tag. Builds, re-checks
-  each ecosystem's version against the tag, then publishes to npm and Maven Central and uploads
-  the CLI jar to the Release.
+  each package's version against the tag, then publishes both npm packages and the Java artifacts
+  to Maven Central, and uploads the CLI jar to the Release.
 
 A complete release is `release.yaml` → tag → `publish.yaml`. **Never trigger `publish.yaml` by
 hand and never `git tag vX.Y.Z` by hand** — both registries are immutable, and there is no dry-run
@@ -21,19 +21,53 @@ gh workflow run release.yaml -f bump=patch --ref master
 
 ## Version sites
 
-One version, five places. `release.yaml` moves all of them in a single commit and refuses to push
-if any disagrees.
+One version, everywhere. `release.yaml` moves all of it in a single commit and refuses to push if
+any site disagrees.
 
 | File | Field |
 |---|---|
 | `java/gradle.properties` | `version=X.Y.Z` |
 | `node/sdk/package.json` | `.version` |
+| `node/cli/package.json` | `.version` |
+| `node/cli/package.json` | `.dependencies["@t-0/usdt-pay-sdk"]` = `^X.Y.Z` |
 | `node/starter/issuer/package.json` | `.version` |
 | `node/starter/issuer/package.json` | `.dependencies["@t-0/usdt-pay-sdk"]` = `^X.Y.Z` |
-| `node/package-lock.json` | `packages["sdk"].version`, `packages["starter/issuer"].version`, and the starter's pin |
+| `node/package-lock.json` | the `sdk`, `cli` and `starter/issuer` entries — three `.version`s and the two SDK pins |
 
 The Java side has exactly one site: `java/cli/src/main/resources/version.properties` is `expand`ed
 from `project.version` at build time (`java/cli/build.gradle.kts`), so it follows automatically.
+
+---
+
+## How the starters get published
+
+Neither starter is published as a package. Both ship *inside a generator*, and in both ecosystems
+the starter stays a live, tested project rather than being forked into a template copy:
+
+| Ecosystem | Generator | Starter source | Packed by |
+|---|---|---|---|
+| Java | `usdt-pay-init.jar`, a Release asset | `java/starter/acquirer`, a live Gradle subproject | `processResources` at build time |
+| Node | `@t-0/usdt-pay-starter-ts` on npm | `node/starter/issuer`, a live npm workspace member | `node/cli` `prepack` at pack/publish time |
+
+`node/cli/template/` is **generated and git-ignored**. Editing it does nothing — `prepack` deletes
+and recreates it from `node/starter/issuer` on every pack. This is the same arrangement the Java
+side has had since the CLI existed; it means CI builds and tests exactly the code users receive.
+
+Two details in the Node packer that are not obvious:
+
+- **`.env` is excluded, `.env.example` is not.** A developer's starter directory can hold live
+  keys. `publish.yaml` re-asserts this against the actual tarball listing rather than trusting the
+  filter.
+- **`.gitignore` ships undotted** as `template/gitignore`, and the CLI renames it back when it
+  scaffolds. npm drops a nested `.gitignore` from a tarball; without the workaround every
+  scaffolded project would commit its own `.env` on the first `git add -A`.
+
+The generated `.env` is written from `.env.example` by filling the empty `PRIVATE_KEY=` line — the
+same contract, and the same line-anchored substitution, as `EnvFileWriter.java`. The keypair is
+derived through the SDK's own `publicKeyFromPrivateKey`, mirroring `KeyGenerator.java` going
+through `Signer`: a key generated here has to be one the runtime accepts.
+
+---
 
 **Not a version site:** `java/starter/acquirer/build.gradle.kts`'s `version = "0.1.0-SNAPSHOT"`.
 That is the *scaffolded project's own* version — the file ships as a template inside
@@ -58,21 +92,21 @@ Dispatch input `bump` — `patch` (default) / `minor` / `major`.
    2. **Calculate version.** With no tags yet, the tree's own version *is* the release and the
       `bump` input is ignored — otherwise the first release would ship `0.1.1` and skip `0.1.0`.
       With tags, the latest `vX.Y.Z` is parsed and incremented.
-   3. **Bump.** Node via `npm version … --no-workspaces-update -w sdk -w starter/issuer`, then
-      `npm pkg set` for the starter's pin, then `npm install --package-lock-only`. Java via `sed`
-      on `gradle.properties`. Nothing hand-edits the lockfile.
-   4. **Validate** all five sites plus the three lockfile entries. Any mismatch fails *before* the
-      push.
+   3. **Bump.** Node via `npm version … --no-workspaces-update -w sdk -w cli -w starter/issuer`,
+      then `npm pkg set` for the two SDK pins, then `npm install --package-lock-only`. Java via
+      `sed` on `gradle.properties`. Nothing hand-edits the lockfile.
+   4. **Validate** every site in the table above, lockfile entries included. Any mismatch fails
+      *before* the push.
    5. **Commit, tag, push** with plain git and `--allow-empty` / `--atomic` (see below).
    6. **Create the GitHub Release**, idempotently.
 
 ### Two flags that look cosmetic and are not
 
 - **`--no-workspaces-update`** on `npm version`. Without it npm does an implicit workspace reify.
-  At that moment `sdk` is already at the new version while the starter still pins `^OLD`, so the
-  workspace link no longer satisfies the pin and npm goes to the registry — which may not have a
-  version satisfying the *old* pin. Result: `npm error 404`, exit 1, with both `package.json`
-  files already rewritten. It breaks every minor/major dispatch, not just the first one.
+  At that moment `sdk` is already at the new version while `cli` and the starter still pin `^OLD`,
+  so those workspace links no longer satisfy their pins and npm goes to the registry — which may
+  not have a version satisfying the *old* pin. Result: `npm error 404`, exit 1, with every
+  `package.json` already rewritten. It breaks every minor/major dispatch, not just the first one.
 - **`git commit --allow-empty`**. On the initial release every site already reads the target
   version, so the diff is empty. An auto-commit action would skip the commit *and* the tag and
   report success — a green run that released nothing. Plain git gives one code path for both cases.
@@ -111,9 +145,19 @@ Node 22 ships npm 10.x, which has no OIDC support, so the job installs `npm@^11.
 the result. Pinned to the 11 major rather than `@latest`: a future npm 12 could raise its own Node
 floor above 22 and break the job on a day nobody touched the repo.
 
-Then: version-matches-tag, `npm ci` (the lockfile is at `node/`, not `node/sdk/`), build +
-typecheck the SDK, assert the package is `@t-0/usdt-pay-sdk` and not `private`, `npm pack
---dry-run`, `npm publish --provenance --access public`.
+Then: versions-match-tag, `npm ci` (the lockfile is at `node/`, not in the package dirs), build +
+typecheck both packages, assert each is the name it should be and not `private`, pack both as a
+dry run, and publish.
+
+Two packages go out, **SDK first**:
+
+| Package | Directory | What it is |
+|---|---|---|
+| `@t-0/usdt-pay-sdk` | `node/sdk` | the SDK itself |
+| `@t-0/usdt-pay-starter-ts` | `node/cli` | the scaffolder — `npx @t-0/usdt-pay-starter-ts my-issuer` |
+
+The order matters only for the partial-failure case: a scaffolder on the registry whose SDK pin
+resolves to nothing is a worse state to be stuck in than an SDK with no scaffolder yet.
 
 ### `publish-java`
 
@@ -157,14 +201,16 @@ In this order. The preflights enforce it, but they enforce it by failing a run.
    This publishes **every remote branch**, including abandoned `feature/*` and `codex/*` ones, and
    is effectively irreversible. Not Pulumi-managed — `gh` is the only mechanism.
 
-2. **Apply the infra change** that creates `OSSRH_USERNAME` / `OSSRH_PASSWORD` /
-   `GPG_PRIVATE_KEY` (`pulumi up` on the **prod** stack).
+2. ~~**Apply the infra change** that creates `OSSRH_USERNAME` / `OSSRH_PASSWORD` /
+   `GPG_PRIVATE_KEY`.~~ Done — [backend#1404](https://github.com/t-0-network/backend/pull/1404) is
+   merged and applied to the **prod** stack.
 
-3. **Bootstrap the npm package.** A trusted publisher can only be configured on a package that
-   already exists, and `@t-0/usdt-pay-sdk` does not. A `@t-0` maintainer, with explicit
-   authorization, publishes one interactive 2FA-protected prerelease under a non-`latest` dist-tag
-   — e.g. `npm publish --tag bootstrap` at `0.1.0-bootstrap.0`, leaving `0.1.0` free for the
-   automated release — then configures the package's GitHub Actions trusted publisher:
+3. **Bootstrap both npm packages.** A trusted publisher can only be configured on a package that
+   already exists, and neither `@t-0/usdt-pay-sdk` nor `@t-0/usdt-pay-starter-ts` does. For **each**
+   of the two, a `@t-0` maintainer — with explicit authorization — publishes one interactive
+   2FA-protected prerelease under a non-`latest` dist-tag (e.g. `npm publish --tag bootstrap` at
+   `0.1.0-bootstrap.0`, leaving `0.1.0` free for the automated release), then configures that
+   package's GitHub Actions trusted publisher:
 
    | Field | Value |
    |---|---|
@@ -174,7 +220,11 @@ In this order. The preflights enforce it, but they enforce it by failing a run.
    | Allowed action | `npm publish` |
    | Environment | *(blank)* |
 
-   Verify one OIDC run before revoking any token-based publish rights.
+   The same workflow publishes both, so both trusted publishers name `publish.yaml`. Verify one
+   OIDC run before revoking any token-based publish rights.
+
+   Bootstrapping the scaffolder means packing it, which runs its `prepack` — check the file list it
+   prints and confirm it carries `template/.env.example` and no `template/.env`.
 
 4. **Dispatch `release.yaml`.** The first run ignores the `bump` input and ships the tree version.
 
@@ -185,7 +235,8 @@ In this order. The preflights enforce it, but they enforce it by failing a run.
 ### Registry publication is immutable
 
 npm and Maven Central both refuse to replace a published version. If npm succeeds and Central
-fails, **a re-run cannot fix it** — the npm version is spent. Recovery is a new patch release,
+fails — or if the SDK publishes and the scaffolder does not — **a re-run cannot fix it**: the npm
+version is spent. Recovery is a new patch release,
 decided deliberately. Never re-run a publish job blind: read which registries actually got the
 artifact first.
 
