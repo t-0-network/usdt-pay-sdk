@@ -10,6 +10,16 @@ plugins {
     id("com.gradleup.nmcp.aggregation")
 }
 
+// The aggregation plugin resolves its own `nmcp-tasks` artifact through the root
+// project's `:nmcpTasks` configuration, so the root needs a repository even though it
+// builds nothing. Every module declares its own, but a module's repositories are not
+// visible here. Without this, `publishAggregationToCentralPortal` dies at
+// `nmcpCheckAggregationFiles` with "no repositories are defined" — and only there:
+// `./gradlew build` never resolves that configuration, so CI stays green.
+repositories {
+    mavenCentral()
+}
+
 nmcpAggregation {
     centralPortal {
         username = providers.environmentVariable("MAVEN_CENTRAL_USERNAME")
