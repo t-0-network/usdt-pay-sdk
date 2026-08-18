@@ -109,6 +109,12 @@ function parseArgs(argv: string[]): Args {
 }
 
 async function ask(question: string): Promise<string> {
+  // With stdin not a terminal — CI, a piped script, a Dockerfile — `rl.question` never
+  // resolves: the event loop drains and node exits 0 having created nothing, so the
+  // failure surfaces at the caller's next line rather than here. Refuse instead.
+  if (!process.stdin.isTTY) {
+    fail(`Cannot ask for the project name: stdin is not a terminal. Pass it as an argument.\n\n${usage()}`);
+  }
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   try {
     return await rl.question(question);
@@ -132,6 +138,16 @@ function resolveStarter(starters: string[], requested: string): string {
   }
   const role = requested.trim().toLowerCase();
   if (!starters.includes(role)) {
+    // Asking for a role that exists elsewhere in the SDK is not the same mistake as a
+    // typo, and answering both with "Available: issuer" dead-ends the one person who
+    // knew exactly what they wanted. The starters split by language, not by role.
+    if (role === "acquirer") {
+      fail(
+        "The acquirer starter ships in the Java initializer, not in this package:\n" +
+          "  curl -LO https://github.com/t-0-network/usdt-pay-sdk/releases/latest/download/usdt-pay-init.jar\n" +
+          "  java -jar usdt-pay-init.jar my-acquirer acquirer",
+      );
+    }
     fail(`No starter named '${requested}'. Available: ${starters.join(", ")}`);
   }
   return role;
@@ -156,7 +172,13 @@ function completion(targetDir: string, publicKeyHex: string): void {
   console.log("");
   console.log(`  1. ${color(BLUE, `cd ${targetDir}`)}`);
   console.log(`  2. Put the t-0 network public key in ${color(BLUE, ".env")} (NETWORK_PUBLIC_KEY)`);
-  console.log(`  3. ${color(BLUE, "npm install")}, then read ${color(BLUE, "README.md")} for the phases`);
+  // All three, in order: `npm start` runs dist/index.js, so it fails until the build
+  // has run. Suggesting a command that cannot work yet is how a first run ends.
+  console.log(`  3. ${color(BLUE, "npm install")}`);
+  console.log(`  4. ${color(BLUE, "npm run build")}`);
+  console.log(`  5. ${color(BLUE, "npm start")} — prints your public key and serves callbacks`);
+  console.log("");
+  console.log(`Then read ${color(BLUE, "README.md")} for the phases.`);
   console.log("");
   console.log(`Docs: ${color(BLUE, "https://usdt-pay-docs.t-0.network/")}`);
   console.log("");

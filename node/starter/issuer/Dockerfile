@@ -3,13 +3,13 @@
 #
 #   cd node && docker build -f starter/issuer/Dockerfile -t usdt-pay-issuer .
 #
-FROM node:24-alpine AS build
+FROM node:22-alpine AS build
 
 WORKDIR /src
 COPY . .
 RUN npm ci && npm run build
 
-FROM node:24-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 COPY --from=build /src ./
