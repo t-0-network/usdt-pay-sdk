@@ -2,8 +2,10 @@ package network.t0.pay.cli;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Spec;
 
 import java.io.BufferedReader;
 import java.io.Console;
@@ -12,8 +14,10 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.stream.Stream;
 
 /**
  * Scaffolds a USDt Pay integration from one of the starters this jar carries.
@@ -31,6 +35,10 @@ public class InitCommand implements Callable<Integer> {
     private static final String YELLOW = "\u001B[33m";
     private static final String RED = "\u001B[31m";
     private static final String RESET = "\u001B[0m";
+
+    // Colour follows the terminal, so piping or redirecting this output yields text
+    // rather than escape codes — nobody has to remember --no-color for `| tee`.
+    private static final boolean STDOUT_IS_TERMINAL = stdoutIsTerminal();
 
     // [project-name] <role>, the same shape the Node generator takes. The role is
     // required and comes last; because it cannot be omitted, a lone argument can only
@@ -58,6 +66,9 @@ public class InitCommand implements Callable<Integer> {
     )
     private boolean noColor;
 
+    @Spec
+    private CommandSpec spec;
+
     private BufferedReader stdinReader;
 
     /**
@@ -75,6 +86,15 @@ public class InitCommand implements Callable<Integer> {
             List<String> starters = TemplateExtractor.availableStarters();
             if (starters.isEmpty()) {
                 printError("This jar carries no starters — it was built wrong.");
+                return 1;
+            }
+
+            // Said plainly, because the alternative is worse than an error: a third
+            // argument silently ignored leaves `starter` unset, and the failure that
+            // follows claims a role is missing when one was given.
+            if (args.size() > 2) {
+                printError("Too many arguments: " + String.join(" ", args));
+                spec.commandLine().usage(System.out);
                 return 1;
             }
 
@@ -112,19 +132,29 @@ public class InitCommand implements Callable<Integer> {
             printInfo("Creating " + role + " project: " + projectName);
             Files.createDirectories(targetDir);
 
-            printInfo("Extracting starter...");
-            TemplateExtractor.extractTo(targetDir, projectName, role);
-            printSuccess("Starter extracted");
+            try {
+                printInfo("Extracting starter...");
+                TemplateExtractor.extractTo(targetDir, projectName, role);
+                printSuccess("Starter extracted");
 
-            printInfo("Generating secp256k1 keypair...");
-            KeyGenerator.KeyPair keyPair = KeyGenerator.generate();
-            printSuccess("Keypair generated");
+                printInfo("Generating secp256k1 keypair...");
+                KeyGenerator.KeyPair keyPair = KeyGenerator.generate();
+                printSuccess("Keypair generated");
 
-            printInfo("Writing .env...");
-            EnvFileWriter.write(targetDir, keyPair);
-            printSuccess("Environment configured");
+                printInfo("Writing .env...");
+                EnvFileWriter.write(targetDir, keyPair);
+                printSuccess("Environment configured");
 
-            printCompletionMessage(targetDir, keyPair.publicKeyHex());
+                printCompletionMessage(targetDir, role, keyPair.publicKeyHex());
+            } catch (Exception e) {
+                // A half-written project holding a half-written .env is worse than
+                // none — and left behind it holds the name too, so the obvious retry
+                // stops at "already exists" instead. Safe to delete because this try
+                // opens after the createDirectories above, which the exists check
+                // guards: the directory can only be one this run made.
+                deleteTree(targetDir);
+                throw e;
+            }
             return 0;
 
         } catch (Exception e) {
@@ -160,6 +190,19 @@ public class InitCommand implements Callable<Integer> {
         return requested;
     }
 
+    /** Reverse order so children go before the parent — {@code delete} needs them empty. */
+    private void deleteTree(Path root) {
+        try (Stream<Path> paths = Files.walk(root)) {
+            for (Path path : (Iterable<Path>) paths.sorted(Comparator.reverseOrder())::iterator) {
+                Files.deleteIfExists(path);
+            }
+        } catch (IOException e) {
+            // Best effort. The scaffold has already failed, and throwing from the
+            // cleanup would replace the message that says why with this one.
+            printError("Could not remove the partial project at " + root + ": " + e.getMessage());
+        }
+    }
+
     private String readLine() throws IOException {
         Console console = System.console();
         if (console != null) {
@@ -188,7 +231,7 @@ public class InitCommand implements Callable<Integer> {
         println("");
     }
 
-    private void printCompletionMessage(Path targetDir, String publicKey) {
+    private void printCompletionMessage(Path targetDir, String role, String publicKey) {
         println("");
         println(color(GREEN, "Project created at ") + color(BLUE, targetDir.toAbsolutePath().toString()));
         println("");
@@ -199,7 +242,14 @@ public class InitCommand implements Callable<Integer> {
         println("");
         println("  1. " + color(BLUE, "cd " + targetDir));
         println("  2. Put the t-0 network public key in " + color(BLUE, ".env") + " (NETWORK_PUBLIC_KEY)");
-        println("  3. " + color(BLUE, "./gradlew installDist") + ", then read " + color(BLUE, "README.md") + " for the phases");
+        println("  3. " + color(BLUE, "./gradlew installDist"));
+        // The last step is the point of the first three, and stopping at the build
+        // leaves it unsaid. The binary is named for the role — that is the starter's
+        // `applicationName`, and renameProject does not touch it.
+        println("  4. " + color(BLUE, "./build/install/" + role + "/bin/" + role)
+                + " — run it from the project root, where your " + color(BLUE, ".env") + " is");
+        println("");
+        println("Then read " + color(BLUE, "README.md") + " for the phases.");
         println("");
         println("Docs: " + color(BLUE, "https://usdt-pay-docs.t-0.network/"));
         println("");
@@ -222,7 +272,26 @@ public class InitCommand implements Callable<Integer> {
     }
 
     private String color(String colorCode, String text) {
-        return noColor ? text : colorCode + text + RESET;
+        return noColor || !STDOUT_IS_TERMINAL ? text : colorCode + text + RESET;
+    }
+
+    /**
+     * A non-null {@code System.console()} was the whole answer until Java 22, which
+     * started returning one for a redirected stream too; from there {@code isTerminal()}
+     * is the only honest check. Called reflectively because this jar compiles to a 17
+     * floor, where the method does not exist — and on 17 through 21 the null check
+     * above has already answered it.
+     */
+    private static boolean stdoutIsTerminal() {
+        Console console = System.console();
+        if (console == null) {
+            return false;
+        }
+        try {
+            return (Boolean) Console.class.getMethod("isTerminal").invoke(console);
+        } catch (ReflectiveOperationException e) {
+            return true;
+        }
     }
 
     static class VersionProvider implements CommandLine.IVersionProvider {
