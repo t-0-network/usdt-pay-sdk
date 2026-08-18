@@ -19,6 +19,8 @@ my-issuer/
 ├── package.json         named after your project, depending on @t-0/usdt-pay-sdk
 ├── README.md            the numbered path from "prints my public key" to "settled a real sale"
 ├── Dockerfile
+├── tsconfig.json
+├── tsconfig.test.json
 ├── src/                 the starter's handlers and outbound calls
 └── test/
 ```
@@ -42,7 +44,7 @@ prints it again. Do not overwrite it from `.env.example`.
 ```bash
 cd my-issuer
 # add NETWORK_PUBLIC_KEY to .env — the t-0 team gives you this
-npm install
+npm install && npm run build
 npm start
 ```
 

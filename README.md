@@ -52,7 +52,7 @@ npx @t-0/usdt-pay-starter-ts my-issuer issuer
 cd my-issuer
 # add NETWORK_PUBLIC_KEY to .env — the t-0 team gives you this.
 # Your PRIVATE_KEY is already there; do not overwrite .env from the example.
-npm install
+npm install && npm run build
 npm start
 ```
 
@@ -79,9 +79,13 @@ Issuer public key: 0x04…
 Callback server listening on port 8080
 ```
 
-Send that public key to the t-0 team — they cannot call you until they have it. Then
-work through [`node/starter/issuer/README.md`](node/starter/issuer/README.md), which
-walks the integration phase by phase.
+Send that public key to the t-0 team — they cannot call you until they have it.
+
+Then work through the starter's README, which walks the integration phase by phase:
+your own project's `README.md` if you scaffolded, or
+[`node/starter/issuer/README.md`](node/starter/issuer/README.md) if you cloned. They
+differ — the scaffolded copy documents your standalone project, and its run steps do
+not overwrite the `.env` holding your key.
 
 ### Java — the acquirer starter
 
@@ -123,8 +127,9 @@ cp .env.example .env
 ./build/install/acquirer/bin/acquirer
 ```
 
-Then work through [`java/starter/acquirer/README.md`](java/starter/acquirer/README.md)
-— the same numbered path, for the acquirer's half of the flow.
+Then work through the starter's README — the same numbered path, for the acquirer's
+half of the flow: your own project's `README.md` if you scaffolded, or
+[`java/starter/acquirer/README.md`](java/starter/acquirer/README.md) if you cloned.
 
 ### Both generators take the same arguments
 
@@ -429,8 +434,9 @@ surprise:
 
 - **Cloned?** `git pull`, rebuild, and read the release notes for the tag you moved
   to. Your starter follows the SDK in the same commit.
-- **Scaffolded?** Your project pins the SDK — `@t-0/usdt-pay-sdk` in `package.json`,
-  `usdtPaySdkVersion` in `gradle.properties`. Raise it, read the release notes for
+- **Scaffolded?** Your project carries its own SDK version — a `^` range on
+  `@t-0/usdt-pay-sdk` in `package.json`, an exact `usdtPaySdkVersion` in
+  `gradle.properties`. Raise it, read the release notes for
   every version you skipped, and rebuild. To see what changed in the starter itself,
   scaffold a throwaway project at the new version and diff it against yours.
 

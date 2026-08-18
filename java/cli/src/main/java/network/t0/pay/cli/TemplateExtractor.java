@@ -109,8 +109,8 @@ public final class TemplateExtractor {
     /**
      * The starter README documents the in-repo build, which an extracted project
      * cannot run. These rewrites are keyed on that README's exact wording; if it
-     * changes they simply stop applying, which is why the end-to-end scaffold check
-     * greps for {@code cd ../..}.
+     * changes they simply stop applying, which is why {@code TemplateExtractorTest}
+     * asserts on the extracted result rather than on this method.
      */
     private static void deRepoReadme(Path targetDir) throws IOException {
         Path readme = targetDir.resolve("README.md");
@@ -119,11 +119,26 @@ public final class TemplateExtractor {
         }
         String content = Files.readString(readme);
 
+        // The whole Run-it block, not the build line inside it. The first line of the
+        // in-repo version is `cp .env.example .env`, and following it in a scaffolded
+        // project overwrites the .env EnvFileWriter just produced — destroying the only
+        // copy of the generated private key, whose public half the user has already been
+        // told to send to the t-0 team.
         content = content.replace(
                 """
+                cp .env.example .env      # then fill in PRIVATE_KEY and NETWORK_PUBLIC_KEY
+
                 # Build from the java/ root — the starter compiles against the local :sdk project.
                 (cd ../.. && ./gradlew :starter:acquirer:installDist)""",
-                "./gradlew installDist");
+                """
+                # .env already exists and holds the PRIVATE_KEY generated for you. Do not
+                # overwrite it — add NETWORK_PUBLIC_KEY, which the t-0 team gives you.
+
+                ./gradlew installDist""");
+
+        content = content.replace(
+                "- A secp256k1 private key. Any 32 random bytes will do: `openssl rand -hex 32`.",
+                "- Your secp256k1 private key — already generated, in `.env`.");
 
         content = content.replace(
                 """
