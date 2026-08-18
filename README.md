@@ -32,10 +32,15 @@ Two routes to a working project. The choice is the same in both languages:
 
 | | **Scaffold** | **Clone** |
 |---|---|---|
-| What you get | a standalone project of your own, pinning the published SDK | this repo, the starter building against the local SDK |
+| What you get | a standalone project of your own, on a published SDK version you move deliberately | this repo, the starter building against the local SDK |
 | Keys | generated for you, written to `.env` | you generate and fill them in |
 | When the contract moves | you bump the SDK deliberately | you `git pull` and follow it |
 | Pick it when | you are starting your own service | **recommended before 1.0** — the contract still moves and you want to track it |
+
+Scaffolded, the SDK version is yours to move: Java pins it exactly as
+`usdtPaySdkVersion` in `gradle.properties`, Node takes `^X.Y.Z` and leaves
+`package-lock.json` to fix the exact build — commit that lockfile and a fresh
+`npm install` cannot drift onto a patch you never tested.
 
 Either way you end up in the same place: a starter whose README is a numbered path
 from "prints my public key" to "settled a real sale".
@@ -59,7 +64,7 @@ npm start
 **Clone:**
 
 ```bash
-git clone git@github.com:t-0-network/usdt-pay-sdk.git
+git clone https://github.com/t-0-network/usdt-pay-sdk.git   # or git@github.com:…
 cd usdt-pay-sdk/node
 npm install && npm run build                     # SDK + the issuer starter
 
@@ -79,7 +84,11 @@ Issuer public key: 0x04…
 Callback server listening on port 8080
 ```
 
-Send that public key to the t-0 team — they cannot call you until they have it.
+Send that public key to your t-0 onboarding contact — they cannot call you until they
+have it. That exchange is the other direction too: `NETWORK_PUBLIC_KEY` and a
+`TZERO_ENDPOINT` you can reach come back from it. It runs through the contact you
+already have at t-0, not through this repo. They will also need a base URL they can
+open, so a laptop on `localhost:8080` needs a tunnel or a deployed host first.
 
 Then work through the starter's README, which walks the integration phase by phase:
 your own project's `README.md` if you scaffolded, or
@@ -103,17 +112,21 @@ the starter code uses a language feature newer than 17.
 [release](https://github.com/t-0-network/usdt-pay-sdk/releases):
 
 ```bash
+curl -LO https://github.com/t-0-network/usdt-pay-sdk/releases/latest/download/usdt-pay-init.jar
 java -jar usdt-pay-init.jar my-acquirer acquirer
 
 cd my-acquirer
 # add NETWORK_PUBLIC_KEY to .env; PRIVATE_KEY is already there.
 ./gradlew installDist
+
+# Run from this directory — .env is read from the working directory.
+./build/install/acquirer/bin/acquirer
 ```
 
 **Clone:**
 
 ```bash
-git clone git@github.com:t-0-network/usdt-pay-sdk.git
+git clone https://github.com/t-0-network/usdt-pay-sdk.git   # or git@github.com:…
 cd usdt-pay-sdk/java
 ./gradlew build                                  # SDK + the acquirer starter
 
@@ -126,6 +139,19 @@ cp .env.example .env
 # Run from this directory — .env is read from the working directory.
 ./build/install/acquirer/bin/acquirer
 ```
+
+Either way, a working start prints your public key and then blocks on the callback
+server:
+
+```
+Acquirer public key: 0x04…
+Callback server listening on port 8080
+```
+
+Send it to your t-0 onboarding contact, as above. The acquirer also fires one demo
+sale through §3 → §4 on startup, and that demo is a **fiat-mode** sale — if you settle
+in USDt it is not the call your integration makes. The starter README says which is
+which.
 
 Then work through the starter's README — the same numbered path, for the acquirer's
 half of the flow: your own project's `README.md` if you scaffolded, or
@@ -153,10 +179,12 @@ proto/tzero/v1/          protocol definitions, snapshot-synced from the t-0 back
 
 java/                    Java SDK (built on 21, consumable on 17) + a starter
 ├── sdk/                 network.t-0:usdt-pay-sdk-java — generated stubs for all three roles
+├── cli/                 usdt-pay-init.jar — the scaffolder, attached to each Release
 └── starter/acquirer
 
 node/                    Node SDK + a starter, as one npm workspace
 ├── sdk/                 @t-0/usdt-pay-sdk — generated Connect code for all three roles
+├── cli/                 @t-0/usdt-pay-starter-ts — the scaffolder, on npm
 └── starter/issuer
 ```
 

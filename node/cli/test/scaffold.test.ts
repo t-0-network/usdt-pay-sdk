@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, existsSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -41,6 +41,18 @@ describe("generateKeyPair", () => {
 describe("scaffold", () => {
   let workdir: string;
 
+  /** Runs the real CLI. stdio "pipe" also makes stdin a pipe, which is the point below. */
+  const run = (args: string[]) => {
+    const cli = join(packageRoot, "bin", "cli.js");
+    try {
+      execFileSync("node", [cli, ...args], { cwd: workdir, encoding: "utf8", stdio: "pipe" });
+      return { code: 0, err: "" };
+    } catch (e) {
+      const error = e as { status: number; stderr: string };
+      return { code: error.status, err: error.stderr };
+    }
+  };
+
   before(() => {
     // prepack generates template/; the test needs it whether or not a pack ran.
     execFileSync("node", [join(packageRoot, "scripts", "pack-template.mjs")], { stdio: "ignore" });
@@ -67,17 +79,6 @@ describe("scaffold", () => {
   it("requires the role, as the last positional, and never guesses it", () => {
     // Not a style preference: availableStarters() sorts, so a default would silently
     // change role the day a starter sorting before the current one is added.
-    const cli = join(packageRoot, "bin", "cli.js");
-    const run = (args: string[]) => {
-      try {
-        execFileSync("node", [cli, ...args], { cwd: workdir, encoding: "utf8", stdio: "pipe" });
-        return { code: 0, err: "" };
-      } catch (e) {
-        const error = e as { status: number; stderr: string };
-        return { code: error.status, err: error.stderr };
-      }
-    };
-
     const bare = run(["--no-color"]);
     assert.equal(bare.code, 1);
     assert.match(bare.err, /A role is required, and comes last\. Available: issuer/);
@@ -98,6 +99,27 @@ describe("scaffold", () => {
     const tooMany = run(["a", "b", "c", "--no-color"]);
     assert.equal(tooMany.code, 1);
     assert.match(tooMany.err, /Too many arguments/);
+  });
+
+  it("refuses to prompt into a pipe rather than exiting 0 with nothing", () => {
+    // Non-TTY stdin is CI, a piped script and a Dockerfile. `rl.question` never
+    // resolves there: the event loop drained and node exited 0 having printed the
+    // prompt and created nothing, so the failure landed on the caller's next line.
+    const piped = run(["issuer", "--no-color"]);
+    assert.equal(piped.code, 1);
+    assert.match(piped.err, /stdin is not a terminal/);
+    assert.match(piped.err, /Usage: usdt-pay-starter-ts/);
+    assert.ok(!existsSync(join(workdir, "issuer")), "nothing scaffolded");
+  });
+
+  it("sends the acquirer role to the Java initializer instead of dead-ending", () => {
+    // The acquirer starter is real, it just ships in usdt-pay-init.jar. "Available:
+    // issuer" answered the one person who knew exactly which role they wanted with
+    // nowhere to go.
+    const acquirer = run(["acquirer", "--no-color"]);
+    assert.equal(acquirer.code, 1);
+    assert.match(acquirer.err, /usdt-pay-init\.jar/);
+    assert.doesNotMatch(acquirer.err, /No starter named 'acquirer'/);
   });
 
   it("writes a named project with a usable .env and no stray secrets", () => {
@@ -131,6 +153,15 @@ describe("scaffold", () => {
     assert.match(dockerfile, /Build context is this project directory/);
     assert.doesNotMatch(dockerfile, /starter\/issuer\/Dockerfile/);
 
+    // The lockfile, so the image runs the SDK build that was tested and not whatever
+    // patch resolves on build day. `npm ci` needs it copied in.
+    assert.match(dockerfile, /COPY package\.json package-lock\.json \.\//);
+    assert.match(dockerfile, /^RUN npm ci$/m);
+
+    // Shipped alongside, and the only reason `COPY . .` does not put .env in a layer.
+    assert.ok(existsSync(join(target, ".dockerignore")), ".dockerignore shipped");
+    assert.match(readFileSync(join(target, ".dockerignore"), "utf8"), /^\.env$/m);
+
     const readme = readFileSync(join(target, "README.md"), "utf8");
     assert.doesNotMatch(readme, /cd \.\.\/\.\./, "no repo-relative cd left in the README");
     assert.doesNotMatch(readme, /-f starter\/issuer\/Dockerfile/);
@@ -141,6 +172,25 @@ describe("scaffold", () => {
     assert.doesNotMatch(readme, /cp \.env\.example \.env/, "would destroy the generated key");
     assert.doesNotMatch(readme, /openssl rand -hex 32/, "the key is already generated");
     assert.match(readme, /Do not\n# overwrite it/);
+  });
+
+  it("tells nobody, anywhere, to write over the .env holding their key", () => {
+    const target = join(workdir, "no-bad-advice");
+    scaffold(target, "no-bad-advice", "issuer", packageRoot);
+
+    // The whole tree, not just the README: the last of these lived in a config.ts
+    // error message, where it surfaces exactly when a rattled developer will follow
+    // it. .env holds the only copy of the generated private key, and its public half
+    // is already with the t-0 team by the time any of this is read.
+    const banned = ["Put your private key", "Copy .env.example", "cp .env.example .env"];
+    for (const entry of readdirSync(target, { recursive: true, withFileTypes: true })) {
+      if (!entry.isFile()) continue;
+      const file = join(entry.parentPath, entry.name);
+      const content = readFileSync(file, "utf8");
+      for (const phrase of banned) {
+        assert.ok(!content.includes(phrase), `${file} still says '${phrase}'`);
+      }
+    }
   });
 
   it("carries the example but never a real .env or build output", () => {

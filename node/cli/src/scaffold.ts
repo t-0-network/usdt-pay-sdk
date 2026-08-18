@@ -119,7 +119,7 @@ function deRepoReadme(targetDir: string, role: string): void {
 
   content = content.replace(
     `cd ../..                    # node/\ndocker build -f starter/${role}/Dockerfile -t usdt-pay-${role} .\ndocker run -p 8080:8080 --env-file starter/${role}/.env usdt-pay-${role}`,
-    `docker build -t usdt-pay-${role} .\ndocker run -p 8080:8080 --env-file .env usdt-pay-${role}`,
+    `npm install                 # writes package-lock.json; the image installs from it\ndocker build -t usdt-pay-${role} .\ndocker run -p 8080:8080 --env-file .env usdt-pay-${role}`,
   );
 
   writeFileSync(path, content);

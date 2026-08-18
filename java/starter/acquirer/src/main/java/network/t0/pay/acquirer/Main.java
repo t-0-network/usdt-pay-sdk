@@ -12,8 +12,10 @@ import network.t0.sdk.network.BlockingNetworkClient;
 import network.t0.pay.server.UsdtPayServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -39,6 +41,14 @@ public final class Main {
             Pattern.compile("(0x)?[0-9a-fA-F]{130}");
 
     public static void main(String[] args) {
+        // First, before anything logs: grpc-java logs through java.util.logging, which
+        // logback does not intercept on its own — its records bypass logback.xml
+        // entirely and print in raw JUL format, levels and all. Dropping the JDK's own
+        // root handler and installing the bridge is what makes the io.grpc level in
+        // logback.xml mean something.
+        SLF4JBridgeHandler.removeHandlersForRootLogger();
+        SLF4JBridgeHandler.install();
+
         try {
             run();
         } catch (ConfigurationException e) {
@@ -128,7 +138,8 @@ public final class Main {
         // from the directory holding your .env. Say where we looked — otherwise a
         // .env one directory up looks exactly like a .env that is not filled in.
         Path env = Path.of(".env").toAbsolutePath();
-        if (!Files.exists(env)) {
+        boolean hasEnvFile = Files.exists(env);
+        if (!hasEnvFile) {
             log.info("No .env at {} — taking configuration from the environment instead", env);
         }
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
@@ -136,12 +147,20 @@ public final class Main {
         String privateKey = dotenv.get("PRIVATE_KEY");
         String networkPublicKey = dotenv.get("NETWORK_PUBLIC_KEY");
         String endpoint = dotenv.get("TZERO_ENDPOINT", "https://usdt-pay-api-sandbox.t-0.network");
-        int port = Integer.parseInt(dotenv.get("PORT", "8080"));
 
         if (privateKey == null || privateKey.isBlank()) {
+            // Never "copy the example over it". A scaffolded project's .env already
+            // holds the generated key, its public half is with the t-0 team, and the
+            // private half exists nowhere else — overwriting it ends the integration.
+            // With no .env in sight the likelier cause is the working directory, since
+            // that is where it is read from.
             throw new ConfigurationException(
                     "PRIVATE_KEY is not set",
-                    "Copy .env.example to .env and put your acquirer private key in PRIVATE_KEY.");
+                    hasEnvFile
+                            ? "Add it to " + env + ", editing that file in place."
+                            : "There is no .env here. Run this from your project directory, whose "
+                                    + ".env holds the key generated for you — or, in a project you "
+                                    + "built by hand, set PRIVATE_KEY in the environment.");
         }
 
         if (networkPublicKey == null || networkPublicKey.isBlank()) {
@@ -161,7 +180,30 @@ public final class Main {
                             + networkPublicKey.length() + " characters.");
         }
 
+        // Last, so the keys — which nobody can guess for you — are reported before a
+        // setting that has a working default.
+        int port = parsePort(dotenv.get("PORT", "8080"));
+
         return new Config(privateKey, networkPublicKey, endpoint, port);
+    }
+
+    /**
+     * Checked here so a typo reports as configuration. Left to {@code Integer.parseInt}
+     * it surfaces as a NumberFormatException under "Acquirer failed to start", which
+     * names neither the setting nor the value.
+     */
+    private static int parsePort(String value) {
+        try {
+            int port = Integer.parseInt(value.trim());
+            if (port >= 1 && port <= 65535) {
+                return port;
+            }
+        } catch (NumberFormatException e) {
+            // Same error as out-of-range: to whoever set PORT it is the same mistake.
+        }
+        throw new ConfigurationException(
+                "PORT is not a valid port number: " + value,
+                "Set PORT to an integer between 1 and 65535, or leave it unset for 8080.");
     }
 
     private static UsdtPayServer startCallbackServer(Config config) {
@@ -173,6 +215,17 @@ public final class Main {
             log.info("Callback server listening on port {}", server.getPort());
             return server;
         } catch (IOException e) {
+            // grpc wraps the bind failure, so the BindException sits two levels down
+            // rather than being what we caught. Worth digging out: 8080 is the busiest
+            // port on a developer's laptop, and the netty frames under it say nothing
+            // the port number does not.
+            for (Throwable cause = e; cause != null; cause = cause.getCause()) {
+                if (cause instanceof BindException) {
+                    throw new ConfigurationException(
+                            "Port " + config.port() + " is already in use",
+                            "Something else is listening on it. Set PORT in .env to a free port.");
+                }
+            }
             throw new RuntimeException("Failed to start the callback server", e);
         }
     }

@@ -4,16 +4,18 @@ You reserve deposit addresses, watch the chain for the customer's USDt, and sett
 on-chain. One inbound endpoint, three outbound calls — all three driven by what you
 observe on-chain, none by a timer.
 
-The §-numbers (§5, §6, …) are shorthand for the endpoints; the table below maps each
-to its RPC name. This README says what to build — for what every field and decline
-code means, see the
+The §-numbers (§5, §6, …) are shorthand for the endpoints; the table under
+[What you implement](#what-you-implement) maps each to its RPC name. This README says
+what to build — for what every field and decline code means, see the
 [issuer API reference](https://usdt-pay-docs.t-0.network/docs/integration-guidance/api-reference/pay_issuer/).
 
 ## Prerequisites
 
 - Node 22+.
 - A secp256k1 private key. Any 32 random bytes will do: `openssl rand -hex 32`.
-- The t-0 network public key, from the t-0 team.
+- The t-0 network public key — an uncompressed secp256k1 key, `0x04…` and 130 hex
+  digits. It comes from your t-0 onboarding contact, along with a `TZERO_ENDPOINT`
+  you can reach.
 
 ## Run it
 
@@ -53,10 +55,14 @@ an echo of its own input.
 
 ### Phase 1 — server
 
-1. **1.1** Put your private key in `.env`, start the app, see it print your public key.
-2. **1.2** Send that public key to the t-0 team, and give them the base URL where
-   this service listens. §5 is synchronous and on the critical path — if t-0 cannot
-   reach you, no intent can be opened.
+1. **1.1** With `PRIVATE_KEY` set in `.env`, start the app and see it print your public key.
+2. **1.2** Send that public key to your t-0 onboarding contact, together with the
+   base URL where this service listens. Onboarding runs through the contact you
+   already have at t-0 — there is no self-service channel, and the same exchange is
+   where `NETWORK_PUBLIC_KEY` comes back to you. §5 is synchronous and on the
+   critical path: if t-0 cannot reach that URL, no intent can be opened, so a laptop
+   on `localhost:8080` needs a tunnel or a deployed host before this step means
+   anything.
 
 ### Phase 2 — the one inbound endpoint
 
@@ -92,11 +98,12 @@ are real and stay as they are — it is the deposit addresses that must become y
 Wire your chain watcher to these; nothing here belongs on a timer.
 
 1. **3.1** §6 `reportPaymentReceived` — the transfer is final and KYT-cleared. This
-   is what authorizes the sale: t-0 fires §7 to the acquirer off it, and from that
-   moment you own the on-chain risk and are obligated to settle. `amountUsdt` must
-   equal the intent's stored amount exactly, so pass through the `Decimal` §5 handed
-   you rather than rebuilding it. A payment in the wrong amount, or one that arrived
-   after expiry, is yours to refund and never becomes the acquirer's problem.
+   is what authorizes the sale: t-0 fires §7 `PaymentAuthorized` to the acquirer off
+   it, and from that moment you own the on-chain risk and are obligated to settle.
+   `amountUsdt` must equal the intent's stored amount exactly, so pass through the
+   `Decimal` §5 handed you rather than rebuilding it. A payment in the wrong amount,
+   or one that arrived after expiry, is yours to refund and never becomes the
+   acquirer's problem.
 2. **3.2** §9 `reportSettlementSent` — after you broadcast a settlement transfer,
    report it with the transfer's own id as `settlementRef`. On
    `ON_CHAIN_UNCONFIRMED`, resend the same ref once it confirms. Never broadcast a

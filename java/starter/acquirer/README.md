@@ -4,9 +4,9 @@ You own the merchant relationship. Your POS asks you to price a sale, you open a
 payment intent with t-0, you show the customer a QR, and you learn from t-0's
 callbacks whether the sale was authorized and when it settled.
 
-The §-numbers (§3, §7, …) are shorthand for the endpoints; the table below maps each
-to its RPC name. This README says what to build — for what every field and decline
-code means, see the
+The §-numbers (§3, §7, …) are shorthand for the endpoints; the table under
+[What you implement](#what-you-implement) maps each to its RPC name. This README says
+what to build — for what every field and decline code means, see the
 [acquirer API reference](https://usdt-pay-docs.t-0.network/docs/integration-guidance/api-reference/pay_acquirer/).
 
 ## Prerequisites
@@ -14,7 +14,9 @@ code means, see the
 - Java 21+. If your JDK is older the Gradle build still works — it provisions a 21
   toolchain on its own — but the binary it produces needs a 21 runtime.
 - A secp256k1 private key. Any 32 random bytes will do: `openssl rand -hex 32`.
-- The t-0 network public key, from the t-0 team.
+- The t-0 network public key — an uncompressed secp256k1 key, `0x04…` and 130 hex
+  digits. It comes from your t-0 onboarding contact, along with a `TZERO_ENDPOINT`
+  you can reach.
 
 ## Run it
 
@@ -29,7 +31,10 @@ cp .env.example .env      # then fill in PRIVATE_KEY and NETWORK_PUBLIC_KEY
 ```
 
 It prints your public key, starts the callback server, and runs one demo sale
-through §3 → §4.
+through §3 → §4. That demo is a **fiat-mode** sale: if you settle in USDt you skip §3
+entirely and set your own rate on §4, so do not read your own first call off it —
+[What you implement](#what-you-implement) says which half is yours. `./gradlew test`
+runs the starter's own tests.
 
 ## What you implement
 
@@ -51,9 +56,11 @@ Your settlement mode is fixed at onboarding and decides which half you need.
 
 ### Phase 1 — keys and server
 
-1. **1.1** Put your private key in `.env`, start the app, see it print your public key.
-2. **1.2** Send that public key to the t-0 team. Until they have it, every call you
-   make is rejected.
+1. **1.1** With `PRIVATE_KEY` set in `.env`, start the app and see it print your public key.
+2. **1.2** Send that public key to your t-0 onboarding contact. Until they have it,
+   every call you make is rejected. Onboarding runs through the contact you already
+   have at t-0 — there is no self-service channel, and the same exchange is where
+   `NETWORK_PUBLIC_KEY` comes back to you.
 3. **1.3** Confirm the callback server came up on `PORT`.
 
 ### Phase 2 — quote → intent
@@ -64,12 +71,18 @@ Your settlement mode is fixed at onboarding and decides which half you need.
    straight to §4 with your own rate.
 2. **2.2** Mint `paymentRef` and `idempotencyKey` when the sale is created rather
    than at call time, and persist the returned `paymentIntentId` against the sale.
-   `paymentRef` is your sale's correlation ref — t-0 echoes it on §7 and §15 and does
-   not require it to be unique; `idempotencyKey` is what §4 is keyed on. Render each
+   `paymentRef` is your sale's correlation ref — t-0 echoes it on §7 and §15, and it
+   is explicitly **not** an idempotency key and not required to be unique.
+   `idempotencyKey` is the only thing §4 is keyed on: at most one intent is ever
+   created under one key, repeating a key returns that intent unchanged, and retrying
+   a *declined* sale takes a fresh key under the same `paymentRef`. Keying §4 on
+   `paymentRef` opens a second intent on every retry. Render each
    `qrOptions[].renderablePayload` as a QR image **as-is** — it is chain-native, and
    rebuilding it from the address and the amount is how you end up with a QR that
    pays the wrong thing.
-3. **2.3** Deploy and give the t-0 team your base URL so Phase 3 can reach you.
+3. **2.3** Deploy and give your t-0 onboarding contact the base URL Phase 3's
+   callbacks should reach. It has to be openable from outside, so a laptop on
+   `localhost:8080` needs a tunnel or a deployed host first.
 
 ### Phase 3 — callbacks
 

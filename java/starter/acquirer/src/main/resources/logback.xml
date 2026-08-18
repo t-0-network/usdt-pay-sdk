@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+    <!-- Pushes the levels below down into java.util.logging, so the JUL loggers grpc
+         uses stop building records logback would only drop. The bridge Main installs
+         is what routes those records here in the first place. -->
+    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator"/>
+
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>

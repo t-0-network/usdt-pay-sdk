@@ -42,9 +42,17 @@ export function loadConfig(): Config {
   const tzeroEndpoint = process.env.TZERO_ENDPOINT ?? "https://usdt-pay-api-sandbox.t-0.network";
 
   if (!privateKey?.trim()) {
+    // Never "copy .env.example to .env" here: a scaffolded project's .env already holds
+    // the key the scaffolder generated, its public half is already with the t-0 team,
+    // and the private half exists nowhere else. Reaching this line means the .env was
+    // not read — nearly always the working directory, since dotenv looks there and
+    // nowhere up the tree — or a project that genuinely has none yet.
     throw new ConfigurationError(
       "PRIVATE_KEY is not set",
-      "Copy .env.example to .env and put your issuer private key in PRIVATE_KEY.",
+      `.env is read from the working directory, and we looked in ${envPath}. Run the app ` +
+        "from the directory holding your .env, or set PRIVATE_KEY in the environment. " +
+        "Only a project with no .env at all starts one from .env.example — an existing " +
+        ".env holds the key generated for you, and its private half is not recoverable.",
     );
   }
 
