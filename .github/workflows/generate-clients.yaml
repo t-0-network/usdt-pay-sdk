@@ -1,0 +1,51 @@
+name: Generate Clients
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - "proto/**"
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    # Trigger only if the PR is opened or synchronized by T-0 CI APP (sync proto files)
+    if: github.event.pull_request.user.login == 't-0-ci[bot]'
+
+    steps:
+      # An App token, not GITHUB_TOKEN: a GITHUB_TOKEN push does not retrigger
+      # workflows, and ci.yaml re-running on the regenerated head SHA is the whole
+      # verification story for an incoming sync.
+      - name: Generate GitHub APP Token
+        uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          client-id: ${{ vars.CI_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: usdt-pay-sdk
+          permission-contents: write
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          show-progress: false
+          token: ${{ steps.app-token.outputs.token }}
+          ref: ${{ github.head_ref }}
+
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@v1
+
+      # No npm install: buf.gen.yaml uses a remote plugin and buf.yaml a remote dep,
+      # both resolved over the network. Java needs nothing — its protos are a symlink
+      # to the same tree and ./gradlew build regenerates every time.
+      - name: Generate clients
+        working-directory: node/sdk
+        run: buf generate
+
+      - name: Commit generated files
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: "Auto-generate gRPC clients"
+          file_pattern: "node/sdk/src/gen/**"
