@@ -160,15 +160,13 @@ minutes between tag and publish strands a tagged release that cannot be re-cut w
 dependency bump.
 
 ```
-preflight     build-java     build-node
-     \             |             /
-      \------------+------------/
-                   |
-           publish-node-sdk
-                   |
-         publish-node-starter
-                   |
-              publish-java
+    preflight            build-java            build-node
+         \                    |                    /
+          \-------------------+-------------------/
+                              |
+          /-------------------+-------------------\
+         /                    |                    \
+publish-node-sdk    publish-node-starter    publish-java
 ```
 
 Nothing publishes until everything builds and the shared **`preflight`** job passes.
@@ -180,29 +178,13 @@ Nothing publishes until everything builds and the shared **`preflight`** job pas
 - `vars.OSSRH_USERNAME` / `secrets.OSSRH_PASSWORD` / `secrets.GPG_PRIVATE_KEY` are all non-empty;
 - both npm packages already exist on the registry — a trusted publisher can only be attached to a
   package that exists, so this is the [bootstrap](#before-the-first-release) having happened.
-  Necessary, not sufficient: it cannot see whether the trusted publisher is actually configured.
-  The job order covers the rest.
+  Necessary, not sufficient: it cannot see whether the trusted publisher is actually configured,
+  and nothing here can. A misconfigured one surfaces as a failed publish on that package's job
+  alone — before the upload, so nothing is spent.
 
 That it is *shared* is the point. Per-job preflights would let `publish-java` spend the Maven
 Central version while `publish-node` was still failing its visibility check — and a spent Central
 version cannot be un-spent. A prerequisite missing for either registry now stops both.
-
-### `publish-java` runs last, not in parallel
-
-Both registries are immutable, but they are not equally recoverable, and the risk of failing is
-not evenly spread between them:
-
-- **Everything fragile is on the npm side** — the OIDC exchange, the trusted-publisher config,
-  provenance's repo-visibility rule, the npm >= 11.5.1 floor. Java's side is bearer-token auth.
-- **An npm auth failure spends nothing anywhere.** It happens before the upload, so once the trust
-  config is fixed, *Re-run failed jobs* publishes the same version and the release converges with
-  no version burned.
-- **Maven Central has no unpublish, ever.** npm has deprecation and a 72-hour unpublish window.
-
-So the recoverable, likelier-to-fail registry goes first and the irreversible one goes last. Run
-in parallel, a missing trusted publisher would fail npm *while* Java spent the Central version —
-the half-release that cannot be undone. Sequenced, `publish-java` cannot start until both npm
-packages are published. The cost is a few minutes on a workflow that runs a few times a month.
 
 ### The npm packages publish from separate jobs
 
@@ -210,9 +192,6 @@ packages are published. The cost is a few minutes on a workflow that runs a few 
 npm refuses to replace a published version, so if both publishes lived in one job and the second
 failed, re-running that job would die on the *first* package's duplicate and never reach the one
 that still needed publishing. Split, each is independently re-runnable.
-
-`publish-node-starter` needs `publish-node-sdk` — a scaffolder on the registry whose SDK pin
-resolves to nothing is a worse state to be stuck in than an SDK with no scaffolder yet.
 
 ### Both npm jobs
 
@@ -354,8 +333,10 @@ What a failure costs depends on where it happened, and the two cases are not the
 - **The publish landed and something after it failed.** That version is spent. If the fix needs a
   new commit, recovery is a new patch release, decided deliberately — not a re-run.
 
-The job order exists to keep the first case the likely one: see
-[`publish-java` runs last](#publish-java-runs-last-not-in-parallel).
+The three publish jobs are independent — one failing does not stop the others — so a partial
+release across registries is possible in either direction: npm published and Central not, or the
+reverse. Neither is worse than the other to sit in, and both recover the same way, with *Re-run
+failed jobs* at the same version.
 
 **Re-running after a partial success:** use *Re-run failed jobs*, never *Re-run all jobs* — the
 latter re-enters a publish that already succeeded and fails on the duplicate. Because each npm

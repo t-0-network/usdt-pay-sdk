@@ -218,11 +218,13 @@ jobs:
         working-directory: node/sdk
         run: npm publish --provenance --access public
 
-  # Needs the SDK to be on the registry first: a scaffolder whose SDK pin resolves to
-  # nothing is a worse state to be stuck in than an SDK with no scaffolder yet.
+  # Independent of publish-node-sdk, like every other publish job here. The accepted
+  # cost: the scaffolder can reach the registry before the SDK does, so if the SDK
+  # publish fails, `npx @t-0/usdt-pay-starter-ts` scaffolds a project whose install
+  # 404s on the `^X.Y.Z` pin until *Re-run failed jobs* lands the SDK.
   publish-node-starter:
     name: Publish Node starter
-    needs: [publish-node-sdk]
+    needs: [preflight, build-java, build-node]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -359,14 +361,9 @@ jobs:
         working-directory: node/cli
         run: npm publish --provenance --access public
 
-  # Last, deliberately — not in parallel with the npm jobs. Both registries are
-  # immutable, but they are not equally recoverable: npm allows an unpublish inside 72
-  # hours, a Maven Central release never comes back. Publishing the recoverable
-  # registry first means a failure on the fragile side (OIDC, trusted publishers, repo
-  # visibility) costs nothing, instead of stranding Java at a version npm never reached.
   publish-java:
     name: Publish Java
-    needs: [publish-node-starter]
+    needs: [preflight, build-java, build-node]
     runs-on: ubuntu-latest
     steps:
       - name: Generate GitHub App token
