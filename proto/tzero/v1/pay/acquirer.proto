@@ -364,7 +364,7 @@ message SettlementInitiatedRequest {
     }
   ];
 
-  /** Intended recipient. The Acquirer must reject a request whose id is not its own. */
+  /** t-0's id for the Acquirer this settlement is addressed to. */
   uint64 acquirer_id = 70 [(buf.validate.field).uint64.gt = 0];
 
   /** Moment t-0 accepted the LP's fiat-settlement report. */
@@ -401,12 +401,11 @@ message SettlementCompletedRequest {
 
 message SettlementCompletedResponse {}
 
-// `PaymentExpired` is also a method on IssuerService in this flat
-// package, so the request/response carry a role prefix to avoid a colliding
-// `PaymentExpiredRequest`. Interim name: buf STANDARD RPC_REQUEST_STANDARD_NAME
-// accepts only bare `PaymentExpiredRequest` or the full
-// `AcquirerCallbackServicePaymentExpiredRequest`, so this short form needs a
-// lint ignore at graduation (or rename the method).
+/**
+ * PaymentExpired exists on both the acquirer and issuer edges of this flat package,
+ * so each side's request and response carry their role as a prefix. This is the
+ * acquirer's.
+ */
 message AcquirerPaymentExpiredRequest {
   /** Intent that expired. */
   uint64 payment_intent_id = 10 [(buf.validate.field).uint64.gt = 0];
