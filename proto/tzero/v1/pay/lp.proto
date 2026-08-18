@@ -25,18 +25,21 @@ service LpService {
     option idempotency_level = IDEMPOTENT;
   }
 
-  /** Reports a fiat bank-rails settlement the LP made on its own initiative against locked executions. */
+  /**
+   * Reports a fiat bank-rails settlement the LP made on its own initiative against accepted quote executions.
+   * An execution still awaiting its durable result returns FAILED_PRECONDITION; retry the same request.
+   */
   rpc FiatSettlementSent(FiatSettlementSentRequest) returns (FiatSettlementSentResponse) {
     option idempotency_level = IDEMPOTENT;
   }
 }
 
 /**
- * LP-implemented endpoint t-0 calls to bind the LP to a standing quote's locked
- * rate for one authorized sale. Fiat mode only.
+ * LP-implemented endpoint t-0 calls to request the LP's durable decision on a
+ * standing quote execution for one authorized sale. Fiat mode only.
  */
 service LpCallbackService {
-  /** Creates the LP's firm per-sale obligation at the standing quote's locked rate. */
+  /** Requests a durable Accepted or Rejected result; only Accepted creates the LP's firm per-sale obligation. */
   rpc ExecuteQuote(ExecuteQuoteRequest) returns (ExecuteQuoteResponse) {
     option idempotency_level = IDEMPOTENT;
   }
@@ -68,7 +71,7 @@ message PublishQuoteRequest {
       pattern: "^[A-Z]{3}$"
     }];
 
-    /** Rate committed, in units of local_currency per 1 USDt. */
+    /** Published rate, in units of local_currency per 1 USDt. */
     Decimal fx_rate = 30 [
       (buf.validate.field).required = true,
       (buf.validate.field).cel = {
@@ -144,10 +147,19 @@ message WithdrawQuoteResponse {
 
 message FiatSettlementSentRequest {
   /** Reference on the bank-rails transfer; idempotency key, unique per LP. */
-  string bank_transfer_ref = 10 [(buf.validate.field).string = {min_len: 1}];
+  string bank_transfer_ref = 10 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 256
+  }];
 
-  /** Executions this settlement clears, in the LP's execution-space. */
-  repeated uint64 settled_execution_ids = 20 [(buf.validate.field).repeated = {min_items: 1}];
+  /** Accepted executions this settlement clears, treated as a set (duplicates collapse, order is not significant). */
+  repeated uint64 settled_execution_ids = 20 [
+    (buf.validate.field).repeated.min_items = 1,
+    (buf.validate.field).repeated.items.uint64 = {
+      gt: 0
+      lte: 9223372036854775807
+    }
+  ];
 
   /** ISO 4217 currency delivered; matches the covered executions' currency. */
   string local_currency = 30 [(buf.validate.field).string = {
@@ -163,9 +175,6 @@ message FiatSettlementSentRequest {
       expression: "this.unscaled > 0"
     }
   ];
-
-  /** Acquirer's registered bank destination the fiat was sent to. */
-  string destination_account = 50 [(buf.validate.field).string = {min_len: 1}];
 
   /** Moment the LP released the bank-rails transfer. */
   google.protobuf.Timestamp settled_at = 60 [(buf.validate.field).required = true];
@@ -183,12 +192,9 @@ message FiatSettlementSentResponse {
   message Rejected {
     Reason reason = 10 [(buf.validate.field).enum.not_in = 0];
 
-    /** Executions that failed validation against t-0's ledger. */
-    repeated uint64 failing_execution_ids = 20;
-
     enum Reason {
       REASON_UNSPECIFIED = 0;
-      // A listed execution was never created for this LP.
+      // A listed execution was never created for this LP or has a durable Rejected result; do not settle it.
       REASON_EXECUTION_UNKNOWN = 10;
       // A listed execution is already covered by an accepted settlement.
       REASON_EXECUTION_ALREADY_COVERED = 20;
@@ -196,10 +202,11 @@ message FiatSettlementSentResponse {
       REASON_CURRENCY_MISMATCH = 30;
       // settlement_amount does not equal the covered executions' sum.
       REASON_AMOUNT_MISMATCH = 40;
-      // destination_account is not the Acquirer's registered bank destination.
-      REASON_DESTINATION_MISMATCH = 50;
       // The covered executions span more than one Acquirer (one transfer credits one account).
       REASON_ACQUIRER_MIXED = 60;
+      // bank_transfer_ref is already settled with different content; a genuinely different
+      // money movement is reported under a different reference.
+      REASON_BANK_TRANSFER_REF_CONFLICT = 70;
     }
   }
 }
@@ -207,7 +214,7 @@ message FiatSettlementSentResponse {
 // ── LpCallbackService ───────────────────────────────────────────────────────
 
 message ExecuteQuoteRequest {
-  /** t-0's id for this execution; idempotency key and the LP's obligation handle. */
+  /** t-0's id for this execution command; idempotency key and, after Accepted, the LP's obligation handle. */
   uint64 execution_id = 10 [(buf.validate.field).uint64.gt = 0];
 
   /** t-0's id for the standing quote this execution is under. */
@@ -220,7 +227,7 @@ message ExecuteQuoteRequest {
    */
   string quote_ref = 30 [(buf.validate.field).string = {min_len: 1}];
 
-  /** t-0's stable id for the Acquirer; the LP resolves the registered bank destination from it. */
+  /** t-0's stable id for the Acquirer whose local-fiat obligation is being executed. */
   uint64 acquirer_id = 40 [(buf.validate.field).uint64.gt = 0];
 
   /** Fiat amount owed to the Acquirer for this sale, in the standing quote's currency. */
@@ -241,8 +248,41 @@ message ExecuteQuoteRequest {
     }
   ];
 
-  /** Moment t-0 bound the LP to this execution. */
+  /** Moment t-0 created this durable execution command at authorization. */
   google.protobuf.Timestamp executed_at = 70 [(buf.validate.field).required = true];
 }
 
-message ExecuteQuoteResponse {}
+/** The LP's durable decision on one ExecuteQuote command. */
+message ExecuteQuoteResponse {
+  /** The LP's final business decision. */
+  oneof result {
+    option (buf.validate.oneof).required = true;
+    /** The LP accepts the execution. */
+    Accepted accepted = 10;
+    /** The LP declines the execution. */
+    Rejected rejected = 20;
+  }
+
+  /** Acceptance creates the LP's firm per-sale obligation. */
+  message Accepted {}
+
+  /** Rejection leaves the payment intent authorized for manual handling. */
+  message Rejected {
+    /** Stable business classification for declining the command. */
+    Reason reason = 10 [(buf.validate.field).enum.not_in = 0];
+
+    /** Human-readable business details for declining the command. */
+    string details = 20 [(buf.validate.field).string = {
+      min_len: 1
+      max_len: 1024
+      pattern: ".*\\S.*"
+    }];
+
+    enum Reason {
+      REASON_UNSPECIFIED = 0;
+      // The LP declines for a business reason not otherwise classified; t-0
+      // persists details and routes the authorized payment to manual handling.
+      REASON_OTHER = 10;
+    }
+  }
+}

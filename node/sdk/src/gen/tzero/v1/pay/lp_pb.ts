@@ -19,7 +19,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file tzero/v1/pay/lp.proto.
  */
 export const file_tzero_v1_pay_lp: GenFile = /*@__PURE__*/
-  fileDesc("ChV0emVyby92MS9wYXkvbHAucHJvdG8SDHR6ZXJvLnYxLnBheSLRAgoTUHVibGlzaFF1b3RlUmVxdWVzdBJDCgZxdW90ZXMYCiADKAsyJy50emVyby52MS5wYXkuUHVibGlzaFF1b3RlUmVxdWVzdC5RdW90ZUIKukgHkgEECAEQZBr0AQoFUXVvdGUSHAoJcXVvdGVfcmVmGAogASgJQgm6SAZyBBABGEASLAoObG9jYWxfY3VycmVuY3kYFCABKAlCFLpIEXIPMgpeW0EtWl17M30kmAEDEmcKB2Z4X3JhdGUYHiABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEI/ukg8ugE2EiFmeF9yYXRlIG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBEjYKCmV4cGlyZXNfYXQYKCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEi5wMKFFB1Ymxpc2hRdW90ZVJlc3BvbnNlEj0KB3N1Y2Nlc3MYCiABKAsyKi50emVyby52MS5wYXkuUHVibGlzaFF1b3RlUmVzcG9uc2UuU3VjY2Vzc0gAEj0KB2ZhaWx1cmUYFCABKAsyKi50emVyby52MS5wYXkuUHVibGlzaFF1b3RlUmVzcG9uc2UuRmFpbHVyZUgAGqcBCgdTdWNjZXNzElMKBnF1b3RlcxgKIAMoCzI5LnR6ZXJvLnYxLnBheS5QdWJsaXNoUXVvdGVSZXNwb25zZS5TdWNjZXNzLlB1Ymxpc2hlZFF1b3RlQgi6SAWSAQIIARpHCg5QdWJsaXNoZWRRdW90ZRIaCglxdW90ZV9yZWYYCiABKAlCB7pIBHICEAESGQoIcXVvdGVfaWQYFCABKARCB7pIBDICIAAalQEKB0ZhaWx1cmUSSwoGcmVhc29uGAogASgOMjEudHplcm8udjEucGF5LlB1Ymxpc2hRdW90ZVJlc3BvbnNlLkZhaWx1cmUuUmVhc29uQgi6SAWCAQIgACI9CgZSZWFzb24SFgoSUkVBU09OX1VOU1BFQ0lGSUVEEAASGwoXUkVBU09OX1ZBTElESVRZX0lOVkFMSUQQHkIPCgZyZXN1bHQSBbpIAggBIjEKFFdpdGhkcmF3UXVvdGVSZXF1ZXN0EhkKCHF1b3RlX2lkGAogASgEQge6SAQyAiAAIskCChVXaXRoZHJhd1F1b3RlUmVzcG9uc2USPgoHc3VjY2VzcxgKIAEoCzIrLnR6ZXJvLnYxLnBheS5XaXRoZHJhd1F1b3RlUmVzcG9uc2UuU3VjY2Vzc0gAEj4KB2ZhaWx1cmUYFCABKAsyKy50emVyby52MS5wYXkuV2l0aGRyYXdRdW90ZVJlc3BvbnNlLkZhaWx1cmVIABoJCgdTdWNjZXNzGpMBCgdGYWlsdXJlEkwKBnJlYXNvbhgKIAEoDjIyLnR6ZXJvLnYxLnBheS5XaXRoZHJhd1F1b3RlUmVzcG9uc2UuRmFpbHVyZS5SZWFzb25CCLpIBYIBAiAAIjoKBlJlYXNvbhIWChJSRUFTT05fVU5TUEVDSUZJRUQQABIYChRSRUFTT05fUVVPVEVfVU5LTk9XThAKQg8KBnJlc3VsdBIFukgCCAEi8QIKGUZpYXRTZXR0bGVtZW50U2VudFJlcXVlc3QSIgoRYmFua190cmFuc2Zlcl9yZWYYCiABKAlCB7pIBHICEAESJwoVc2V0dGxlZF9leGVjdXRpb25faWRzGBQgAygEQgi6SAWSAQIIARIsCg5sb2NhbF9jdXJyZW5jeRgeIAEoCUIUukgRcg8yCl5bQS1aXXszfSSYAQMSewoRc2V0dGxlbWVudF9hbW91bnQYKCABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEJJukhGugFAEitzZXR0bGVtZW50X2Ftb3VudCBtdXN0IGJlIGdyZWF0ZXIgdGhhbiB6ZXJvGhF0aGlzLnVuc2NhbGVkID4gMMgBARIkChNkZXN0aW5hdGlvbl9hY2NvdW50GDIgASgJQge6SARyAhABEjYKCnNldHRsZWRfYXQYPCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEipAQKGkZpYXRTZXR0bGVtZW50U2VudFJlc3BvbnNlEkUKCGFjY2VwdGVkGAogASgLMjEudHplcm8udjEucGF5LkZpYXRTZXR0bGVtZW50U2VudFJlc3BvbnNlLkFjY2VwdGVkSAASRQoIcmVqZWN0ZWQYFCABKAsyMS50emVyby52MS5wYXkuRmlhdFNldHRsZW1lbnRTZW50UmVzcG9uc2UuUmVqZWN0ZWRIABoKCghBY2NlcHRlZBraAgoIUmVqZWN0ZWQSUgoGcmVhc29uGAogASgOMjgudHplcm8udjEucGF5LkZpYXRTZXR0bGVtZW50U2VudFJlc3BvbnNlLlJlamVjdGVkLlJlYXNvbkIIukgFggECIAASHQoVZmFpbGluZ19leGVjdXRpb25faWRzGBQgAygEItoBCgZSZWFzb24SFgoSUkVBU09OX1VOU1BFQ0lGSUVEEAASHAoYUkVBU09OX0VYRUNVVElPTl9VTktOT1dOEAoSJAogUkVBU09OX0VYRUNVVElPTl9BTFJFQURZX0NPVkVSRUQQFBIcChhSRUFTT05fQ1VSUkVOQ1lfTUlTTUFUQ0gQHhIaChZSRUFTT05fQU1PVU5UX01JU01BVENIECgSHwobUkVBU09OX0RFU1RJTkFUSU9OX01JU01BVENIEDISGQoVUkVBU09OX0FDUVVJUkVSX01JWEVEEDxCDwoGcmVzdWx0EgW6SAIIASKmAwoTRXhlY3V0ZVF1b3RlUmVxdWVzdBIdCgxleGVjdXRpb25faWQYCiABKARCB7pIBDICIAASGQoIcXVvdGVfaWQYFCABKARCB7pIBDICIAASGgoJcXVvdGVfcmVmGB4gASgJQge6SARyAhABEhwKC2FjcXVpcmVyX2lkGCggASgEQge6SAQyAiAAEnEKDGxvY2FsX2Ftb3VudBgyIAEoCzIVLnR6ZXJvLnYxLnBheS5EZWNpbWFsQkS6SEG6ATsSJmxvY2FsX2Ftb3VudCBtdXN0IGJlIGdyZWF0ZXIgdGhhbiB6ZXJvGhF0aGlzLnVuc2NhbGVkID4gMMgBARJvCgthbW91bnRfdXNkdBg8IAEoCzIVLnR6ZXJvLnYxLnBheS5EZWNpbWFsQkO6SEC6AToSJWFtb3VudF91c2R0IG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBEjcKC2V4ZWN1dGVkX2F0GEYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBIhYKFEV4ZWN1dGVRdW90ZVJlc3BvbnNlMrQCCglMcFNlcnZpY2USWgoMUHVibGlzaFF1b3RlEiEudHplcm8udjEucGF5LlB1Ymxpc2hRdW90ZVJlcXVlc3QaIi50emVyby52MS5wYXkuUHVibGlzaFF1b3RlUmVzcG9uc2UiA5ACAhJdCg1XaXRoZHJhd1F1b3RlEiIudHplcm8udjEucGF5LldpdGhkcmF3UXVvdGVSZXF1ZXN0GiMudHplcm8udjEucGF5LldpdGhkcmF3UXVvdGVSZXNwb25zZSIDkAICEmwKEkZpYXRTZXR0bGVtZW50U2VudBInLnR6ZXJvLnYxLnBheS5GaWF0U2V0dGxlbWVudFNlbnRSZXF1ZXN0GigudHplcm8udjEucGF5LkZpYXRTZXR0bGVtZW50U2VudFJlc3BvbnNlIgOQAgIybwoRTHBDYWxsYmFja1NlcnZpY2USWgoMRXhlY3V0ZVF1b3RlEiEudHplcm8udjEucGF5LkV4ZWN1dGVRdW90ZVJlcXVlc3QaIi50emVyby52MS5wYXkuRXhlY3V0ZVF1b3RlUmVzcG9uc2UiA5ACAmIGcHJvdG8z", [file_buf_validate_validate, file_google_protobuf_timestamp, file_tzero_v1_pay_common]);
+  fileDesc("ChV0emVyby92MS9wYXkvbHAucHJvdG8SDHR6ZXJvLnYxLnBheSLRAgoTUHVibGlzaFF1b3RlUmVxdWVzdBJDCgZxdW90ZXMYCiADKAsyJy50emVyby52MS5wYXkuUHVibGlzaFF1b3RlUmVxdWVzdC5RdW90ZUIKukgHkgEECAEQZBr0AQoFUXVvdGUSHAoJcXVvdGVfcmVmGAogASgJQgm6SAZyBBABGEASLAoObG9jYWxfY3VycmVuY3kYFCABKAlCFLpIEXIPMgpeW0EtWl17M30kmAEDEmcKB2Z4X3JhdGUYHiABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEI/ukg8ugE2EiFmeF9yYXRlIG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBEjYKCmV4cGlyZXNfYXQYKCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEi5wMKFFB1Ymxpc2hRdW90ZVJlc3BvbnNlEj0KB3N1Y2Nlc3MYCiABKAsyKi50emVyby52MS5wYXkuUHVibGlzaFF1b3RlUmVzcG9uc2UuU3VjY2Vzc0gAEj0KB2ZhaWx1cmUYFCABKAsyKi50emVyby52MS5wYXkuUHVibGlzaFF1b3RlUmVzcG9uc2UuRmFpbHVyZUgAGqcBCgdTdWNjZXNzElMKBnF1b3RlcxgKIAMoCzI5LnR6ZXJvLnYxLnBheS5QdWJsaXNoUXVvdGVSZXNwb25zZS5TdWNjZXNzLlB1Ymxpc2hlZFF1b3RlQgi6SAWSAQIIARpHCg5QdWJsaXNoZWRRdW90ZRIaCglxdW90ZV9yZWYYCiABKAlCB7pIBHICEAESGQoIcXVvdGVfaWQYFCABKARCB7pIBDICIAAalQEKB0ZhaWx1cmUSSwoGcmVhc29uGAogASgOMjEudHplcm8udjEucGF5LlB1Ymxpc2hRdW90ZVJlc3BvbnNlLkZhaWx1cmUuUmVhc29uQgi6SAWCAQIgACI9CgZSZWFzb24SFgoSUkVBU09OX1VOU1BFQ0lGSUVEEAASGwoXUkVBU09OX1ZBTElESVRZX0lOVkFMSUQQHkIPCgZyZXN1bHQSBbpIAggBIjEKFFdpdGhkcmF3UXVvdGVSZXF1ZXN0EhkKCHF1b3RlX2lkGAogASgEQge6SAQyAiAAIskCChVXaXRoZHJhd1F1b3RlUmVzcG9uc2USPgoHc3VjY2VzcxgKIAEoCzIrLnR6ZXJvLnYxLnBheS5XaXRoZHJhd1F1b3RlUmVzcG9uc2UuU3VjY2Vzc0gAEj4KB2ZhaWx1cmUYFCABKAsyKy50emVyby52MS5wYXkuV2l0aGRyYXdRdW90ZVJlc3BvbnNlLkZhaWx1cmVIABoJCgdTdWNjZXNzGpMBCgdGYWlsdXJlEkwKBnJlYXNvbhgKIAEoDjIyLnR6ZXJvLnYxLnBheS5XaXRoZHJhd1F1b3RlUmVzcG9uc2UuRmFpbHVyZS5SZWFzb25CCLpIBYIBAiAAIjoKBlJlYXNvbhIWChJSRUFTT05fVU5TUEVDSUZJRUQQABIYChRSRUFTT05fUVVPVEVfVU5LTk9XThAKQg8KBnJlc3VsdBIFukgCCAEi3gIKGUZpYXRTZXR0bGVtZW50U2VudFJlcXVlc3QSJQoRYmFua190cmFuc2Zlcl9yZWYYCiABKAlCCrpIB3IFEAEYgAISNwoVc2V0dGxlZF9leGVjdXRpb25faWRzGBQgAygEQhi6SBWSARIIASIOMgwY//////////9/IAASLAoObG9jYWxfY3VycmVuY3kYHiABKAlCFLpIEXIPMgpeW0EtWl17M30kmAEDEnsKEXNldHRsZW1lbnRfYW1vdW50GCggASgLMhUudHplcm8udjEucGF5LkRlY2ltYWxCSbpIRroBQBIrc2V0dGxlbWVudF9hbW91bnQgbXVzdCBiZSBncmVhdGVyIHRoYW4gemVybxoRdGhpcy51bnNjYWxlZCA+IDDIAQESNgoKc2V0dGxlZF9hdBg8IAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASKLBAoaRmlhdFNldHRsZW1lbnRTZW50UmVzcG9uc2USRQoIYWNjZXB0ZWQYCiABKAsyMS50emVyby52MS5wYXkuRmlhdFNldHRsZW1lbnRTZW50UmVzcG9uc2UuQWNjZXB0ZWRIABJFCghyZWplY3RlZBgUIAEoCzIxLnR6ZXJvLnYxLnBheS5GaWF0U2V0dGxlbWVudFNlbnRSZXNwb25zZS5SZWplY3RlZEgAGgoKCEFjY2VwdGVkGsECCghSZWplY3RlZBJSCgZyZWFzb24YCiABKA4yOC50emVyby52MS5wYXkuRmlhdFNldHRsZW1lbnRTZW50UmVzcG9uc2UuUmVqZWN0ZWQuUmVhc29uQgi6SAWCAQIgACLgAQoGUmVhc29uEhYKElJFQVNPTl9VTlNQRUNJRklFRBAAEhwKGFJFQVNPTl9FWEVDVVRJT05fVU5LTk9XThAKEiQKIFJFQVNPTl9FWEVDVVRJT05fQUxSRUFEWV9DT1ZFUkVEEBQSHAoYUkVBU09OX0NVUlJFTkNZX01JU01BVENIEB4SGgoWUkVBU09OX0FNT1VOVF9NSVNNQVRDSBAoEhkKFVJFQVNPTl9BQ1FVSVJFUl9NSVhFRBA8EiUKIVJFQVNPTl9CQU5LX1RSQU5TRkVSX1JFRl9DT05GTElDVBBGQg8KBnJlc3VsdBIFukgCCAEipgMKE0V4ZWN1dGVRdW90ZVJlcXVlc3QSHQoMZXhlY3V0aW9uX2lkGAogASgEQge6SAQyAiAAEhkKCHF1b3RlX2lkGBQgASgEQge6SAQyAiAAEhoKCXF1b3RlX3JlZhgeIAEoCUIHukgEcgIQARIcCgthY3F1aXJlcl9pZBgoIAEoBEIHukgEMgIgABJxCgxsb2NhbF9hbW91bnQYMiABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEJEukhBugE7EiZsb2NhbF9hbW91bnQgbXVzdCBiZSBncmVhdGVyIHRoYW4gemVybxoRdGhpcy51bnNjYWxlZCA+IDDIAQESbwoLYW1vdW50X3VzZHQYPCABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEJDukhAugE6EiVhbW91bnRfdXNkdCBtdXN0IGJlIGdyZWF0ZXIgdGhhbiB6ZXJvGhF0aGlzLnVuc2NhbGVkID4gMMgBARI3CgtleGVjdXRlZF9hdBhGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASLpAgoURXhlY3V0ZVF1b3RlUmVzcG9uc2USPwoIYWNjZXB0ZWQYCiABKAsyKy50emVyby52MS5wYXkuRXhlY3V0ZVF1b3RlUmVzcG9uc2UuQWNjZXB0ZWRIABI/CghyZWplY3RlZBgUIAEoCzIrLnR6ZXJvLnYxLnBheS5FeGVjdXRlUXVvdGVSZXNwb25zZS5SZWplY3RlZEgAGgoKCEFjY2VwdGVkGrEBCghSZWplY3RlZBJMCgZyZWFzb24YCiABKA4yMi50emVyby52MS5wYXkuRXhlY3V0ZVF1b3RlUmVzcG9uc2UuUmVqZWN0ZWQuUmVhc29uQgi6SAWCAQIgABIjCgdkZXRhaWxzGBQgASgJQhK6SA9yDRABGIAIMgYuKlxTLioiMgoGUmVhc29uEhYKElJFQVNPTl9VTlNQRUNJRklFRBAAEhAKDFJFQVNPTl9PVEhFUhAKQg8KBnJlc3VsdBIFukgCCAEytAIKCUxwU2VydmljZRJaCgxQdWJsaXNoUXVvdGUSIS50emVyby52MS5wYXkuUHVibGlzaFF1b3RlUmVxdWVzdBoiLnR6ZXJvLnYxLnBheS5QdWJsaXNoUXVvdGVSZXNwb25zZSIDkAICEl0KDVdpdGhkcmF3UXVvdGUSIi50emVyby52MS5wYXkuV2l0aGRyYXdRdW90ZVJlcXVlc3QaIy50emVyby52MS5wYXkuV2l0aGRyYXdRdW90ZVJlc3BvbnNlIgOQAgISbAoSRmlhdFNldHRsZW1lbnRTZW50EicudHplcm8udjEucGF5LkZpYXRTZXR0bGVtZW50U2VudFJlcXVlc3QaKC50emVyby52MS5wYXkuRmlhdFNldHRsZW1lbnRTZW50UmVzcG9uc2UiA5ACAjJvChFMcENhbGxiYWNrU2VydmljZRJaCgxFeGVjdXRlUXVvdGUSIS50emVyby52MS5wYXkuRXhlY3V0ZVF1b3RlUmVxdWVzdBoiLnR6ZXJvLnYxLnBheS5FeGVjdXRlUXVvdGVSZXNwb25zZSIDkAICYgZwcm90bzM", [file_buf_validate_validate, file_google_protobuf_timestamp, file_tzero_v1_pay_common]);
 
 /**
  * @generated from message tzero.v1.pay.PublishQuoteRequest
@@ -62,7 +62,7 @@ export type PublishQuoteRequest_Quote = Message<"tzero.v1.pay.PublishQuoteReques
   localCurrency: string;
 
   /**
-   * * Rate committed, in units of local_currency per 1 USDt. 
+   * * Published rate, in units of local_currency per 1 USDt. 
    *
    * @generated from field: tzero.v1.pay.Decimal fx_rate = 30;
    */
@@ -313,7 +313,7 @@ export type FiatSettlementSentRequest = Message<"tzero.v1.pay.FiatSettlementSent
   bankTransferRef: string;
 
   /**
-   * * Executions this settlement clears, in the LP's execution-space. 
+   * * Accepted executions this settlement clears, treated as a set (duplicates collapse, order is not significant). 
    *
    * @generated from field: repeated uint64 settled_execution_ids = 20;
    */
@@ -332,13 +332,6 @@ export type FiatSettlementSentRequest = Message<"tzero.v1.pay.FiatSettlementSent
    * @generated from field: tzero.v1.pay.Decimal settlement_amount = 40;
    */
   settlementAmount?: Decimal | undefined;
-
-  /**
-   * * Acquirer's registered bank destination the fiat was sent to. 
-   *
-   * @generated from field: string destination_account = 50;
-   */
-  destinationAccount: string;
 
   /**
    * * Moment the LP released the bank-rails transfer. 
@@ -405,13 +398,6 @@ export type FiatSettlementSentResponse_Rejected = Message<"tzero.v1.pay.FiatSett
    * @generated from field: tzero.v1.pay.FiatSettlementSentResponse.Rejected.Reason reason = 10;
    */
   reason: FiatSettlementSentResponse_Rejected_Reason;
-
-  /**
-   * * Executions that failed validation against t-0's ledger. 
-   *
-   * @generated from field: repeated uint64 failing_execution_ids = 20;
-   */
-  failingExecutionIds: bigint[];
 };
 
 /**
@@ -431,7 +417,7 @@ export enum FiatSettlementSentResponse_Rejected_Reason {
   UNSPECIFIED = 0,
 
   /**
-   * A listed execution was never created for this LP.
+   * A listed execution was never created for this LP or has a durable Rejected result; do not settle it.
    *
    * @generated from enum value: REASON_EXECUTION_UNKNOWN = 10;
    */
@@ -459,18 +445,19 @@ export enum FiatSettlementSentResponse_Rejected_Reason {
   AMOUNT_MISMATCH = 40,
 
   /**
-   * destination_account is not the Acquirer's registered bank destination.
-   *
-   * @generated from enum value: REASON_DESTINATION_MISMATCH = 50;
-   */
-  DESTINATION_MISMATCH = 50,
-
-  /**
    * The covered executions span more than one Acquirer (one transfer credits one account).
    *
    * @generated from enum value: REASON_ACQUIRER_MIXED = 60;
    */
   ACQUIRER_MIXED = 60,
+
+  /**
+   * bank_transfer_ref is already settled with different content; a genuinely different
+   * money movement is reported under a different reference.
+   *
+   * @generated from enum value: REASON_BANK_TRANSFER_REF_CONFLICT = 70;
+   */
+  BANK_TRANSFER_REF_CONFLICT = 70,
 }
 
 /**
@@ -484,7 +471,7 @@ export const FiatSettlementSentResponse_Rejected_ReasonSchema: GenEnum<FiatSettl
  */
 export type ExecuteQuoteRequest = Message<"tzero.v1.pay.ExecuteQuoteRequest"> & {
   /**
-   * * t-0's id for this execution; idempotency key and the LP's obligation handle. 
+   * * t-0's id for this execution command; idempotency key and, after Accepted, the LP's obligation handle. 
    *
    * @generated from field: uint64 execution_id = 10;
    */
@@ -508,7 +495,7 @@ export type ExecuteQuoteRequest = Message<"tzero.v1.pay.ExecuteQuoteRequest"> & 
   quoteRef: string;
 
   /**
-   * * t-0's stable id for the Acquirer; the LP resolves the registered bank destination from it. 
+   * * t-0's stable id for the Acquirer whose local-fiat obligation is being executed. 
    *
    * @generated from field: uint64 acquirer_id = 40;
    */
@@ -529,7 +516,7 @@ export type ExecuteQuoteRequest = Message<"tzero.v1.pay.ExecuteQuoteRequest"> & 
   amountUsdt?: Decimal | undefined;
 
   /**
-   * * Moment t-0 bound the LP to this execution. 
+   * * Moment t-0 created this durable execution command at authorization. 
    *
    * @generated from field: google.protobuf.Timestamp executed_at = 70;
    */
@@ -544,9 +531,33 @@ export const ExecuteQuoteRequestSchema: GenMessage<ExecuteQuoteRequest> = /*@__P
   messageDesc(file_tzero_v1_pay_lp, 6);
 
 /**
+ * * The LP's durable decision on one ExecuteQuote command. 
+ *
  * @generated from message tzero.v1.pay.ExecuteQuoteResponse
  */
 export type ExecuteQuoteResponse = Message<"tzero.v1.pay.ExecuteQuoteResponse"> & {
+  /**
+   * * The LP's final business decision. 
+   *
+   * @generated from oneof tzero.v1.pay.ExecuteQuoteResponse.result
+   */
+  result: {
+    /**
+     * * The LP accepts the execution. 
+     *
+     * @generated from field: tzero.v1.pay.ExecuteQuoteResponse.Accepted accepted = 10;
+     */
+    value: ExecuteQuoteResponse_Accepted;
+    case: "accepted";
+  } | {
+    /**
+     * * The LP declines the execution. 
+     *
+     * @generated from field: tzero.v1.pay.ExecuteQuoteResponse.Rejected rejected = 20;
+     */
+    value: ExecuteQuoteResponse_Rejected;
+    case: "rejected";
+  } | { case: undefined; value?: undefined };
 };
 
 /**
@@ -555,6 +566,73 @@ export type ExecuteQuoteResponse = Message<"tzero.v1.pay.ExecuteQuoteResponse"> 
  */
 export const ExecuteQuoteResponseSchema: GenMessage<ExecuteQuoteResponse> = /*@__PURE__*/
   messageDesc(file_tzero_v1_pay_lp, 7);
+
+/**
+ * * Acceptance creates the LP's firm per-sale obligation. 
+ *
+ * @generated from message tzero.v1.pay.ExecuteQuoteResponse.Accepted
+ */
+export type ExecuteQuoteResponse_Accepted = Message<"tzero.v1.pay.ExecuteQuoteResponse.Accepted"> & {
+};
+
+/**
+ * Describes the message tzero.v1.pay.ExecuteQuoteResponse.Accepted.
+ * Use `create(ExecuteQuoteResponse_AcceptedSchema)` to create a new message.
+ */
+export const ExecuteQuoteResponse_AcceptedSchema: GenMessage<ExecuteQuoteResponse_Accepted> = /*@__PURE__*/
+  messageDesc(file_tzero_v1_pay_lp, 7, 0);
+
+/**
+ * * Rejection leaves the payment intent authorized for manual handling. 
+ *
+ * @generated from message tzero.v1.pay.ExecuteQuoteResponse.Rejected
+ */
+export type ExecuteQuoteResponse_Rejected = Message<"tzero.v1.pay.ExecuteQuoteResponse.Rejected"> & {
+  /**
+   * * Stable business classification for declining the command. 
+   *
+   * @generated from field: tzero.v1.pay.ExecuteQuoteResponse.Rejected.Reason reason = 10;
+   */
+  reason: ExecuteQuoteResponse_Rejected_Reason;
+
+  /**
+   * * Human-readable business details for declining the command. 
+   *
+   * @generated from field: string details = 20;
+   */
+  details: string;
+};
+
+/**
+ * Describes the message tzero.v1.pay.ExecuteQuoteResponse.Rejected.
+ * Use `create(ExecuteQuoteResponse_RejectedSchema)` to create a new message.
+ */
+export const ExecuteQuoteResponse_RejectedSchema: GenMessage<ExecuteQuoteResponse_Rejected> = /*@__PURE__*/
+  messageDesc(file_tzero_v1_pay_lp, 7, 1);
+
+/**
+ * @generated from enum tzero.v1.pay.ExecuteQuoteResponse.Rejected.Reason
+ */
+export enum ExecuteQuoteResponse_Rejected_Reason {
+  /**
+   * @generated from enum value: REASON_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * The LP declines for a business reason not otherwise classified; t-0
+   * persists details and routes the authorized payment to manual handling.
+   *
+   * @generated from enum value: REASON_OTHER = 10;
+   */
+  OTHER = 10,
+}
+
+/**
+ * Describes the enum tzero.v1.pay.ExecuteQuoteResponse.Rejected.Reason.
+ */
+export const ExecuteQuoteResponse_Rejected_ReasonSchema: GenEnum<ExecuteQuoteResponse_Rejected_Reason> = /*@__PURE__*/
+  enumDesc(file_tzero_v1_pay_lp, 7, 1, 0);
 
 /**
  * *
@@ -585,7 +663,9 @@ export const LpService: GenService<{
     output: typeof WithdrawQuoteResponseSchema;
   },
   /**
-   * * Reports a fiat bank-rails settlement the LP made on its own initiative against locked executions. 
+   * *
+   * Reports a fiat bank-rails settlement the LP made on its own initiative against accepted quote executions.
+   * An execution still awaiting its durable result returns FAILED_PRECONDITION; retry the same request.
    *
    * @generated from rpc tzero.v1.pay.LpService.FiatSettlementSent
    */
@@ -599,14 +679,14 @@ export const LpService: GenService<{
 
 /**
  * *
- * LP-implemented endpoint t-0 calls to bind the LP to a standing quote's locked
- * rate for one authorized sale. Fiat mode only.
+ * LP-implemented endpoint t-0 calls to request the LP's durable decision on a
+ * standing quote execution for one authorized sale. Fiat mode only.
  *
  * @generated from service tzero.v1.pay.LpCallbackService
  */
 export const LpCallbackService: GenService<{
   /**
-   * * Creates the LP's firm per-sale obligation at the standing quote's locked rate. 
+   * * Requests a durable Accepted or Rejected result; only Accepted creates the LP's firm per-sale obligation. 
    *
    * @generated from rpc tzero.v1.pay.LpCallbackService.ExecuteQuote
    */
