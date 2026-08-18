@@ -49,11 +49,12 @@ describe("scaffold", () => {
 
   after(() => rmSync(workdir, { recursive: true, force: true }));
 
-  it("offers every starter directory, and nothing else", () => {
-    const starters = availableStarters(templateDir);
-    // The listing IS the role set — adding node/starter/<role> is the whole change.
-    assert.ok(starters.includes("issuer"), `expected issuer in ${starters.join(", ")}`);
-    assert.deepEqual(starters, [...starters].sort());
+  it("offers exactly the declared starters, in order", () => {
+    // Spelled out rather than "contains issuer". The listing IS the role set, and
+    // `npx @t-0/usdt-pay-starter-ts <name> <role>` is a published invocation — a role
+    // appearing, vanishing or being renamed is a CLI API change, so it has to be made
+    // here deliberately. publish.yaml asserts the same set against the tarball.
+    assert.deepEqual(availableStarters(templateDir), ["issuer"]);
   });
 
   it("refuses a role it does not carry", () => {

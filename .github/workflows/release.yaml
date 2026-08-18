@@ -119,6 +119,25 @@ jobs:
         with:
           node-version: "22"
 
+      # The same bootstrap gate publish.yaml's preflight carries, but ahead of the tag.
+      # A trusted publisher can only be attached to a package that already exists, so
+      # until both packages are bootstrapped the publish half cannot authenticate at
+      # all. Failing there would leave a public tag and a Release with no artifacts
+      # behind it, and a re-dispatch — the intuitive recovery — would compute the next
+      # version and strand that tag empty forever. Failing here costs nothing.
+      - name: npm packages must already exist
+        run: |
+          ERRORS=0
+          for PKG in @t-0/usdt-pay-sdk @t-0/usdt-pay-starter-ts; do
+            if npm view "$PKG" version >/dev/null 2>&1; then
+              echo "$PKG is on the registry"
+            else
+              echo "::error::$PKG does not exist on npm — run the one-time bootstrap in docs/RELEASE_AND_PUBLISH.md before releasing"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+          [ "$ERRORS" -eq 0 ] || exit 1
+
       - name: Calculate version
         id: version
         env:

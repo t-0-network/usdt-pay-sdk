@@ -49,6 +49,24 @@ jobs:
           [ "$ERRORS" -eq 0 ] || exit 1
           echo "Maven Central credentials present"
 
+      # A trusted publisher can only be attached to a package that already exists on
+      # the registry, so the very first version of each package has to be published by
+      # hand. Until that bootstrap has happened these jobs cannot authenticate at all —
+      # and without this check the failure lands *after* publish-java has spent the
+      # version on Maven Central, which is permanent. See docs/RELEASE_AND_PUBLISH.md.
+      - name: npm packages must already exist
+        run: |
+          ERRORS=0
+          for PKG in @t-0/usdt-pay-sdk @t-0/usdt-pay-starter-ts; do
+            if npm view "$PKG" version >/dev/null 2>&1; then
+              echo "$PKG is on the registry"
+            else
+              echo "::error::$PKG does not exist on npm — run the one-time bootstrap in docs/RELEASE_AND_PUBLISH.md before releasing"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+          [ "$ERRORS" -eq 0 ] || exit 1
+
   # --- Build gate: ci.yaml's two jobs, minus `npm audit`. Deliberate — post-tag, an
   # advisory published in the minutes between tag and publish would strand a tagged
   # release that cannot be re-cut without a dependency bump. Pre-tag it still blocks. ---
@@ -277,35 +295,37 @@ jobs:
 
           ERRORS=0
 
-          # One template per role, and the listing is the role set — so the roles are
-          # discovered from the tarball rather than hardcoded here. Adding a starter
-          # must not require editing this workflow.
-          ROLES=$(printf '%s\n' "$FILES" | sed -n 's#^template/\([^/]*\)/.*#\1#p' | sort -u)
-          if [ -z "$ROLES" ]; then
-            echo "::error::the tarball carries no template/<role>/ at all"
+          # Space-separated and sorted. The role set is a published contract —
+          # `npx @t-0/usdt-pay-starter-ts <name> <role>` is in every README — so a role
+          # appearing, vanishing or being renamed is a CLI API change, and it has to be
+          # made here deliberately. Deriving the list from the tarball instead would
+          # only ever confirm the tarball matches itself: it catches an empty
+          # template/ and nothing else, and says nothing the day a second role lands.
+          EXPECTED_ROLES='issuer'
+
+          ROLES=$(printf '%s\n' "$FILES" | sed -n 's#^template/\([^/]*\)/.*#\1#p' | sort -u | tr '\n' ' ' | sed 's/ *$//')
+          echo "roles in tarball: ${ROLES:-(none)}"
+          if [ "$ROLES" != "$EXPECTED_ROLES" ]; then
+            echo "::error::tarball carries roles '${ROLES:-(none)}', expected '$EXPECTED_ROLES' — if that change is intended, update EXPECTED_ROLES in this workflow"
             ERRORS=$((ERRORS + 1))
           fi
-          echo "roles in tarball:"
-          printf '%s\n' "$ROLES"
 
+          # Driven by the expected list, not the tarball's: a role missing from the
+          # tarball has to fail here too, not slip through because nothing iterated
+          # over it. Also why this is a plain `for` and no longer a heredoc-fed
+          # `while` — there is no subshell to lose the ERRORS increments in.
+          #
           # gitignore is undotted on purpose — npm drops a nested .gitignore from the
           # tarball, and the CLI restores the name when it scaffolds. Its absence
           # would mean scaffolded projects commit their own .env.
-          #
-          # Heredoc rather than a pipe into `while`: a pipe would run the loop in a
-          # subshell and every ERRORS increment would be discarded, turning this whole
-          # check green no matter what it found.
-          while IFS= read -r ROLE; do
-            [ -n "$ROLE" ] || continue
+          for ROLE in $EXPECTED_ROLES; do
             for REQUIRED in '.env.example' 'gitignore' 'package.json'; do
               if ! printf '%s\n' "$FILES" | grep -qx "template/$ROLE/$REQUIRED"; then
                 echo "::error::template/$ROLE/$REQUIRED is missing from the tarball"
                 ERRORS=$((ERRORS + 1))
               fi
             done
-          done <<ROLE_LIST
-          $ROLES
-          ROLE_LIST
+          done
 
           # Anything env-ish other than the examples, any credential-shaped file, any
           # installed tree. Matched as patterns, not exact names: .env.local and
@@ -327,9 +347,14 @@ jobs:
         working-directory: node/cli
         run: npm publish --provenance --access public
 
+  # Last, deliberately — not in parallel with the npm jobs. Both registries are
+  # immutable, but they are not equally recoverable: npm allows an unpublish inside 72
+  # hours, a Maven Central release never comes back. Publishing the recoverable
+  # registry first means a failure on the fragile side (OIDC, trusted publishers, repo
+  # visibility) costs nothing, instead of stranding Java at a version npm never reached.
   publish-java:
     name: Publish Java
-    needs: [preflight, build-java, build-node]
+    needs: [publish-node-starter]
     runs-on: ubuntu-latest
     steps:
       - name: Generate GitHub App token
