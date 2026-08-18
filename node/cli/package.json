@@ -1,7 +1,7 @@
 {
   "name": "@t-0/usdt-pay-starter-ts",
   "version": "0.1.0",
-  "description": "Scaffolds a USDt Pay integration in TypeScript from any of the Node starters (the Node analog of usdt-pay-init.jar)",
+  "description": "Scaffolds a USDt Pay integration in TypeScript",
   "repository": {
     "type": "git",
     "url": "git@github.com:t-0-network/usdt-pay-sdk.git"
