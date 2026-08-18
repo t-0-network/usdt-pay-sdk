@@ -18,6 +18,19 @@ dependencies {
     implementation(project(":sdk"))
     implementation("info.picocli:picocli:$picocliVersion")
     annotationProcessor("info.picocli:picocli-codegen:$picocliVersion")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+}
+
+// The extractor reads the starters out of this jar's own resources, so the test needs
+// them processed first — `test` alone would otherwise run against an empty /templates.
+tasks.test {
+    dependsOn(tasks.processResources)
 }
 
 java {
