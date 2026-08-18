@@ -125,17 +125,40 @@ fresh advisory should block the release; post-tag it must not, or an advisory pu
 minutes between tag and publish strands a tagged release that cannot be re-cut without a
 dependency bump.
 
-Both publish jobs `needs:` both build jobs — every ecosystem builds before anything publishes.
+```
+preflight     build-java     build-node
+     \             |             /
+      \------------+------------/
+                   |
+        +----------+----------+
+        |                     |
+  publish-node-sdk       publish-java
+        |
+  publish-node-starter
+```
 
-**Preflights run first in each publish job**, because the two jobs run in parallel against
-immutable registries and a missing prerequisite must fail before anything irreversible:
+Every publish job `needs:` both build jobs — nothing publishes until everything builds — and the
+shared **`preflight`** job.
 
-| Job | Preflight |
-|---|---|
-| `publish-node` | repository is public (`gh api repos/$GITHUB_REPOSITORY --jq .private` = `false`) |
-| `publish-java` | `vars.OSSRH_USERNAME`, `secrets.OSSRH_PASSWORD`, `secrets.GPG_PRIVATE_KEY` all non-empty |
+`preflight` checks *both* registries' prerequisites in one place: the repository is public
+(`gh api repos/$GITHUB_REPOSITORY --jq .private` = `false`, which npm provenance requires) and
+`vars.OSSRH_USERNAME` / `secrets.OSSRH_PASSWORD` / `secrets.GPG_PRIVATE_KEY` are all non-empty.
 
-### `publish-node`
+That it is *shared* is the point. Per-job preflights would let `publish-java` spend the Maven
+Central version while `publish-node` was still failing its visibility check — and a spent Central
+version cannot be un-spent. A prerequisite missing for either registry now stops both.
+
+### The npm packages publish from separate jobs
+
+`publish-node-sdk` and `publish-node-starter`, as provider-sdk's two npm jobs are. Not cosmetic:
+npm refuses to replace a published version, so if both publishes lived in one job and the second
+failed, re-running that job would die on the *first* package's duplicate and never reach the one
+that still needed publishing. Split, each is independently re-runnable.
+
+`publish-node-starter` needs `publish-node-sdk` — a scaffolder on the registry whose SDK pin
+resolves to nothing is a worse state to be stuck in than an SDK with no scaffolder yet.
+
+### Both npm jobs
 
 `ubuntu-latest` — npm rejects `--provenance` from self-hosted runners. `id-token: write`, no
 `NPM_TOKEN`, and no `registry-url` on `setup-node` (that would wire up a `NODE_AUTH_TOKEN` path
@@ -145,19 +168,20 @@ Node 22 ships npm 10.x, which has no OIDC support, so the job installs `npm@^11.
 the result. Pinned to the 11 major rather than `@latest`: a future npm 12 could raise its own Node
 floor above 22 and break the job on a day nobody touched the repo.
 
-Then: versions-match-tag, `npm ci` (the lockfile is at `node/`, not in the package dirs), build +
-typecheck both packages, assert each is the name it should be and not `private`, pack both as a
-dry run, and publish.
+Then each does: versions-match-tag, `npm ci` (the lockfile is at `node/`, not in the package
+dirs), build + typecheck, assert the package is the name it should be and not `private`,
+`npm pack --dry-run`, publish.
 
-Two packages go out, **SDK first**:
-
-| Package | Directory | What it is |
+| Job | Package | Directory |
 |---|---|---|
-| `@t-0/usdt-pay-sdk` | `node/sdk` | the SDK itself |
-| `@t-0/usdt-pay-starter-ts` | `node/cli` | the scaffolder — `npx @t-0/usdt-pay-starter-ts my-issuer` |
+| `publish-node-sdk` | `@t-0/usdt-pay-sdk` | `node/sdk` |
+| `publish-node-starter` | `@t-0/usdt-pay-starter-ts` | `node/cli` |
 
-The order matters only for the partial-failure case: a scaffolder on the registry whose SDK pin
-resolves to nothing is a worse state to be stuck in than an SDK with no scaffolder yet.
+`publish-node-starter` also re-checks `node/starter/issuer`'s version *and* its SDK pin, not just
+the scaffolder's own: `prepack` copies that directory into the tarball, so without the check a
+hand-pushed tag could ship a scaffolder whose template still pins an older SDK. Its pack step then
+asserts the real tarball listing carries `template/.env.example` and nothing credential-shaped —
+`.env.local`, `.npmrc`, `*.pem` and friends, not merely an exact `.env`.
 
 ### `publish-java`
 
@@ -240,8 +264,14 @@ version is spent. Recovery is a new patch release,
 decided deliberately. Never re-run a publish job blind: read which registries actually got the
 artifact first.
 
-The two publish jobs run in parallel by design. Sequencing them would not remove the partial-release
-window, only change which registry gets stranded.
+`publish-node-sdk` and `publish-java` run in parallel by design. Sequencing them would not remove
+the partial-release window, only change which registry gets stranded — which is why the fix that
+does help is the shared `preflight`, catching the likely first-release failures before either
+registry is touched.
+
+**Re-running after a partial success:** use *Re-run failed jobs*, never *Re-run all jobs* — the
+latter re-enters a publish that already succeeded and fails on the duplicate. Because each npm
+package has its own job, re-running only the failed one is safe.
 
 ### The jar upload can be stranded
 

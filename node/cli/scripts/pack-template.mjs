@@ -15,9 +15,18 @@ const packageRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const source = join(packageRoot, "..", "starter", "issuer");
 const target = join(packageRoot, "template");
 
-// Build artefacts, installed deps, and — the one that matters — a real .env. A dev's
-// starter directory can hold live keys; only .env.example is ever shipped.
-const EXCLUDED = new Set([".env", "node_modules", "dist", ".DS_Store"]);
+const EXCLUDED = new Set(["node_modules", "dist", ".git", ".DS_Store"]);
+
+// Anything credential-shaped. A dev's starter directory can hold live keys, and CI is
+// not the only place this runs — the one-time npm bootstrap publish happens from a
+// maintainer's laptop, where .env.local and stray *.pem are entirely plausible.
+// Only .env.example is ever shipped.
+const SECRET_LIKE = /^(\.env(\..*)?|\.npmrc|id_[a-z]+|.*\.(pem|key|p12|jks|keystore))$/;
+
+function isExcluded(name) {
+  if (name === ".env.example") return false;
+  return EXCLUDED.has(name) || SECRET_LIKE.test(name) || name.endsWith(".tsbuildinfo");
+}
 
 if (!existsSync(source)) {
   throw new Error(`starter not found at ${source}`);
@@ -27,10 +36,7 @@ rmSync(target, { recursive: true, force: true });
 
 cpSync(source, target, {
   recursive: true,
-  filter: (src) => {
-    const name = src.slice(src.lastIndexOf("/") + 1);
-    return !EXCLUDED.has(name) && !name.endsWith(".tsbuildinfo");
-  },
+  filter: (src) => !isExcluded(src.slice(src.lastIndexOf("/") + 1)),
 });
 
 // npm drops a nested `.gitignore` from the tarball and also reads it as ignore rules,

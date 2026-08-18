@@ -13,6 +13,42 @@ permissions:
   contents: read
 
 jobs:
+  # Every publish job needs this one, so a missing prerequisite for *either* registry
+  # stops *both*. Per-job preflights would not: publish-java would happily spend the
+  # Maven Central version while publish-node was still failing its repo-visibility
+  # check, and Central cannot be un-spent.
+  preflight:
+    name: Preflight
+    runs-on: ubuntu-latest
+    steps:
+      # npm returns 422 "Only public source repositories are supported" for provenance
+      # from a private repo — and only after the build.
+      - name: Repository must be public
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PRIVATE=$(gh api "repos/${GITHUB_REPOSITORY}" --jq .private)
+          [ "$PRIVATE" = "false" ] || {
+            echo "::error::${GITHUB_REPOSITORY} is private; npm rejects --provenance from private source repositories"
+            exit 1
+          }
+          echo "${GITHUB_REPOSITORY} is public"
+
+      # Secrets cannot be read in `if:`, so this is a run step. Values are only tested
+      # for emptiness, never echoed.
+      - name: Maven Central credentials must be present
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ vars.OSSRH_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        run: |
+          ERRORS=0
+          [ -n "$MAVEN_CENTRAL_USERNAME" ] || { echo "::error::vars.OSSRH_USERNAME is empty"; ERRORS=$((ERRORS + 1)); }
+          [ -n "$MAVEN_CENTRAL_PASSWORD" ] || { echo "::error::secrets.OSSRH_PASSWORD is empty"; ERRORS=$((ERRORS + 1)); }
+          [ -n "$GPG_PRIVATE_KEY" ]        || { echo "::error::secrets.GPG_PRIVATE_KEY is empty"; ERRORS=$((ERRORS + 1)); }
+          [ "$ERRORS" -eq 0 ] || exit 1
+          echo "Maven Central credentials present"
+
   # --- Build gate: ci.yaml's two jobs, minus `npm audit`. Deliberate — post-tag, an
   # advisory published in the minutes between tag and publish would strand a tagged
   # release that cannot be re-cut without a dependency bump. Pre-tag it still blocks. ---
@@ -72,9 +108,13 @@ jobs:
         working-directory: node
         run: npm test
 
-  publish-node:
-    name: Publish Node
-    needs: [build-java, build-node]
+  # The two npm packages publish from separate jobs, as provider-sdk's do. Not
+  # cosmetic: npm refuses to replace a published version, so if both lived in one job
+  # and the second publish failed, re-running that job would die on the *first*
+  # package's duplicate and never reach the one that still needs publishing.
+  publish-node-sdk:
+    name: Publish Node SDK
+    needs: [preflight, build-java, build-node]
     # npm rejects --provenance from self-hosted runners.
     runs-on: ubuntu-latest
     permissions:
@@ -85,19 +125,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           show-progress: false
-
-      # First, before anything irreversible: npm returns 422 "Only public source
-      # repositories are supported" for provenance from a private repo — and it does
-      # so *after* the build, from a job running in parallel with publish-java.
-      - name: Preflight — repository must be public
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          PRIVATE=$(gh api "repos/${GITHUB_REPOSITORY}" --jq .private)
-          [ "$PRIVATE" = "false" ] || {
-            echo "::error::${GITHUB_REPOSITORY} is private; npm rejects --provenance from private source repositories"
-            exit 1
-          }
 
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -121,24 +148,12 @@ jobs:
             exit 1
           }
 
-      - name: Verify versions match tag
+      - name: Verify version matches tag
         run: |
           VERSION="${GITHUB_REF#refs/tags/v}"
-          ERRORS=0
-          check() { # <file> <actual> <expected>
-            if [ "$2" != "$3" ]; then
-              echo "::error::$1 has $2, expected $3"
-              ERRORS=$((ERRORS + 1))
-            fi
-          }
-          check "node/sdk/package.json" \
-            "$(node -p "require('./node/sdk/package.json').version")" "$VERSION"
-          check "node/cli/package.json" \
-            "$(node -p "require('./node/cli/package.json').version")" "$VERSION"
-          check "node/cli/package.json SDK pin" \
-            "$(node -p "require('./node/cli/package.json').dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
-          [ "$ERRORS" -eq 0 ] || { echo "::error::tag is v$VERSION"; exit 1; }
-          echo "Node package versions match tag v$VERSION"
+          PKG=$(node -p "require('./node/sdk/package.json').version")
+          [ "$PKG" = "$VERSION" ] || { echo "::error::node/sdk/package.json has $PKG, tag is v$VERSION"; exit 1; }
+          echo "node/sdk/package.json version $PKG matches tag v$VERSION"
 
       # The lockfile lives at the workspace root, not in sdk/.
       - name: Install
@@ -148,33 +163,112 @@ jobs:
       - name: Build
         working-directory: node
         run: |
-          npm run build -w sdk -w cli
-          npm run typecheck -w sdk -w cli
+          npm run build -w sdk
+          npm run typecheck -w sdk
 
-      # Explicit so no future refactor can point a publish step at the private
-      # workspace root or at usdt-pay-issuer-starter. npm refuses "private": true
-      # anyway, but the assert is what makes this reviewable.
-      - name: Verify the packages about to be published
+      # Explicit so no future refactor can point this at the private workspace root or
+      # at usdt-pay-issuer-starter. npm refuses "private": true anyway, but the assert
+      # is what makes it reviewable.
+      - name: Verify the package about to be published
+        working-directory: node/sdk
         run: |
-          ERRORS=0
-          assert_publishable() { # <dir> <expected name>
-            NAME=$(node -p "require('./$1/package.json').name")
-            PRIVATE=$(node -p "String(require('./$1/package.json').private)")
-            [ "$NAME" = "$2" ] || { echo "::error::$1: expected $2, got $NAME"; ERRORS=$((ERRORS + 1)); }
-            [ "$PRIVATE" = "undefined" ] || { echo "::error::$NAME is marked private"; ERRORS=$((ERRORS + 1)); }
-          }
-          assert_publishable node/sdk "@t-0/usdt-pay-sdk"
-          assert_publishable node/cli "@t-0/usdt-pay-starter-ts"
-          [ "$ERRORS" -eq 0 ] || exit 1
+          NAME=$(node -p "require('./package.json').name")
+          PRIVATE=$(node -p "String(require('./package.json').private)")
+          [ "$NAME" = "@t-0/usdt-pay-sdk" ] || { echo "::error::expected @t-0/usdt-pay-sdk, got $NAME"; exit 1; }
+          case "$PRIVATE" in
+            undefined|false) ;;
+            *) echo "::error::$NAME is marked private"; exit 1 ;;
+          esac
 
-      - name: Pack SDK (dry run)
+      - name: Pack (dry run)
         working-directory: node/sdk
         run: npm pack --dry-run
 
-      # The scaffolder ships the starter as template/, generated by its prepack — so
-      # this is both the pack dry-run and the check that the copy is right. A dev's
-      # starter directory can hold a live .env; only the example may ever be published.
-      - name: Pack scaffolder (dry run) and verify the template
+      - name: Publish to npm
+        working-directory: node/sdk
+        run: npm publish --provenance --access public
+
+  # Needs the SDK to be on the registry first: a scaffolder whose SDK pin resolves to
+  # nothing is a worse state to be stuck in than an SDK with no scaffolder yet.
+  publish-node-starter:
+    name: Publish Node starter
+    needs: [publish-node-sdk]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          show-progress: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: node/package-lock.json
+
+      - name: Upgrade npm for trusted publishing
+        run: |
+          npm install -g npm@^11.5.1
+          NPM_VERSION=$(npm -v)
+          echo "npm $NPM_VERSION"
+          printf '11.5.1\n%s\n' "$NPM_VERSION" | sort -V -C || {
+            echo "::error::npm $NPM_VERSION < 11.5.1, trusted publishing unsupported"
+            exit 1
+          }
+
+      # The starter is checked here too, not just in release.yaml: prepack copies it
+      # into the tarball, so a hand-pushed tag could otherwise ship a scaffolder whose
+      # template still pins an older SDK.
+      - name: Verify versions match tag
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          ERRORS=0
+          check() { # <label> <actual> <expected>
+            if [ "$2" != "$3" ]; then
+              echo "::error::$1 has $2, expected $3"
+              ERRORS=$((ERRORS + 1))
+            fi
+          }
+          check "node/cli/package.json .version" \
+            "$(node -p "require('./node/cli/package.json').version")" "$VERSION"
+          check "node/cli/package.json SDK pin" \
+            "$(node -p "require('./node/cli/package.json').dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
+          check "node/starter/issuer/package.json .version" \
+            "$(node -p "require('./node/starter/issuer/package.json').version")" "$VERSION"
+          check "node/starter/issuer/package.json SDK pin" \
+            "$(node -p "require('./node/starter/issuer/package.json').dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
+          [ "$ERRORS" -eq 0 ] || { echo "::error::tag is v$VERSION"; exit 1; }
+          echo "Scaffolder and packed starter match tag v$VERSION"
+
+      - name: Install
+        working-directory: node
+        run: npm ci
+
+      - name: Build
+        working-directory: node
+        run: |
+          npm run build -w cli
+          npm run typecheck -w cli
+
+      - name: Verify the package about to be published
+        working-directory: node/cli
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          PRIVATE=$(node -p "String(require('./package.json').private)")
+          [ "$NAME" = "@t-0/usdt-pay-starter-ts" ] || { echo "::error::expected @t-0/usdt-pay-starter-ts, got $NAME"; exit 1; }
+          case "$PRIVATE" in
+            undefined|false) ;;
+            *) echo "::error::$NAME is marked private"; exit 1 ;;
+          esac
+
+      # This is both the pack dry-run and the check that prepack's copy is right. The
+      # scaffolder ships the starter as template/, and a starter directory can hold a
+      # live .env — only the example may ever be published.
+      - name: Pack (dry run) and verify the template
         working-directory: node/cli
         run: |
           npm pack --dry-run --json > /tmp/pack.json
@@ -191,12 +285,15 @@ jobs:
               ERRORS=$((ERRORS + 1))
             fi
           done
-          for FORBIDDEN in 'template/.env' 'template/.gitignore'; do
-            if printf '%s\n' "$FILES" | grep -qx "$FORBIDDEN"; then
-              echo "::error::$FORBIDDEN would be published"
-              ERRORS=$((ERRORS + 1))
-            fi
-          done
+          # Anything env-ish other than the example, any credential-shaped file, any
+          # installed tree. Matched as patterns, not exact names: .env.local and
+          # id_rsa are just as unpublishable as .env.
+          LEAKS=$(printf '%s\n' "$FILES" | grep -E '(^|/)(\.env($|\..*)|\.npmrc|\.git$|id_[a-z]+|.*\.(pem|key|p12|jks|keystore))$' \
+            | grep -v '^template/\.env\.example$' || true)
+          if [ -n "$LEAKS" ]; then
+            echo "::error::these would be published: $LEAKS"
+            ERRORS=$((ERRORS + 1))
+          fi
           if printf '%s\n' "$FILES" | grep -q 'node_modules'; then
             echo "::error::node_modules would be published"
             ERRORS=$((ERRORS + 1))
@@ -204,36 +301,15 @@ jobs:
           [ "$ERRORS" -eq 0 ] || exit 1
           echo "Template carries .env.example and no secrets"
 
-      # SDK first: a scaffolder on the registry whose SDK pin resolves to nothing is a
-      # worse partial state than the reverse.
-      - name: Publish SDK to npm
-        working-directory: node/sdk
-        run: npm publish --provenance --access public
-
-      - name: Publish scaffolder to npm
+      - name: Publish to npm
         working-directory: node/cli
         run: npm publish --provenance --access public
 
   publish-java:
     name: Publish Java
-    needs: [build-java, build-node]
+    needs: [preflight, build-java, build-node]
     runs-on: ubuntu-latest
     steps:
-      # Secrets cannot be read in `if:`, so this is a run step. It exists because the
-      # alternative is finding out deep inside a Central deployment, after the parallel
-      # npm publish has already gone out and become unrecallable.
-      - name: Preflight — Maven Central credentials present
-        env:
-          MAVEN_CENTRAL_USERNAME: ${{ vars.OSSRH_USERNAME }}
-          MAVEN_CENTRAL_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-        run: |
-          ERRORS=0
-          [ -n "$MAVEN_CENTRAL_USERNAME" ] || { echo "::error::vars.OSSRH_USERNAME is empty"; ERRORS=$((ERRORS + 1)); }
-          [ -n "$MAVEN_CENTRAL_PASSWORD" ] || { echo "::error::secrets.OSSRH_PASSWORD is empty"; ERRORS=$((ERRORS + 1)); }
-          [ -n "$GPG_PRIVATE_KEY" ]        || { echo "::error::secrets.GPG_PRIVATE_KEY is empty"; ERRORS=$((ERRORS + 1)); }
-          [ "$ERRORS" -eq 0 ] || exit 1
-
       - name: Generate GitHub App token
         id: app-token
         uses: actions/create-github-app-token@v3
@@ -306,6 +382,7 @@ jobs:
             sleep 10
           done
           # Same non-atomic race as in release.yaml; the trailing view closes it.
+          # --verify-tag is a remote check, so the shallow checkout above is fine.
           gh release view "v${VERSION}" >/dev/null 2>&1 \
             || gh release create "v${VERSION}" --verify-tag --generate-notes --title "${VERSION}" \
             || gh release view "v${VERSION}" >/dev/null
