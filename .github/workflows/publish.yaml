@@ -58,10 +58,22 @@ jobs:
         run: |
           ERRORS=0
           for PKG in @t-0/usdt-pay-sdk @t-0/usdt-pay-starter-ts; do
-            if npm view "$PKG" version >/dev/null 2>&1; then
+            # `versions`, not `version`: the question is whether the package exists,
+            # and `version` answers a different one — what its `latest` dist-tag
+            # resolves to. They coincide today only because npm sets `latest` on a
+            # package's first publish whatever `--tag` says.
+            #
+            # Only a 404 means "not published". Anything else — a registry 5xx, DNS,
+            # or the CDN briefly serving 404 for a package that was just published —
+            # is a different failure, and reporting it as "does not exist" would send
+            # an operator off to redo a bootstrap that is already done.
+            if ERR=$(npm view "$PKG" versions 2>&1 >/dev/null); then
               echo "$PKG is on the registry"
-            else
+            elif printf '%s' "$ERR" | grep -q 'E404'; then
               echo "::error::$PKG does not exist on npm — run the one-time bootstrap in docs/RELEASE_AND_PUBLISH.md before releasing"
+              ERRORS=$((ERRORS + 1))
+            else
+              echo "::error::could not reach the npm registry for $PKG — this is not a missing package: $ERR"
               ERRORS=$((ERRORS + 1))
             fi
           done
