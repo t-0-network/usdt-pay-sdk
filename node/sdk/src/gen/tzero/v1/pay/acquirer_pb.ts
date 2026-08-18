@@ -673,7 +673,7 @@ export type SettlementInitiatedRequest = Message<"tzero.v1.pay.SettlementInitiat
   settlementAmount?: Decimal | undefined;
 
   /**
-   * * Intended recipient. The Acquirer must reject a request whose id is not its own. 
+   * * t-0's id for the Acquirer this settlement is addressed to. 
    *
    * @generated from field: uint64 acquirer_id = 70;
    */
@@ -770,12 +770,10 @@ export const SettlementCompletedResponseSchema: GenMessage<SettlementCompletedRe
   messageDesc(file_tzero_v1_pay_acquirer, 11);
 
 /**
- * `PaymentExpired` is also a method on IssuerService in this flat
- * package, so the request/response carry a role prefix to avoid a colliding
- * `PaymentExpiredRequest`. Interim name: buf STANDARD RPC_REQUEST_STANDARD_NAME
- * accepts only bare `PaymentExpiredRequest` or the full
- * `AcquirerCallbackServicePaymentExpiredRequest`, so this short form needs a
- * lint ignore at graduation (or rename the method).
+ * *
+ * PaymentExpired exists on both the acquirer and issuer edges of this flat package,
+ * so each side's request and response carry their role as a prefix. This is the
+ * acquirer's.
  *
  * @generated from message tzero.v1.pay.AcquirerPaymentExpiredRequest
  */
