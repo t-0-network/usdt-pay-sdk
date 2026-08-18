@@ -61,7 +61,10 @@ public final class GetPaymentQuote {
                     return new Outcome.Rejected<>(reason);
                 }
                 default -> {
-                    return new Outcome.Rejected<>("response carried no result variant");
+                    // A result variant this stub does not know — the contract can add one before 1.0.
+                    // Unknown, not Rejected: we cannot tell whether t-0 committed, and Rejected's
+                    // follow-up is a fresh idempotency key.
+                    return new Outcome.Unknown<>("response carried an unrecognised result variant");
                 }
             }
         } catch (StatusRuntimeException e) {

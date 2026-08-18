@@ -132,6 +132,25 @@ class CreatePaymentIntentTest {
     }
 
     /**
+     * An answer this stub cannot read is not a decline. The contract may add a result
+     * variant before 1.0, and an old stub sees it as RESULT_NOT_SET — treating that as
+     * Rejected would send the next attempt under a fresh idempotency key, against an
+     * intent t-0 may already have opened.
+     */
+    @Test
+    void unrecognisedResultVariantBecomesUnknown_notRejected() throws IOException {
+        var t0 = t0(observer -> {
+            observer.onNext(CreatePaymentIntentResponse.getDefaultInstance());
+            observer.onCompleted();
+        });
+
+        Outcome<CreatePaymentIntentResponse.Success> outcome = create(t0);
+
+        assertInstanceOf(Outcome.Unknown.class, outcome);
+        assertTrue(outcome.shouldRetry());
+    }
+
+    /**
      * The branch a happy-path integration test never reaches, and the one that costs
      * money: no answer came back, so the intent may or may not be open.
      */
