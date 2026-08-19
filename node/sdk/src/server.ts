@@ -37,6 +37,10 @@ export interface UsdtPayRouter {
  *   signed Connect and carries nothing provider-specific; the wrapper goes away once
  *   the transport ships as a package of its own.
  *
+ * It serves the services you register, plus the standard `grpc.health.v1.Health` the
+ * transport mounts on every server it builds. Health is behind the same signature
+ * check as everything else, so only t-0 can call it.
+ *
  * @param port             the port to listen on; t-0 must be able to reach it
  * @param networkPublicKey t-0's public key — inbound calls that do not verify
  *                         against it are refused

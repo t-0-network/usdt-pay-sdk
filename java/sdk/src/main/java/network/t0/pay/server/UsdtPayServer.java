@@ -15,6 +15,11 @@ import java.util.concurrent.TimeUnit;
  * before it reaches your handler, and every response is validated against the
  * contract's constraints on the way out.
  *
+ * <p>It serves the services you register, plus the standard
+ * {@code grpc.health.v1.Health} the transport mounts on every server it builds.
+ * Health is behind the same signature check as everything else, so only t-0 can
+ * call it.
+ *
  * <pre>{@code
  * UsdtPayServer server = UsdtPayServer.create(port, networkPublicKey)
  *         .withService(new AcquirerCallbackHandler())
