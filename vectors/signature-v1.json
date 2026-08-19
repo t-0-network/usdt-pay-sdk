@@ -197,7 +197,7 @@
       "note": "r = s = 0. A verifier that skips the range check on r and s takes this one."
     }
   ],
-  "divergences": [
+  "incompatibilities": [
     {
       "name": "clock-behind-by-more-than-the-window",
       "check": "timestamp",
@@ -206,12 +206,13 @@
       "nowMs": 1735689539999,
       "publicKey": "0x044f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1",
       "signature": "0x2da34d29a3323192d6a7328e8ef5ec01247a2e642b44da8fdd914e4ca0ab3e4764cf2a97cfa474fbf30db7e5de612397d07b4169d31c190b37f68a6c8db222c300",
-      "behaviour": {
+      "answers": {
         "java": "reject",
         "node": "accept",
         "go": "reject"
       },
-      "note": "A timestamp further in the future than the window allows. Java and Go compare |now - timestamp|; the Node provider only measures how far in the past the timestamp is, so it takes this."
+      "shouldBe": "reject",
+      "note": "A timestamp further ahead than the window allows. Accept and reject are the only answers a verifier has — a request stamped for later cannot be held until it becomes valid — and the spec puts the limit at a minute from the current time in either direction. Java and Go compare |now - timestamp|; the Node provider measures only how far in the past the timestamp is."
     },
     {
       "name": "high-s-signature",
@@ -220,12 +221,12 @@
       "timestampMs": 1735689600000,
       "publicKey": "0x044f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1",
       "signature": "0x2da34d29a3323192d6a7328e8ef5ec01247a2e642b44da8fdd914e4ca0ab3e479b30d568305b8b040cf2481a219edc66ea339b7cdc2c873087dbd42042841e7e",
-      "behaviour": {
+      "answers": {
         "java": "accept",
         "node": "reject",
         "go": "accept"
       },
-      "note": "The malleated twin of the valid signature (s replaced by n - s). Node's curve library refuses a non-canonical s; the Java and Go verifiers do not look."
+      "note": "The malleated twin of the valid signature, s replaced by n - s. Every signer here produces the low-S form, so this one can only come from reshaping a signature that was already sent. Node's curve library refuses a non-canonical s; the Java and Go verifiers do not look. The spec does not say which answer is right."
     },
     {
       "name": "public-key-header-without-0x",
@@ -234,12 +235,13 @@
       "timestampMs": 1735689600000,
       "publicKey": "044f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1",
       "signature": "0x2da34d29a3323192d6a7328e8ef5ec01247a2e642b44da8fdd914e4ca0ab3e4764cf2a97cfa474fbf30db7e5de612397d07b4169d31c190b37f68a6c8db222c300",
-      "behaviour": {
+      "answers": {
         "java": "accept",
         "node": "accept",
         "go": "reject"
       },
-      "note": "The published spec calls the 0x prefix optional. Go's header parser drops the first two characters unconditionally, so a prefixless header loses a byte and the key no longer parses. Send the prefix."
+      "shouldBe": "accept",
+      "note": "The published spec calls the 0x prefix optional. Go's header parser drops the first two characters unconditionally, so a prefixless header loses a byte and the key no longer parses (t-0-network/provider-sdk#205). Send the prefix until it does."
     }
   ]
 }

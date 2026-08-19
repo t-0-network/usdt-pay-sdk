@@ -51,7 +51,7 @@ every verifier takes 64 or 65 bytes and ignores `v`.
 | `message` | the fields the payloads were built from, for a consumer that wants to rebuild the request |
 | `signing` | payload + timestamp → digest + signature |
 | `verification` | a presented request → accepted, or refused with a reason |
-| `divergences` | inputs today's SDKs answer differently; asserted by nobody |
+| `incompatibilities` | inputs the SDKs answer differently today; asserted by nobody |
 
 ### `signing`
 
@@ -97,20 +97,31 @@ Changing the scheme means new fixtures. Sign the new payloads with any one imple
 and run both suites: they re-derive every byte, so a fixture only its own library agrees
 with fails immediately.
 
-## Divergences
+## Incompatibilities
 
-Three inputs get different answers from the three SDKs today. `divergences` carries the
-bytes and what each side does with them; no suite asserts them, because a fixture that
-fails a shipped SDK is a bug report, not a fixture.
+Three requests get a different answer depending on which SDK receives them, so the same
+bytes pass one provider and fail another. `incompatibilities` carries them with what each
+side answers today and, where the spec settles it, the answer they should share. No suite
+asserts them: a fixture that fails a shipped SDK is a bug report, not a fixture.
 
-| Case | Java | Node | Go |
-|---|---|---|---|
-| `clock-behind-by-more-than-the-window` — a timestamp further ahead than the window allows | reject | **accept** | reject |
-| `high-s-signature` — the malleated twin of a valid signature, `s` replaced by `n − s` | **accept** | reject | **accept** |
-| `public-key-header-without-0x` — the prefix the published spec calls optional | accept | accept | **reject** |
+| Case | Java | Node | Go | Should be |
+|---|---|---|---|---|
+| `clock-behind-by-more-than-the-window` — a timestamp further ahead than the window allows | reject | **accept** | reject | reject |
+| `high-s-signature` — the malleated twin of a valid signature, `s` replaced by `n − s` | accept | reject | accept | unsettled |
+| `public-key-header-without-0x` — the prefix the published spec calls optional | accept | accept | **reject** | accept |
 
-Java and Go compare `|now − timestamp|`; the Node provider measures only how far in the
-past a timestamp is, so a future one never expires. Node's curve library refuses a
-non-canonical `s`, and the Java and Go verifiers read `r` and `s` without looking at which
-half of the order `s` falls in. Go's header parser drops the first two characters of every
-hex header whether or not they are `0x`, so a prefixless key loses a byte — send the prefix.
+A verifier has two answers available for a timestamp it cannot use, accept and reject —
+a request stamped for later cannot be held until it becomes valid — and the spec puts the
+limit at a minute from the current time in either direction. Java and Go compare
+`|now − timestamp|`; the Node provider measures only how far in the past a timestamp is, so
+a future one never expires.
+
+Node's curve library refuses a non-canonical `s`, and the Java and Go verifiers read `r` and
+`s` without checking which half of the order `s` falls in. Every signer here emits the low-S
+form, so a high-S signature can only come from reshaping one that was already sent; which
+answer is right is not written down anywhere yet.
+
+Go's header parser drops the first two characters of every hex header whether or not they
+are `0x`, so a prefixless key loses a byte
+([t-0-network/provider-sdk#205](https://github.com/t-0-network/provider-sdk/issues/205)).
+Send the prefix until that lands.
