@@ -67,8 +67,7 @@ test("a call signed by anyone but t-0 never reaches the handler", async () => {
 
 /**
  * `grpc.health.v1.Health` is on the port alongside the services you registered — the
- * transport mounts it so t-0 can see the endpoint is up. Health is the one thing mounted
- * for you, and it can be, because it belongs to nobody's business protocol.
+ * transport mounts it so t-0 can see the endpoint is up.
  *
  * The status codes are the discriminator: an unrouted path is answered 404 by the router
  * before the signature check ever runs, a routed one gets to the signature check and is

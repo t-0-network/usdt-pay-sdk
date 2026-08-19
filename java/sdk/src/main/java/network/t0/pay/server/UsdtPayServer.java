@@ -16,9 +16,7 @@ import java.util.concurrent.TimeUnit;
  * contract's constraints on the way out.
  *
  * <p>It serves the services you register, plus the standard
- * {@code grpc.health.v1.Health} the transport mounts on every server it builds. No
- * t-0 contract you did not ask for: health is nobody's business protocol, which is
- * the whole reason it is the one thing mounted for you.
+ * {@code grpc.health.v1.Health} the transport mounts on every server it builds.
  *
  * <pre>{@code
  * UsdtPayServer server = UsdtPayServer.create(port, networkPublicKey)

@@ -26,8 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * {@code grpc.health.v1.Health} is on the port alongside the services you registered —
- * the transport mounts it so t-0 can see the endpoint is up. Health is the one thing
- * mounted for you, and it can be, because it belongs to nobody's business protocol.
+ * the transport mounts it so t-0 can see the endpoint is up.
  *
  * <p>Health is called by raw method name rather than through a generated stub: the claim
  * is about a wire path, and stating it that way keeps the pay tests free of protocols
