@@ -7,10 +7,8 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.Spec;
 
-import java.io.BufferedReader;
 import java.io.Console;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -36,9 +34,12 @@ public class InitCommand implements Callable<Integer> {
     private static final String RED = "\u001B[31m";
     private static final String RESET = "\u001B[0m";
 
-    // Colour follows the terminal, so piping or redirecting this output yields text
-    // rather than escape codes — nobody has to remember --no-color for `| tee`.
-    private static final boolean STDOUT_IS_TERMINAL = stdoutIsTerminal();
+    // One check, two uses: colour follows the terminal, so piping or redirecting this
+    // output yields text rather than escape codes — nobody has to remember --no-color
+    // for `| tee` — and a missing terminal is also what makes the project-name prompt
+    // unanswerable. System.console() is null unless *both* streams are a terminal, so
+    // it answers for stdin too.
+    private static final boolean CONSOLE_IS_TERMINAL = consoleIsTerminal();
 
     // [project-name] <role>, the same shape the Node generator takes. The role is
     // required and comes last; because it cannot be omitted, a lone argument can only
@@ -68,8 +69,6 @@ public class InitCommand implements Callable<Integer> {
 
     @Spec
     private CommandSpec spec;
-
-    private BufferedReader stdinReader;
 
     /**
      * @param args command line arguments
@@ -113,9 +112,19 @@ public class InitCommand implements Callable<Integer> {
             }
 
             if (projectName == null || projectName.isEmpty()) {
+                // With stdin not a terminal — CI, a piped script, a Dockerfile — the
+                // prompt reads EOF and the empty answer comes back as "Invalid project
+                // name", blaming the caller for a name they were never able to give.
+                if (!CONSOLE_IS_TERMINAL) {
+                    printError("Cannot ask for the project name: stdin is not a terminal."
+                            + " Pass it as an argument.");
+                    println("");
+                    spec.commandLine().usage(System.out);
+                    return 1;
+                }
                 System.out.print("Enter your project name: ");
                 System.out.flush();
-                projectName = readLine();
+                projectName = System.console().readLine();
             }
             projectName = sanitizeProjectName(projectName);
             if (projectName.isEmpty()) {
@@ -203,17 +212,6 @@ public class InitCommand implements Callable<Integer> {
         }
     }
 
-    private String readLine() throws IOException {
-        Console console = System.console();
-        if (console != null) {
-            return console.readLine();
-        }
-        if (stdinReader == null) {
-            stdinReader = new BufferedReader(new InputStreamReader(System.in));
-        }
-        return stdinReader.readLine();
-    }
-
     private String sanitizeProjectName(String name) {
         if (name == null) {
             return "";
@@ -272,7 +270,7 @@ public class InitCommand implements Callable<Integer> {
     }
 
     private String color(String colorCode, String text) {
-        return noColor || !STDOUT_IS_TERMINAL ? text : colorCode + text + RESET;
+        return noColor || !CONSOLE_IS_TERMINAL ? text : colorCode + text + RESET;
     }
 
     /**
@@ -282,7 +280,7 @@ public class InitCommand implements Callable<Integer> {
      * floor, where the method does not exist — and on 17 through 21 the null check
      * above has already answered it.
      */
-    private static boolean stdoutIsTerminal() {
+    private static boolean consoleIsTerminal() {
         Console console = System.console();
         if (console == null) {
             return false;

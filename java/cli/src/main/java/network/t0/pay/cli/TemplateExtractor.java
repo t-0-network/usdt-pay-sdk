@@ -77,12 +77,26 @@ public final class TemplateExtractor {
             return true;
         });
 
+        restoreGitignore(targetDir);
         pinSdkVersion(targetDir);
         renameProject(targetDir, projectName);
         deRepoReadme(targetDir);
 
         // A zip carries no POSIX modes, so gradlew comes out non-executable.
         makeExecutable(targetDir.resolve("gradlew"));
+    }
+
+    /**
+     * The template carries the starter's ignore file undotted, because Ant's default
+     * excludes drop every {@code .gitignore} from a directory scan and each Gradle copy
+     * on the way into this jar is one. Without the name back, a scaffolded project
+     * commits its own {@code .env} on the first {@code git add -A}.
+     */
+    private static void restoreGitignore(Path targetDir) throws IOException {
+        Path undotted = targetDir.resolve("gitignore");
+        if (Files.exists(undotted)) {
+            Files.move(undotted, targetDir.resolve(".gitignore"), StandardCopyOption.REPLACE_EXISTING);
+        }
     }
 
     /** The starter's standalone mode reads exactly this property. */

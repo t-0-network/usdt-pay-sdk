@@ -50,6 +50,23 @@ application {
     applicationName = "usdt-pay-init"
 }
 
+// `**/.gitignore` is one of Ant's default excludes, which every Gradle file scan
+// inherits — a `from()` naming the file directly is filtered just the same — so a
+// starter's .gitignore cannot ride into the jar with the rest of its directory. Copied
+// by hand instead, undotted: the name would only be dropped a second time by the scan
+// shadowJar does, and TemplateExtractor puts the dot back when it scaffolds.
+//
+// The blunt alternative, `DirectoryScanner.removeDefaultExclude` in settings.gradle.kts,
+// leaks into every other task in the build: Gradle 9 sees the mutated defaults mid-build
+// in a reused daemon and fails `:starter:acquirer:installDist` with "Cannot change
+// default excludes during the build".
+//
+// Without any of this a scaffolded project has no .gitignore, and the first `git add -A`
+// commits the .env holding its private key.
+val starterIgnores = file("../starter").listFiles().orEmpty()
+    .filter { it.isDirectory }
+    .mapNotNull { starter -> starter.resolve(".gitignore").takeIf { it.isFile }?.let { starter.name to it } }
+
 // Every starter directory becomes /templates/<role> in the jar, and that listing is
 // the CLI's `--starter` menu — adding a starter needs no registry, just a directory.
 //
@@ -67,6 +84,14 @@ tasks.processResources {
     // corrupt gradle-wrapper.jar and choke on every `$` in gradlew.
     filesMatching("version.properties") {
         expand("version" to project.version)
+    }
+
+    inputs.files(starterIgnores.map { it.second }).withPropertyName("starterIgnores")
+    val destination = destinationDir
+    doLast {
+        for ((role, ignore) in starterIgnores) {
+            ignore.copyTo(File(destination, "templates/$role/gitignore"), overwrite = true)
+        }
     }
 }
 

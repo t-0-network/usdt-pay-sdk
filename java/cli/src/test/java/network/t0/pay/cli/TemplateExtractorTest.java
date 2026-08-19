@@ -105,6 +105,16 @@ class TemplateExtractorTest {
             assertFalse(Files.exists(project.resolve(".env")),
                     role + ": the template must not carry a .env — EnvFileWriter writes it");
 
+            // The .gitignore travels undotted, because Ant's default excludes drop it
+            // from every Gradle copy on the way into this jar. Lose the dot on the way
+            // out and the first `git add -A` commits the generated private key.
+            assertFalse(Files.exists(project.resolve("gitignore")),
+                    role + ": the ignore file kept its packaging name");
+            Path gitignore = project.resolve(".gitignore");
+            assertTrue(Files.exists(gitignore), role + ": .gitignore");
+            assertTrue(Files.readAllLines(gitignore).contains(".env"),
+                    role + ": .gitignore must ignore .env");
+
             // Standalone mode reads exactly this property; without it the scaffolded
             // build has no SDK version to resolve.
             List<String> props = Files.readAllLines(project.resolve("gradle.properties"));
