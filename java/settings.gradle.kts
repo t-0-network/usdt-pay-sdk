@@ -15,11 +15,6 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
-// `**/.gitignore` is one of Ant's default excludes, which Gradle inherits for every
-// Copy *and* Jar task. Without this, the starter's .gitignore is silently dropped on
-// the way into usdt-pay-init.jar and again on the way out of it.
-org.apache.tools.ant.DirectoryScanner.removeDefaultExclude("**/.gitignore")
-
 rootProject.name = "usdt-pay-sdk-java"
 
 include("sdk")

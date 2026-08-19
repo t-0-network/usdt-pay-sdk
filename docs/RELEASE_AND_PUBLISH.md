@@ -88,6 +88,14 @@ Two further details in the Node packer that are not obvious:
   scaffolds. npm drops a nested `.gitignore` from a tarball; without the workaround every
   scaffolded project would commit its own `.env` on the first `git add -A`.
 
+  `usdt-pay-init.jar` carries it undotted too, for its own reason: `**/.gitignore` is an Ant
+  default exclude, so no Gradle copy will take the file — not even a `from()` that names it
+  directly. `cli/build.gradle.kts` copies it by hand in `processResources` and
+  `TemplateExtractor.restoreGitignore` puts the dot back. Removing the exclude globally in
+  `settings.gradle.kts` is the obvious alternative and was the previous approach; Gradle 9 sees
+  the mutated defaults mid-build in a reused daemon and fails the next Copy task in the build
+  with "Cannot change default excludes during the build".
+
 The generated `.env` is written from `.env.example` by filling the empty `PRIVATE_KEY=` line — the
 same contract, and the same line-anchored substitution, as `EnvFileWriter.java`. The keypair is
 derived through the SDK's own `publicKeyFromPrivateKey`, mirroring `KeyGenerator.java` going
