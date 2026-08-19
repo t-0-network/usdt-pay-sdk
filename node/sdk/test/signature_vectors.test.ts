@@ -24,8 +24,8 @@ import {
  * with the code the fixtures name. So these tests go through HTTP rather than calling the
  * crypto directly: verification here is the shipped interceptor's, not a re-implementation.
  *
- * The vectors carry a fixed timestamp, so every request runs under a fake clock — which is
- * also how the window cases get to be a test rather than a minute of waiting.
+ * The vectors carry a fixed timestamp, and a provider refuses anything more than a minute
+ * off its own clock, so every request runs with `Date` faked to the timestamp it presents.
  */
 const vectors = JSON.parse(
   readFileSync(new URL("../../../vectors/signature-v1.json", import.meta.url), "utf8"),
@@ -60,7 +60,7 @@ const bytes = (hex: string) => Buffer.from(hex.slice(2), "hex");
 
 for (const vector of vectors.verification) {
   test(`${vector.name}: ${vector.note}`, async () => {
-    mock.timers.enable({ apis: ["Date"], now: vector.nowMs ?? vector.timestampMs });
+    mock.timers.enable({ apis: ["Date"], now: vector.timestampMs });
     const before = handled;
     try {
       const response = await fetch(endpoint, {

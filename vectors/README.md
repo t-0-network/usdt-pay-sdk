@@ -19,10 +19,13 @@ signature = secp256k1 ECDSA over that 32-byte digest — RFC 6979 deterministic 
 | `X-Signature` | `0x` + hex of the signature |
 | `X-Signature-Timestamp` | decimal milliseconds |
 
-A request is refused unless its timestamp is within 60 000 ms of the verifier's clock and
-its signature verifies under the key the verifier was configured with. The protocol
-context around that is in the
-[authentication reference](https://usdt-pay-docs.t-0.network/docs/integration-guidance/protocol/authentication/).
+The fixtures cover the signature: what goes into the digest, what comes out of the curve,
+and which presented requests verify. A provider also refuses a timestamp more than a minute
+from its own clock, but that is a policy each verifier applies against a clock only it can
+see — the
+[authentication reference](https://usdt-pay-docs.t-0.network/docs/integration-guidance/protocol/authentication/)
+is where that lives. The timestamp still matters here because it is hashed into the digest:
+`re-stamped-timestamp` is a valid signature under a later header, and it fails.
 
 **`payload` is the request body as it goes on the wire, before any decoding.** Which bytes
 those are depends on the transport, which is why the file carries all three:
@@ -33,9 +36,10 @@ those are depends on the transport, which is why the file carries all three:
 | Connect, `application/json` | its JSON form — what the Node SDK's client sends |
 | gRPC | the framed body: `0x00` + `uint32be(length)` + the serialized message |
 
-The Java provider verifies against the unframed body first and the gRPC-framed body second,
-because the network signs below the framer when it calls over gRPC and above it when it
-calls over Connect.
+The Java provider verifies against the unframed body first and the gRPC-framed body second.
+That dual path is what lets one provider serve callers on either protocol: the network signs
+below the framer when it calls over gRPC and above it when it calls over Connect, and the
+provider does not get to know which in advance.
 
 Determinism is what lets a fixture name exact signature bytes: with RFC 6979 there is no
 nonce to differ, so BouncyCastle, noble and dcrd produce the same `r` and `s` for the same
@@ -51,7 +55,6 @@ every verifier takes 64 or 65 bytes and ignores `v`.
 | `message` | the fields the payloads were built from, for a consumer that wants to rebuild the request |
 | `signing` | payload + timestamp → digest + signature |
 | `verification` | a presented request → accepted, or refused with a reason |
-| `incompatibilities` | inputs the SDKs answer differently today; asserted by nobody |
 
 ### `signing`
 
@@ -65,18 +68,17 @@ passes everything else.
 
 ### `verification`
 
-Each case is self-contained: `payload`, `timestampMs`, `publicKey`, `signature`, and
-`nowMs` — the verifier's clock, defaulting to `timestampMs`. `accept` is what a provider
-does with it; a refused case names the Connect code in `reason`.
+Each case is self-contained: `payload`, `timestampMs`, `publicKey` and `signature` are the
+request as presented. `accept` is what a provider does with it; a refused case names the
+Connect code in `reason`.
 
-`check` says which layer decides, so a suite that only reaches one of them knows what it
-can run:
+`check` says which layer decides, so a suite that reaches only the crypto knows what it can
+run:
 
 | `check` | Decided by |
 |---|---|
 | `signature` | the curve, over the digest |
 | `identity` | the presented key against the trusted one, before any curve arithmetic |
-| `timestamp` | the 60-second window, before the body is read |
 
 ## Who runs them
 
@@ -85,43 +87,22 @@ can run:
   The vectors were produced with a different curve library, so agreement there is two
   implementations agreeing on bytes, not one library agreeing with itself.
 - [`node/sdk/test/signature_vectors.test.ts`](../node/sdk/test/signature_vectors.test.ts)
-  replays every verification case against a real `createUsdtPayServer` under a fake clock,
-  and checks that `createUsdtPayClient` puts the `connect-json` payload and its signature
-  on the wire.
+  replays every verification case against a real `createUsdtPayServer`, with `Date` faked to
+  each case's timestamp so the fixtures do not age out of the provider's window, and checks
+  that `createUsdtPayClient` puts the `connect-json` payload and its signature on the wire.
 
-The Go SDK is the next consumer: `encoding/json` reads the file, and the `signature` and
-`timestamp` cases map onto `provider.newSignatureVerifierMiddleware` as directly as they do
-onto the other two.
+The Go SDK is the next consumer: `encoding/json` reads the file, and the cases map onto
+`provider.newSignatureVerifierMiddleware` as directly as they do onto the other two.
 
 Changing the scheme means new fixtures. Sign the new payloads with any one implementation
 and run both suites: they re-derive every byte, so a fixture only its own library agrees
 with fails immediately.
 
-## Incompatibilities
+## Send the `0x` prefix
 
-Three requests get a different answer depending on which SDK receives them, so the same
-bytes pass one provider and fail another. `incompatibilities` carries them with what each
-side answers today and, where the spec settles it, the answer they should share. No suite
-asserts them: a fixture that fails a shipped SDK is a bug report, not a fixture.
-
-| Case | Java | Node | Go | Should be |
-|---|---|---|---|---|
-| `clock-behind-by-more-than-the-window` — a timestamp further ahead than the window allows | reject | **accept** | reject | reject |
-| `high-s-signature` — the malleated twin of a valid signature, `s` replaced by `n − s` | accept | reject | accept | unsettled |
-| `public-key-header-without-0x` — the prefix the published spec calls optional | accept | accept | **reject** | accept |
-
-A verifier has two answers available for a timestamp it cannot use, accept and reject —
-a request stamped for later cannot be held until it becomes valid — and the spec puts the
-limit at a minute from the current time in either direction. Java and Go compare
-`|now − timestamp|`; the Node provider measures only how far in the past a timestamp is, so
-a future one never expires.
-
-Node's curve library refuses a non-canonical `s`, and the Java and Go verifiers read `r` and
-`s` without checking which half of the order `s` falls in. Every signer here emits the low-S
-form, so a high-S signature can only come from reshaping one that was already sent; which
-answer is right is not written down anywhere yet.
-
-Go's header parser drops the first two characters of every hex header whether or not they
-are `0x`, so a prefixless key loses a byte
+The spec calls the prefix on `X-Public-Key` and `X-Signature` optional, and only the Java
+and Node providers treat it that way. C# requires it. Go and Python cut the first two
+characters off every hex header whether or not they are `0x`, so a prefixless key arrives a
+byte short and the request is refused for looking malformed
 ([t-0-network/provider-sdk#205](https://github.com/t-0-network/provider-sdk/issues/205)).
-Send the prefix until that lands.
+Every value in this file carries the prefix, which is the form to send.

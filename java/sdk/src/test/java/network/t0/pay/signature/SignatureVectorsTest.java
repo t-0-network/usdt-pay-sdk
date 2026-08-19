@@ -27,8 +27,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * <p>The vectors were produced with a different curve library than this one signs with, so
  * a passing run is two independent implementations agreeing on every byte — which is the
  * whole reason the file exists. What it pins here is the algorithm: the digest, the
- * signature bytes, and which signatures verify. The window and the reject codes live in
- * the interceptor and are exercised over the wire by the Node suite.
+ * signature bytes, and which signatures verify. The reject codes and the key comparison
+ * live in the interceptor, and the Node suite drives those over the wire.
  */
 class SignatureVectorsTest {
 
@@ -63,8 +63,8 @@ class SignatureVectorsTest {
 
     /**
      * The verification vectors a verifier settles with the curve alone. The ones marked
-     * {@code timestamp} turn on the clock and {@code identity} on which key is presented —
-     * both belong to the interceptor, and the Node suite drives them over HTTP.
+     * {@code identity} turn on which key was presented rather than on the signature, which
+     * is the interceptor's comparison to make, not this one's.
      */
     @TestFactory
     Stream<DynamicTest> verification() {
