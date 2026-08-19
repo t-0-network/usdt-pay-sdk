@@ -218,13 +218,16 @@ jobs:
         working-directory: node/sdk
         run: npm publish --provenance --access public
 
-  # Independent of publish-node-sdk, like every other publish job here. The accepted
-  # cost: the scaffolder can reach the registry before the SDK does, so if the SDK
-  # publish fails, `npx @t-0/usdt-pay-starter-ts` scaffolds a project whose install
-  # 404s on the `^X.Y.Z` pin until *Re-run failed jobs* lands the SDK.
+  # The one publish job here that is NOT independent. It ships the template pinning
+  # `@t-0/usdt-pay-sdk` at `^X.Y.Z`, and its own package.json depends on that SDK —
+  # so a starter on the registry ahead of the SDK is a starter that cannot work:
+  # `npx @t-0/usdt-pay-starter-ts` fails outright, because npx installs the CLI's
+  # dependencies. Ordering it after the SDK costs nothing that independence bought.
+  # If the SDK publish fails this is skipped rather than failed, and *Re-run failed
+  # jobs* still lands both.
   publish-node-starter:
     name: Publish Node starter
-    needs: [preflight, build-java, build-node]
+    needs: [preflight, build-java, build-node, publish-node-sdk]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
