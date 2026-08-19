@@ -83,7 +83,7 @@ test("the port carries what you registered plus health", async () => {
       body: "{}",
     });
 
-  assert.equal((await post("/grpc.health.v1.Health/List")).status, 400);
+  assert.equal((await post("/grpc.health.v1.Health/Check")).status, 400);
   assert.equal(
     (await post(`/${IssuerCallbackService.typeName}/CreatePaymentInstructions`)).status,
     400,

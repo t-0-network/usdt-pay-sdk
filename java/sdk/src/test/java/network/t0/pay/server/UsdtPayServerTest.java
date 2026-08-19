@@ -62,7 +62,7 @@ class UsdtPayServerTest {
             try {
                 assertEquals(
                         Status.Code.INVALID_ARGUMENT,
-                        callStatus(channel, "grpc.health.v1.Health/List"),
+                        callStatus(channel, "grpc.health.v1.Health/Check"),
                         "health is not mounted, so t-0 cannot tell this endpoint is up");
 
                 assertEquals(
