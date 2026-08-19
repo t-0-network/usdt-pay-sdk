@@ -1,6 +1,6 @@
 {
   "name": "@t-0/usdt-pay-starter-ts",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Scaffolds a USDt Pay integration in TypeScript",
   "repository": {
     "type": "git",
@@ -22,7 +22,7 @@
     "overlay"
   ],
   "dependencies": {
-    "@t-0/usdt-pay-sdk": "^0.1.2"
+    "@t-0/usdt-pay-sdk": "^0.1.3"
   },
   "devDependencies": {
     "@types/node": "^25.9.1",
