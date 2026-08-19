@@ -64,3 +64,28 @@ test("a call signed by anyone but t-0 never reaches the handler", async () => {
 
   await assert.rejects(impostor.createPaymentInstructions(request), /unauthenticated/i);
 });
+
+/**
+ * `grpc.health.v1.Health` is on the port alongside the services you registered — the
+ * transport mounts it so t-0 can see the endpoint is up. Health is the one thing mounted
+ * for you, and it can be, because it belongs to nobody's business protocol.
+ *
+ * The status codes are the discriminator: an unrouted path is answered 404 by the router
+ * before the signature check ever runs, a routed one gets to the signature check and is
+ * refused 400. So 400 here means routed.
+ */
+test("the port carries what you registered plus health", async () => {
+  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  const post = (path: string) =>
+    fetch(base + path, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{}",
+    });
+
+  assert.equal((await post("/grpc.health.v1.Health/List")).status, 400);
+  assert.equal(
+    (await post(`/${IssuerCallbackService.typeName}/CreatePaymentInstructions`)).status,
+    400,
+  );
+});
