@@ -1,8 +1,8 @@
 # Issuer starter — Node
 
 You reserve deposit addresses, watch the chain for the customer's USDt, and settle
-on-chain. One inbound endpoint, three outbound calls — all three driven by what you
-observe on-chain, none by a timer.
+on-chain. One inbound endpoint, two outbound calls — both driven by what you
+observe on-chain, neither by a timer.
 
 This README says what to build — for what every field and decline code means, see the
 [issuer API reference](https://usdt-pay-docs.t-0.network/docs/integration-guidance/api-reference/pay_issuer/).
@@ -39,9 +39,8 @@ declines, so nobody can pay against addresses that are not yours.
 | Direction | Endpoint | What it does | Where |
 |---|---|---|---|
 | t-0 → you | `CreatePaymentInstructions` | Reserve deposit addresses for a sale | `src/handler.ts` |
-| you → t-0 | `PaymentReceived` | Transfer is final and KYT-cleared | `src/internal/payment_received.ts` |
+| you → t-0 | `PaymentReceived` | Report a deposit and its disposition | `src/internal/payment_received.ts` |
 | you → t-0 | `SettlementSent` | You broadcast a settlement transfer | `src/internal/settlement_sent.ts` |
-| you → t-0 | `PaymentExpired` | Reservation lapsed, addresses released | `src/internal/payment_expired.ts` |
 
 You always settle in USDt. Where that USDt goes depends on the acquirer: its own
 wallet in USDt mode, its LP's wallet in fiat mode. You resolve that from the
@@ -95,20 +94,16 @@ are real and stay as they are — it is the deposit addresses that must become y
 
 Wire your chain watcher to these; nothing here belongs on a timer.
 
-1. **3.1** `reportPaymentReceived` — the transfer is final and KYT-cleared. This
-   is what authorizes the sale: t-0 fires `PaymentAuthorized` to the acquirer off
-   it, and from that moment you own the on-chain risk and are obligated to settle.
-   `amountUsdt` must equal the intent's stored amount exactly, so pass through the
-   `Decimal` that `CreatePaymentInstructions` handed you rather than rebuilding it. A payment in the wrong amount,
-   or one that arrived after expiry, is yours to refund and never becomes the
-   acquirer's problem.
+1. **3.1** `reportPaymentReceived` — a deposit landed on-chain and your screening
+   is complete. Pass `outcome: authorized` when the deposit passes; t-0 fires
+   `PaymentAuthorized` to the acquirer off it, and from that moment you own the
+   on-chain risk and are obligated to settle. Pass `outcome: unprocessable` with a
+   `FundsDisposition` when you will not process it; t-0 fires `PaymentFailed` to
+   the acquirer and the intent ends failed.
 2. **3.2** `reportSettlementSent` — after you broadcast a settlement transfer,
    report it with the transfer's own id as `settlementRef`. On
    `ON_CHAIN_UNCONFIRMED`, resend the same ref once it confirms. Never broadcast a
    second transfer as a "retry": one `settlementRef` is one real transfer.
-3. **3.3** `reportPaymentExpired` — when a reservation lapses and you release its
-   addresses. Confirmation, not a trigger: t-0 expires the intent on its own clock
-   regardless.
 
 ## At-least-once, both directions
 
@@ -125,7 +120,6 @@ content until t-0 answers:
 | `CreatePaymentInstructions` | `paymentIntentId` | t-0 |
 | `PaymentReceived` | `paymentIntentId` | t-0 |
 | `SettlementSent` | `settlementRef` | you, unique per issuer |
-| `PaymentExpired` | `paymentIntentId` | t-0 |
 
 A rejection is an acknowledgment — stop retrying — but it never consumes the key:
 fix the fields and resend the same key.
@@ -189,7 +183,6 @@ src/
 └── internal/
     ├── payment_received.ts     # PaymentReceived
     ├── settlement_sent.ts      # SettlementSent
-    ├── payment_expired.ts      # PaymentExpired
     ├── outcome.ts              # accepted / rejected / unknown
     └── decimals.ts             # unscaled × 10^exponent ↔ decimal string
 test/

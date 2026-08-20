@@ -37,7 +37,7 @@ export const issuerCallbackHandler: ServiceImpl<typeof IssuerCallbackService> = 
     //       it yourself is what makes t-0's on-chain check a real cross-check rather
     //       than an echo of its own input.
     // TODO: Step 2.3 — hold the reservation until request.expiresAt, then release the
-    //       addresses and report §14 PaymentExpired.
+    //       addresses.
     // TODO: Step 2.4 — no free addresses, or the amount is outside your range? Answer
     //       with the failure variant (ADDRESS_POOL_EMPTY / AMOUNT_OUT_OF_RANGE /
     //       ISSUER_UNAVAILABLE) instead of throwing — which is what the unimplemented
