@@ -11,7 +11,7 @@ import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf
 import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.js";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
-import type { Decimal, OnChainSettlementDetails, QrOption, UsdtOnChainPayment } from "./common_pb.js";
+import type { Decimal, FundsDisposition, OnChainSettlementDetails, QrOption, UsdtOnChainPayment } from "./common_pb.js";
 import { file_tzero_v1_pay_common } from "./common_pb.js";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -19,21 +19,21 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file tzero/v1/pay/issuer.proto.
  */
 export const file_tzero_v1_pay_issuer: GenFile = /*@__PURE__*/
-  fileDesc("Chl0emVyby92MS9wYXkvaXNzdWVyLnByb3RvEgx0emVyby52MS5wYXkiugIKFlBheW1lbnRSZWNlaXZlZFJlcXVlc3QSIgoRcGF5bWVudF9pbnRlbnRfaWQYCiABKARCB7pIBDICIAASbwoLYW1vdW50X3VzZHQYFCABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEJDukhAugE6EiVhbW91bnRfdXNkdCBtdXN0IGJlIGdyZWF0ZXIgdGhhbiB6ZXJvGhF0aGlzLnVuc2NhbGVkID4gMMgBARI5Cg11c2R0X29uX2NoYWluGB4gASgLMiAudHplcm8udjEucGF5LlVzZHRPbkNoYWluUGF5bWVudEgAEjcKC3JlY2VpdmVkX2F0GCggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBQhcKDnBheW1lbnRfbWV0aG9kEgW6SAIIASKQAwoXUGF5bWVudFJlY2VpdmVkUmVzcG9uc2USQgoIYWNjZXB0ZWQYCiABKAsyLi50emVyby52MS5wYXkuUGF5bWVudFJlY2VpdmVkUmVzcG9uc2UuQWNjZXB0ZWRIABJCCghyZWplY3RlZBgUIAEoCzIuLnR6ZXJvLnYxLnBheS5QYXltZW50UmVjZWl2ZWRSZXNwb25zZS5SZWplY3RlZEgAGgoKCEFjY2VwdGVkGs8BCghSZWplY3RlZBJPCgZyZWFzb24YCiABKA4yNS50emVyby52MS5wYXkuUGF5bWVudFJlY2VpdmVkUmVzcG9uc2UuUmVqZWN0ZWQuUmVhc29uQgi6SAWCAQIgACJyCgZSZWFzb24SFgoSUkVBU09OX1VOU1BFQ0lGSUVEEAASGQoVUkVBU09OX0lOVEVOVF9FWFBJUkVEEAoSGQoVUkVBU09OX1VOS05PV05fSU5URU5UEBQSGgoWUkVBU09OX0FNT1VOVF9NSVNNQVRDSBAeQg8KBnJlc3VsdBIFukgCCAEi0wIKFVNldHRsZW1lbnRTZW50UmVxdWVzdBIfCg5zZXR0bGVtZW50X3JlZhgKIAEoCUIHukgEcgIQARJvCgthbW91bnRfdXNkdBgUIAEoCzIVLnR6ZXJvLnYxLnBheS5EZWNpbWFsQkO6SEC6AToSJWFtb3VudF91c2R0IG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBEkIKCnNldHRsZW1lbnQYHiABKAsyJi50emVyby52MS5wYXkuT25DaGFpblNldHRsZW1lbnREZXRhaWxzQga6SAPIAQESLAoac2V0dGxlZF9wYXltZW50X2ludGVudF9pZHMYKCADKARCCLpIBZIBAggBEjYKCnNldHRsZWRfYXQYMiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEi1AMKFlNldHRsZW1lbnRTZW50UmVzcG9uc2USQQoIYWNjZXB0ZWQYCiABKAsyLS50emVyby52MS5wYXkuU2V0dGxlbWVudFNlbnRSZXNwb25zZS5BY2NlcHRlZEgAEkEKCHJlamVjdGVkGBQgASgLMi0udHplcm8udjEucGF5LlNldHRsZW1lbnRTZW50UmVzcG9uc2UuUmVqZWN0ZWRIABoKCghBY2NlcHRlZBqWAgoIUmVqZWN0ZWQSTgoGcmVhc29uGAogASgOMjQudHplcm8udjEucGF5LlNldHRsZW1lbnRTZW50UmVzcG9uc2UuUmVqZWN0ZWQuUmVhc29uQgi6SAWCAQIgABIaChJmYWlsaW5nX2ludGVudF9pZHMYFCADKAQinQEKBlJlYXNvbhIWChJSRUFTT05fVU5TUEVDSUZJRUQQABIfChtSRUFTT05fT05fQ0hBSU5fVU5DT05GSVJNRUQQChIaChZSRUFTT05fQU1PVU5UX01JU01BVENIEBQSHAoYUkVBU09OX1dST05HX0RFU1RJTkFUSU9OEB4SIAocUkVBU09OX0lOVEVOVF9OT1RfU0VUVExFQUJMRRAoQg8KBnJlc3VsdBIFukgCCAEieQobSXNzdWVyUGF5bWVudEV4cGlyZWRSZXF1ZXN0EiIKEXBheW1lbnRfaW50ZW50X2lkGAogASgEQge6SAQyAiAAEjYKCmV4cGlyZWRfYXQYFCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEi7QIKHElzc3VlclBheW1lbnRFeHBpcmVkUmVzcG9uc2USRwoIYWNjZXB0ZWQYCiABKAsyMy50emVyby52MS5wYXkuSXNzdWVyUGF5bWVudEV4cGlyZWRSZXNwb25zZS5BY2NlcHRlZEgAEkcKCHJlamVjdGVkGBQgASgLMjMudHplcm8udjEucGF5Lklzc3VlclBheW1lbnRFeHBpcmVkUmVzcG9uc2UuUmVqZWN0ZWRIABoKCghBY2NlcHRlZBqdAQoIUmVqZWN0ZWQSVAoGcmVhc29uGAogASgOMjoudHplcm8udjEucGF5Lklzc3VlclBheW1lbnRFeHBpcmVkUmVzcG9uc2UuUmVqZWN0ZWQuUmVhc29uQgi6SAWCAQIgACI7CgZSZWFzb24SFgoSUkVBU09OX1VOU1BFQ0lGSUVEEAASGQoVUkVBU09OX1VOS05PV05fSU5URU5UEApCDwoGcmVzdWx0EgW6SAIIASKPAgogQ3JlYXRlUGF5bWVudEluc3RydWN0aW9uc1JlcXVlc3QSIgoRcGF5bWVudF9pbnRlbnRfaWQYCiABKARCB7pIBDICIAASHAoLYWNxdWlyZXJfaWQYFCABKARCB7pIBDICIAASbwoLYW1vdW50X3VzZHQYHiABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEJDukhAugE6EiVhbW91bnRfdXNkdCBtdXN0IGJlIGdyZWF0ZXIgdGhhbiB6ZXJvGhF0aGlzLnVuc2NhbGVkID4gMMgBARI4CgpleHBpcmVzX2F0GCggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIIukgFsgECQAEiqwQKIUNyZWF0ZVBheW1lbnRJbnN0cnVjdGlvbnNSZXNwb25zZRJKCgdzdWNjZXNzGAogASgLMjcudHplcm8udjEucGF5LkNyZWF0ZVBheW1lbnRJbnN0cnVjdGlvbnNSZXNwb25zZS5TdWNjZXNzSAASSgoHZmFpbHVyZRgUIAEoCzI3LnR6ZXJvLnYxLnBheS5DcmVhdGVQYXltZW50SW5zdHJ1Y3Rpb25zUmVzcG9uc2UuRmFpbHVyZUgAGncKB1N1Y2Nlc3MSNAoKcXJfb3B0aW9ucxgKIAMoCzIWLnR6ZXJvLnYxLnBheS5Rck9wdGlvbkIIukgFkgECCAESNgoKZXhwaXJlc19hdBgUIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARrjAQoHRmFpbHVyZRJYCgZyZWFzb24YCiABKA4yPi50emVyby52MS5wYXkuQ3JlYXRlUGF5bWVudEluc3RydWN0aW9uc1Jlc3BvbnNlLkZhaWx1cmUuUmVhc29uQgi6SAWCAQIgACJ+CgZSZWFzb24SFgoSUkVBU09OX1VOU1BFQ0lGSUVEEAASHQoZUkVBU09OX0lTU1VFUl9VTkFWQUlMQUJMRRAKEh0KGVJFQVNPTl9BRERSRVNTX1BPT0xfRU1QVFkQFBIeChpSRUFTT05fQU1PVU5UX09VVF9PRl9SQU5HRRAoQg8KBnJlc3VsdBIFukgCCAEyxAIKDUlzc3VlclNlcnZpY2USYwoPUGF5bWVudFJlY2VpdmVkEiQudHplcm8udjEucGF5LlBheW1lbnRSZWNlaXZlZFJlcXVlc3QaJS50emVyby52MS5wYXkuUGF5bWVudFJlY2VpdmVkUmVzcG9uc2UiA5ACAhJgCg5TZXR0bGVtZW50U2VudBIjLnR6ZXJvLnYxLnBheS5TZXR0bGVtZW50U2VudFJlcXVlc3QaJC50emVyby52MS5wYXkuU2V0dGxlbWVudFNlbnRSZXNwb25zZSIDkAICEmwKDlBheW1lbnRFeHBpcmVkEikudHplcm8udjEucGF5Lklzc3VlclBheW1lbnRFeHBpcmVkUmVxdWVzdBoqLnR6ZXJvLnYxLnBheS5Jc3N1ZXJQYXltZW50RXhwaXJlZFJlc3BvbnNlIgOQAgIymwEKFUlzc3VlckNhbGxiYWNrU2VydmljZRKBAQoZQ3JlYXRlUGF5bWVudEluc3RydWN0aW9ucxIuLnR6ZXJvLnYxLnBheS5DcmVhdGVQYXltZW50SW5zdHJ1Y3Rpb25zUmVxdWVzdBovLnR6ZXJvLnYxLnBheS5DcmVhdGVQYXltZW50SW5zdHJ1Y3Rpb25zUmVzcG9uc2UiA5ACAmIGcHJvdG8z", [file_buf_validate_validate, file_google_protobuf_timestamp, file_tzero_v1_pay_common]);
+  fileDesc("Chl0emVyby92MS9wYXkvaXNzdWVyLnByb3RvEgx0emVyby52MS5wYXkiwAQKFlBheW1lbnRSZWNlaXZlZFJlcXVlc3QSIgoRcGF5bWVudF9pbnRlbnRfaWQYCiABKARCB7pIBDICIAASbwoLYW1vdW50X3VzZHQYFCABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEJDukhAugE6EiVhbW91bnRfdXNkdCBtdXN0IGJlIGdyZWF0ZXIgdGhhbiB6ZXJvGhF0aGlzLnVuc2NhbGVkID4gMMgBARI5Cg11c2R0X29uX2NoYWluGB4gASgLMiAudHplcm8udjEucGF5LlVzZHRPbkNoYWluUGF5bWVudEgAEjcKC3JlY2VpdmVkX2F0GCggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBEkUKCmF1dGhvcml6ZWQYMiABKAsyLy50emVyby52MS5wYXkuUGF5bWVudFJlY2VpdmVkUmVxdWVzdC5BdXRob3JpemVkSAESSwoNdW5wcm9jZXNzYWJsZRg8IAEoCzIyLnR6ZXJvLnYxLnBheS5QYXltZW50UmVjZWl2ZWRSZXF1ZXN0LlVucHJvY2Vzc2FibGVIARoMCgpBdXRob3JpemVkGlAKDVVucHJvY2Vzc2FibGUSPwoLZGlzcG9zaXRpb24YCiABKA4yHi50emVyby52MS5wYXkuRnVuZHNEaXNwb3NpdGlvbkIKukgHggEEEAEgAEIXCg5wYXltZW50X21ldGhvZBIFukgCCAFCEAoHb3V0Y29tZRIFukgCCAEikAMKF1BheW1lbnRSZWNlaXZlZFJlc3BvbnNlEkIKCGFjY2VwdGVkGAogASgLMi4udHplcm8udjEucGF5LlBheW1lbnRSZWNlaXZlZFJlc3BvbnNlLkFjY2VwdGVkSAASQgoIcmVqZWN0ZWQYFCABKAsyLi50emVyby52MS5wYXkuUGF5bWVudFJlY2VpdmVkUmVzcG9uc2UuUmVqZWN0ZWRIABoKCghBY2NlcHRlZBrPAQoIUmVqZWN0ZWQSTwoGcmVhc29uGAogASgOMjUudHplcm8udjEucGF5LlBheW1lbnRSZWNlaXZlZFJlc3BvbnNlLlJlamVjdGVkLlJlYXNvbkIIukgFggECIAAicgoGUmVhc29uEhYKElJFQVNPTl9VTlNQRUNJRklFRBAAEhkKFVJFQVNPTl9JTlRFTlRfRVhQSVJFRBAKEhkKFVJFQVNPTl9VTktOT1dOX0lOVEVOVBAUEhoKFlJFQVNPTl9BTU9VTlRfTUlTTUFUQ0gQHkIPCgZyZXN1bHQSBbpIAggBIuYCChVTZXR0bGVtZW50U2VudFJlcXVlc3QSIgoOc2V0dGxlbWVudF9yZWYYCiABKAlCCrpIB3IFEAEYgAISbwoLYW1vdW50X3VzZHQYFCABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEJDukhAugE6EiVhbW91bnRfdXNkdCBtdXN0IGJlIGdyZWF0ZXIgdGhhbiB6ZXJvGhF0aGlzLnVuc2NhbGVkID4gMMgBARJCCgpzZXR0bGVtZW50GB4gASgLMiYudHplcm8udjEucGF5Lk9uQ2hhaW5TZXR0bGVtZW50RGV0YWlsc0IGukgDyAEBEjwKGnNldHRsZWRfcGF5bWVudF9pbnRlbnRfaWRzGCggAygEQhi6SBWSARIIASIOMgwY//////////9/IAASNgoKc2V0dGxlZF9hdBgyIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASLcAwoWU2V0dGxlbWVudFNlbnRSZXNwb25zZRJBCghhY2NlcHRlZBgKIAEoCzItLnR6ZXJvLnYxLnBheS5TZXR0bGVtZW50U2VudFJlc3BvbnNlLkFjY2VwdGVkSAASQQoIcmVqZWN0ZWQYFCABKAsyLS50emVyby52MS5wYXkuU2V0dGxlbWVudFNlbnRSZXNwb25zZS5SZWplY3RlZEgAGgoKCEFjY2VwdGVkGp4CCghSZWplY3RlZBJOCgZyZWFzb24YCiABKA4yNC50emVyby52MS5wYXkuU2V0dGxlbWVudFNlbnRSZXNwb25zZS5SZWplY3RlZC5SZWFzb25CCLpIBYIBAiAAIsEBCgZSZWFzb24SFgoSUkVBU09OX1VOU1BFQ0lGSUVEEAASHwobUkVBU09OX09OX0NIQUlOX1VOQ09ORklSTUVEEAoSGgoWUkVBU09OX0FNT1VOVF9NSVNNQVRDSBAUEhwKGFJFQVNPTl9XUk9OR19ERVNUSU5BVElPThAeEiAKHFJFQVNPTl9JTlRFTlRfTk9UX1NFVFRMRUFCTEUQKBIiCh5SRUFTT05fU0VUVExFTUVOVF9SRUZfQ09ORkxJQ1QQMkIPCgZyZXN1bHQSBbpIAggBIo8CCiBDcmVhdGVQYXltZW50SW5zdHJ1Y3Rpb25zUmVxdWVzdBIiChFwYXltZW50X2ludGVudF9pZBgKIAEoBEIHukgEMgIgABIcCgthY3F1aXJlcl9pZBgUIAEoBEIHukgEMgIgABJvCgthbW91bnRfdXNkdBgeIAEoCzIVLnR6ZXJvLnYxLnBheS5EZWNpbWFsQkO6SEC6AToSJWFtb3VudF91c2R0IG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBEjgKCmV4cGlyZXNfYXQYKCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgi6SAWyAQJAASKrBAohQ3JlYXRlUGF5bWVudEluc3RydWN0aW9uc1Jlc3BvbnNlEkoKB3N1Y2Nlc3MYCiABKAsyNy50emVyby52MS5wYXkuQ3JlYXRlUGF5bWVudEluc3RydWN0aW9uc1Jlc3BvbnNlLlN1Y2Nlc3NIABJKCgdmYWlsdXJlGBQgASgLMjcudHplcm8udjEucGF5LkNyZWF0ZVBheW1lbnRJbnN0cnVjdGlvbnNSZXNwb25zZS5GYWlsdXJlSAAadwoHU3VjY2VzcxI0Cgpxcl9vcHRpb25zGAogAygLMhYudHplcm8udjEucGF5LlFyT3B0aW9uQgi6SAWSAQIIARI2CgpleHBpcmVzX2F0GBQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBGuMBCgdGYWlsdXJlElgKBnJlYXNvbhgKIAEoDjI+LnR6ZXJvLnYxLnBheS5DcmVhdGVQYXltZW50SW5zdHJ1Y3Rpb25zUmVzcG9uc2UuRmFpbHVyZS5SZWFzb25CCLpIBYIBAiAAIn4KBlJlYXNvbhIWChJSRUFTT05fVU5TUEVDSUZJRUQQABIdChlSRUFTT05fSVNTVUVSX1VOQVZBSUxBQkxFEAoSHQoZUkVBU09OX0FERFJFU1NfUE9PTF9FTVBUWRAUEh4KGlJFQVNPTl9BTU9VTlRfT1VUX09GX1JBTkdFEChCDwoGcmVzdWx0EgW6SAIIATLWAQoNSXNzdWVyU2VydmljZRJjCg9QYXltZW50UmVjZWl2ZWQSJC50emVyby52MS5wYXkuUGF5bWVudFJlY2VpdmVkUmVxdWVzdBolLnR6ZXJvLnYxLnBheS5QYXltZW50UmVjZWl2ZWRSZXNwb25zZSIDkAICEmAKDlNldHRsZW1lbnRTZW50EiMudHplcm8udjEucGF5LlNldHRsZW1lbnRTZW50UmVxdWVzdBokLnR6ZXJvLnYxLnBheS5TZXR0bGVtZW50U2VudFJlc3BvbnNlIgOQAgIymwEKFUlzc3VlckNhbGxiYWNrU2VydmljZRKBAQoZQ3JlYXRlUGF5bWVudEluc3RydWN0aW9ucxIuLnR6ZXJvLnYxLnBheS5DcmVhdGVQYXltZW50SW5zdHJ1Y3Rpb25zUmVxdWVzdBovLnR6ZXJvLnYxLnBheS5DcmVhdGVQYXltZW50SW5zdHJ1Y3Rpb25zUmVzcG9uc2UiA5ACAmIGcHJvdG8z", [file_buf_validate_validate, file_google_protobuf_timestamp, file_tzero_v1_pay_common]);
 
 /**
  * @generated from message tzero.v1.pay.PaymentReceivedRequest
  */
 export type PaymentReceivedRequest = Message<"tzero.v1.pay.PaymentReceivedRequest"> & {
   /**
-   * * Intent the on-chain payment satisfies. 
+   * * Intent the deposit was made against. 
    *
    * @generated from field: uint64 payment_intent_id = 10;
    */
   paymentIntentId: bigint;
 
   /**
-   * * Amount credited; must equal the intent's stored amount_usdt exactly. 
+   * * Amount the deposit actually credited, on either outcome. 
    *
    * @generated from field: tzero.v1.pay.Decimal amount_usdt = 20;
    */
@@ -53,11 +53,32 @@ export type PaymentReceivedRequest = Message<"tzero.v1.pay.PaymentReceivedReques
   } | { case: undefined; value?: undefined };
 
   /**
-   * * Moment the Issuer treated the payment as final. 
+   * * Moment the Issuer observed the deposit as final on-chain. 
    *
    * @generated from field: google.protobuf.Timestamp received_at = 40;
    */
   receivedAt?: Timestamp | undefined;
+
+  /**
+   * *
+   * The Issuer's final disposition of the deposit. Screening is complete before
+   * the call; a deposit still being screened is not reported at all.
+   *
+   * @generated from oneof tzero.v1.pay.PaymentReceivedRequest.outcome
+   */
+  outcome: {
+    /**
+     * @generated from field: tzero.v1.pay.PaymentReceivedRequest.Authorized authorized = 50;
+     */
+    value: PaymentReceivedRequest_Authorized;
+    case: "authorized";
+  } | {
+    /**
+     * @generated from field: tzero.v1.pay.PaymentReceivedRequest.Unprocessable unprocessable = 60;
+     */
+    value: PaymentReceivedRequest_Unprocessable;
+    case: "unprocessable";
+  } | { case: undefined; value?: undefined };
 };
 
 /**
@@ -68,10 +89,55 @@ export const PaymentReceivedRequestSchema: GenMessage<PaymentReceivedRequest> = 
   messageDesc(file_tzero_v1_pay_issuer, 0);
 
 /**
+ * *
+ * The deposit passed the Issuer's screening. Once t-0 accepts the report the
+ * Issuer owns the on-chain risk and is obligated to settle the intent.
+ *
+ * @generated from message tzero.v1.pay.PaymentReceivedRequest.Authorized
+ */
+export type PaymentReceivedRequest_Authorized = Message<"tzero.v1.pay.PaymentReceivedRequest.Authorized"> & {
+};
+
+/**
+ * Describes the message tzero.v1.pay.PaymentReceivedRequest.Authorized.
+ * Use `create(PaymentReceivedRequest_AuthorizedSchema)` to create a new message.
+ */
+export const PaymentReceivedRequest_AuthorizedSchema: GenMessage<PaymentReceivedRequest_Authorized> = /*@__PURE__*/
+  messageDesc(file_tzero_v1_pay_issuer, 0, 0);
+
+/**
+ * *
+ * The Issuer will not process the deposit and the intent ends failed. The
+ * disposition says where the funds go and is final when reported.
+ *
+ * @generated from message tzero.v1.pay.PaymentReceivedRequest.Unprocessable
+ */
+export type PaymentReceivedRequest_Unprocessable = Message<"tzero.v1.pay.PaymentReceivedRequest.Unprocessable"> & {
+  /**
+   * @generated from field: tzero.v1.pay.FundsDisposition disposition = 10;
+   */
+  disposition: FundsDisposition;
+};
+
+/**
+ * Describes the message tzero.v1.pay.PaymentReceivedRequest.Unprocessable.
+ * Use `create(PaymentReceivedRequest_UnprocessableSchema)` to create a new message.
+ */
+export const PaymentReceivedRequest_UnprocessableSchema: GenMessage<PaymentReceivedRequest_Unprocessable> = /*@__PURE__*/
+  messageDesc(file_tzero_v1_pay_issuer, 0, 1);
+
+/**
  * @generated from message tzero.v1.pay.PaymentReceivedResponse
  */
 export type PaymentReceivedResponse = Message<"tzero.v1.pay.PaymentReceivedResponse"> & {
   /**
+   * *
+   * Accepted records the report as the intent's disposition (authorized →
+   * AUTHORIZED, unprocessable → FAILED), or replays a disposition already
+   * on file. Rejected means the report was not recorded: for an authorized
+   * report the deposit is refunded to sender_address; for an unprocessable
+   * report the funds follow the reported disposition.
+   *
    * @generated from oneof tzero.v1.pay.PaymentReceivedResponse.result
    */
   result: {
@@ -97,6 +163,8 @@ export const PaymentReceivedResponseSchema: GenMessage<PaymentReceivedResponse> 
   messageDesc(file_tzero_v1_pay_issuer, 1);
 
 /**
+ * * The disposition is recorded. 
+ *
  * @generated from message tzero.v1.pay.PaymentReceivedResponse.Accepted
  */
 export type PaymentReceivedResponse_Accepted = Message<"tzero.v1.pay.PaymentReceivedResponse.Accepted"> & {
@@ -110,6 +178,8 @@ export const PaymentReceivedResponse_AcceptedSchema: GenMessage<PaymentReceivedR
   messageDesc(file_tzero_v1_pay_issuer, 1, 0);
 
 /**
+ * * The report was not recorded. 
+ *
  * @generated from message tzero.v1.pay.PaymentReceivedResponse.Rejected
  */
 export type PaymentReceivedResponse_Rejected = Message<"tzero.v1.pay.PaymentReceivedResponse.Rejected"> & {
@@ -136,7 +206,7 @@ export enum PaymentReceivedResponse_Rejected_Reason {
   UNSPECIFIED = 0,
 
   /**
-   * Received after expires_at on t-0's clock.
+   * Processing started after expires_at on t-0's clock.
    *
    * @generated from enum value: REASON_INTENT_EXPIRED = 10;
    */
@@ -189,7 +259,7 @@ export type SettlementSentRequest = Message<"tzero.v1.pay.SettlementSentRequest"
   settlement?: OnChainSettlementDetails | undefined;
 
   /**
-   * * Intents this settlement clears; per-intent amounts are resolved by t-0 from the accepted intents. 
+   * * Intents this settlement clears, treated as a set; per-intent amounts come from t-0's ledger. 
    *
    * @generated from field: repeated uint64 settled_payment_intent_ids = 40;
    */
@@ -253,6 +323,12 @@ export const SettlementSentResponse_AcceptedSchema: GenMessage<SettlementSentRes
   messageDesc(file_tzero_v1_pay_issuer, 3, 0);
 
 /**
+ * *
+ * The settlement is not recorded. ON_CHAIN_UNCONFIRMED clears on its own and
+ * the report is resubmitted under the same settlement_ref once the transaction
+ * confirms; the other reasons open a manual reconciliation with t-0, and the
+ * corrected report follows from it.
+ *
  * @generated from message tzero.v1.pay.SettlementSentResponse.Rejected
  */
 export type SettlementSentResponse_Rejected = Message<"tzero.v1.pay.SettlementSentResponse.Rejected"> & {
@@ -260,13 +336,6 @@ export type SettlementSentResponse_Rejected = Message<"tzero.v1.pay.SettlementSe
    * @generated from field: tzero.v1.pay.SettlementSentResponse.Rejected.Reason reason = 10;
    */
   reason: SettlementSentResponse_Rejected_Reason;
-
-  /**
-   * * Intents that failed verification within the batch. 
-   *
-   * @generated from field: repeated uint64 failing_intent_ids = 20;
-   */
-  failingIntentIds: bigint[];
 };
 
 /**
@@ -286,7 +355,7 @@ export enum SettlementSentResponse_Rejected_Reason {
   UNSPECIFIED = 0,
 
   /**
-   * The on-chain transaction is not yet confirmed.
+   * The on-chain transaction is not yet confirmed. Not returned while t-0 accepts unverified.
    *
    * @generated from enum value: REASON_ON_CHAIN_UNCONFIRMED = 10;
    */
@@ -307,11 +376,19 @@ export enum SettlementSentResponse_Rejected_Reason {
   WRONG_DESTINATION = 30,
 
   /**
-   * A listed intent is not in a settleable state (USDt mode: SETTLEMENT_PENDING; fiat mode: authorized).
+   * A listed intent is unknown, not authorized, or already covered. Fiat mode also accepts a
+   * settled intent, whose Acquirer confirmation may land before this reimbursement.
    *
    * @generated from enum value: REASON_INTENT_NOT_SETTLEABLE = 40;
    */
   INTENT_NOT_SETTLEABLE = 40,
+
+  /**
+   * This on-chain transfer is already recorded under a different settlement_ref.
+   *
+   * @generated from enum value: REASON_SETTLEMENT_REF_CONFLICT = 50;
+   */
+  SETTLEMENT_REF_CONFLICT = 50,
 }
 
 /**
@@ -319,119 +396,6 @@ export enum SettlementSentResponse_Rejected_Reason {
  */
 export const SettlementSentResponse_Rejected_ReasonSchema: GenEnum<SettlementSentResponse_Rejected_Reason> = /*@__PURE__*/
   enumDesc(file_tzero_v1_pay_issuer, 3, 1, 0);
-
-/**
- * *
- * PaymentExpired exists on both the acquirer and issuer edges of this flat package,
- * so each side's request and response carry their role as a prefix. This is the
- * issuer's.
- *
- * @generated from message tzero.v1.pay.IssuerPaymentExpiredRequest
- */
-export type IssuerPaymentExpiredRequest = Message<"tzero.v1.pay.IssuerPaymentExpiredRequest"> & {
-  /**
-   * * Intent whose reservation expired. 
-   *
-   * @generated from field: uint64 payment_intent_id = 10;
-   */
-  paymentIntentId: bigint;
-
-  /**
-   * * Moment the Issuer released the deposit addresses. 
-   *
-   * @generated from field: google.protobuf.Timestamp expired_at = 20;
-   */
-  expiredAt?: Timestamp | undefined;
-};
-
-/**
- * Describes the message tzero.v1.pay.IssuerPaymentExpiredRequest.
- * Use `create(IssuerPaymentExpiredRequestSchema)` to create a new message.
- */
-export const IssuerPaymentExpiredRequestSchema: GenMessage<IssuerPaymentExpiredRequest> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_issuer, 4);
-
-/**
- * @generated from message tzero.v1.pay.IssuerPaymentExpiredResponse
- */
-export type IssuerPaymentExpiredResponse = Message<"tzero.v1.pay.IssuerPaymentExpiredResponse"> & {
-  /**
-   * @generated from oneof tzero.v1.pay.IssuerPaymentExpiredResponse.result
-   */
-  result: {
-    /**
-     * @generated from field: tzero.v1.pay.IssuerPaymentExpiredResponse.Accepted accepted = 10;
-     */
-    value: IssuerPaymentExpiredResponse_Accepted;
-    case: "accepted";
-  } | {
-    /**
-     * @generated from field: tzero.v1.pay.IssuerPaymentExpiredResponse.Rejected rejected = 20;
-     */
-    value: IssuerPaymentExpiredResponse_Rejected;
-    case: "rejected";
-  } | { case: undefined; value?: undefined };
-};
-
-/**
- * Describes the message tzero.v1.pay.IssuerPaymentExpiredResponse.
- * Use `create(IssuerPaymentExpiredResponseSchema)` to create a new message.
- */
-export const IssuerPaymentExpiredResponseSchema: GenMessage<IssuerPaymentExpiredResponse> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_issuer, 5);
-
-/**
- * @generated from message tzero.v1.pay.IssuerPaymentExpiredResponse.Accepted
- */
-export type IssuerPaymentExpiredResponse_Accepted = Message<"tzero.v1.pay.IssuerPaymentExpiredResponse.Accepted"> & {
-};
-
-/**
- * Describes the message tzero.v1.pay.IssuerPaymentExpiredResponse.Accepted.
- * Use `create(IssuerPaymentExpiredResponse_AcceptedSchema)` to create a new message.
- */
-export const IssuerPaymentExpiredResponse_AcceptedSchema: GenMessage<IssuerPaymentExpiredResponse_Accepted> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_issuer, 5, 0);
-
-/**
- * @generated from message tzero.v1.pay.IssuerPaymentExpiredResponse.Rejected
- */
-export type IssuerPaymentExpiredResponse_Rejected = Message<"tzero.v1.pay.IssuerPaymentExpiredResponse.Rejected"> & {
-  /**
-   * @generated from field: tzero.v1.pay.IssuerPaymentExpiredResponse.Rejected.Reason reason = 10;
-   */
-  reason: IssuerPaymentExpiredResponse_Rejected_Reason;
-};
-
-/**
- * Describes the message tzero.v1.pay.IssuerPaymentExpiredResponse.Rejected.
- * Use `create(IssuerPaymentExpiredResponse_RejectedSchema)` to create a new message.
- */
-export const IssuerPaymentExpiredResponse_RejectedSchema: GenMessage<IssuerPaymentExpiredResponse_Rejected> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_issuer, 5, 1);
-
-/**
- * @generated from enum tzero.v1.pay.IssuerPaymentExpiredResponse.Rejected.Reason
- */
-export enum IssuerPaymentExpiredResponse_Rejected_Reason {
-  /**
-   * @generated from enum value: REASON_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * payment_intent_id is one t-0 never opened.
-   *
-   * @generated from enum value: REASON_UNKNOWN_INTENT = 10;
-   */
-  UNKNOWN_INTENT = 10,
-}
-
-/**
- * Describes the enum tzero.v1.pay.IssuerPaymentExpiredResponse.Rejected.Reason.
- */
-export const IssuerPaymentExpiredResponse_Rejected_ReasonSchema: GenEnum<IssuerPaymentExpiredResponse_Rejected_Reason> = /*@__PURE__*/
-  enumDesc(file_tzero_v1_pay_issuer, 5, 1, 0);
 
 /**
  * @generated from message tzero.v1.pay.CreatePaymentInstructionsRequest
@@ -460,8 +424,8 @@ export type CreatePaymentInstructionsRequest = Message<"tzero.v1.pay.CreatePayme
 
   /**
    * *
-   * Absolute moment t-0 requires the reservation held until, on t-0's clock
-   * (t-0 currently sets a 60–120 second window).
+   * Absolute moment t-0 requires the reservation held until, on t-0's clock.
+   * t-0 sizes the window per intent rather than to a fixed value.
    *
    * @generated from field: google.protobuf.Timestamp expires_at = 40;
    */
@@ -473,7 +437,7 @@ export type CreatePaymentInstructionsRequest = Message<"tzero.v1.pay.CreatePayme
  * Use `create(CreatePaymentInstructionsRequestSchema)` to create a new message.
  */
 export const CreatePaymentInstructionsRequestSchema: GenMessage<CreatePaymentInstructionsRequest> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_issuer, 6);
+  messageDesc(file_tzero_v1_pay_issuer, 4);
 
 /**
  * @generated from message tzero.v1.pay.CreatePaymentInstructionsResponse
@@ -502,7 +466,7 @@ export type CreatePaymentInstructionsResponse = Message<"tzero.v1.pay.CreatePaym
  * Use `create(CreatePaymentInstructionsResponseSchema)` to create a new message.
  */
 export const CreatePaymentInstructionsResponseSchema: GenMessage<CreatePaymentInstructionsResponse> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_issuer, 7);
+  messageDesc(file_tzero_v1_pay_issuer, 5);
 
 /**
  * @generated from message tzero.v1.pay.CreatePaymentInstructionsResponse.Success
@@ -516,7 +480,7 @@ export type CreatePaymentInstructionsResponse_Success = Message<"tzero.v1.pay.Cr
   qrOptions: QrOption[];
 
   /**
-   * * Absolute expiry of the reservation. 
+   * * Absolute expiry of the reservation; at or after the commanded expires_at. 
    *
    * @generated from field: google.protobuf.Timestamp expires_at = 20;
    */
@@ -528,7 +492,7 @@ export type CreatePaymentInstructionsResponse_Success = Message<"tzero.v1.pay.Cr
  * Use `create(CreatePaymentInstructionsResponse_SuccessSchema)` to create a new message.
  */
 export const CreatePaymentInstructionsResponse_SuccessSchema: GenMessage<CreatePaymentInstructionsResponse_Success> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_issuer, 7, 0);
+  messageDesc(file_tzero_v1_pay_issuer, 5, 0);
 
 /**
  * @generated from message tzero.v1.pay.CreatePaymentInstructionsResponse.Failure
@@ -545,7 +509,7 @@ export type CreatePaymentInstructionsResponse_Failure = Message<"tzero.v1.pay.Cr
  * Use `create(CreatePaymentInstructionsResponse_FailureSchema)` to create a new message.
  */
 export const CreatePaymentInstructionsResponse_FailureSchema: GenMessage<CreatePaymentInstructionsResponse_Failure> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_issuer, 7, 1);
+  messageDesc(file_tzero_v1_pay_issuer, 5, 1);
 
 /**
  * @generated from enum tzero.v1.pay.CreatePaymentInstructionsResponse.Failure.Reason
@@ -582,18 +546,18 @@ export enum CreatePaymentInstructionsResponse_Failure_Reason {
  * Describes the enum tzero.v1.pay.CreatePaymentInstructionsResponse.Failure.Reason.
  */
 export const CreatePaymentInstructionsResponse_Failure_ReasonSchema: GenEnum<CreatePaymentInstructionsResponse_Failure_Reason> = /*@__PURE__*/
-  enumDesc(file_tzero_v1_pay_issuer, 7, 1, 0);
+  enumDesc(file_tzero_v1_pay_issuer, 5, 1, 0);
 
 /**
  * *
- * t-0 endpoints the Issuer calls to report on-chain recognition, settlement,
- * and reservation expiry.
+ * t-0 endpoints the Issuer calls to report what it did with a customer deposit
+ * and the USDt settlements that clear the intents it covers.
  *
  * @generated from service tzero.v1.pay.IssuerService
  */
 export const IssuerService: GenService<{
   /**
-   * * Reports the customer's payment seen on-chain and KYT-cleared; the Issuer now owns on-chain risk. 
+   * * Reports a deposit seen on-chain against an intent and the Issuer's final disposition of it. 
    *
    * @generated from rpc tzero.v1.pay.IssuerService.PaymentReceived
    */
@@ -611,16 +575,6 @@ export const IssuerService: GenService<{
     methodKind: "unary";
     input: typeof SettlementSentRequestSchema;
     output: typeof SettlementSentResponseSchema;
-  },
-  /**
-   * * Confirms the reservation closed with no valid payment and the deposit addresses are released. 
-   *
-   * @generated from rpc tzero.v1.pay.IssuerService.PaymentExpired
-   */
-  paymentExpired: {
-    methodKind: "unary";
-    input: typeof IssuerPaymentExpiredRequestSchema;
-    output: typeof IssuerPaymentExpiredResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_tzero_v1_pay_issuer, 0);
