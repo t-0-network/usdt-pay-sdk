@@ -11,11 +11,12 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 
 /**
- * §12 SettlementReceived — you are the oracle for the bank leg. Fiat mode only.
+ * SettlementReceived — you are the oracle for the bank leg. Fiat mode only.
  *
  * <p>Call this when the LP's transfer actually shows up on your bank statement,
- * never when §11 SettlementInitiated arrives: §11 is a pre-notice naming the
- * reference to watch for, and the intent only reaches SETTLED on your §12.
+ * never when SettlementInitiated arrives: that is a pre-notice naming the
+ * reference to watch for, and the intent only reaches SETTLED on your
+ * SettlementReceived call.
  *
  * <p>Idempotency key: the pair (lpId, bankTransferRef) — bankTransferRef is minted
  * by the LP and unique only per LP. On {@link Outcome#shouldRetry()} resend the
@@ -48,6 +49,7 @@ public final class SettlementReceived {
                 case ACCEPTED -> {
                     log.info("Settlement {} from LP {} confirmed: {} {}",
                             bankTransferRef, lpId, Decimals.format(amountReceived), localCurrency);
+                    // TODO: Step 4.1 — record that this fiat leg is confirmed; the intent is now SETTLED.
                     return new Outcome.Accepted<>(response.getAccepted());
                 }
                 case REJECTED -> {
@@ -65,6 +67,7 @@ public final class SettlementReceived {
             }
         } catch (StatusRuntimeException e) {
             log.error("SettlementReceived failed for {}: {}", bankTransferRef, e.getStatus());
+            // TODO: Step 4.2 — retry with backoff, same (lpId, bankTransferRef) pair.
             return new Outcome.Unknown<>(e.getStatus().toString());
         }
     }

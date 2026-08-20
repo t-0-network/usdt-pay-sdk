@@ -16,7 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The callbacks t-0 pushes to the acquirer: §7, §11, §13, §15.
+ * The callbacks t-0 pushes to the acquirer: PaymentAuthorized, SettlementInitiated,
+ * SettlementCompleted, PaymentExpired.
  *
  * <p><b>Every one of these is delivered at least once.</b> t-0 retries with backoff
  * until you acknowledge, and your acknowledgment means "recorded, stop retrying".
@@ -26,32 +27,33 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Dedup key per callback:
  * <ul>
- *   <li>§7 PaymentAuthorized — {@code paymentIntentId}</li>
- *   <li>§11 SettlementInitiated — {@code fiatSettlementId}</li>
- *   <li>§13 SettlementCompleted — {@code settlementId}</li>
- *   <li>§15 PaymentExpired — {@code paymentIntentId}</li>
+ *   <li>PaymentAuthorized — {@code paymentIntentId}</li>
+ *   <li>SettlementInitiated — {@code fiatSettlementId}</li>
+ *   <li>SettlementCompleted — {@code settlementId}</li>
+ *   <li>PaymentExpired — {@code paymentIntentId}</li>
  * </ul>
  * A repeat delivery under a key you have already written is a no-op that you
  * still acknowledge.
  *
- * <p>Scope the key <b>per callback</b>, not globally: §7 and §15 are both keyed on
- * {@code paymentIntentId}, so a single {@code processed(key)} table collides the
- * expiry of an intent with its authorization and silently drops one of them.
+ * <p>Scope the key <b>per callback</b>, not globally: PaymentAuthorized and
+ * PaymentExpired are both keyed on {@code paymentIntentId}, so a single
+ * {@code processed(key)} table collides the expiry of an intent with its
+ * authorization and silently drops one of them.
  */
 public class AcquirerCallbackHandler extends AcquirerCallbackServiceGrpc.AcquirerCallbackServiceImplBase {
 
     private static final Logger log = LoggerFactory.getLogger(AcquirerCallbackHandler.class);
 
     /**
-     * §7 — the sale is approved and the Issuer is now obligated to settle it.
-     * This is the moment to release the goods; settlement follows later.
+     * PaymentAuthorized — the sale is approved and the Issuer is now obligated to
+     * settle it. This is the moment to release the goods; settlement follows later.
      */
     @Override
     public void paymentAuthorized(
             PaymentAuthorizedRequest request,
             StreamObserver<PaymentAuthorizedResponse> responseObserver) {
 
-        log.info("§7 authorized: intent={} sale={} tx={} at {}",
+        log.info("PaymentAuthorized: intent={} sale={} tx={} at {}",
                 request.getPaymentIntentId(),
                 request.getPaymentRef(),
                 request.getUsdtOnChain().getOnChainTxHash(),
@@ -65,16 +67,16 @@ public class AcquirerCallbackHandler extends AcquirerCallbackServiceGrpc.Acquire
     }
 
     /**
-     * §11 — pre-notice that the LP sent a bank transfer, naming the reference to
-     * expect on your statement. Fiat mode only. Not proof of receipt: the intent
-     * settles on your §12, not on this.
+     * SettlementInitiated — pre-notice that the LP sent a bank transfer, naming the
+     * reference to expect on your statement. Fiat mode only. Not proof of receipt:
+     * the intent settles on your SettlementReceived call, not on this.
      */
     @Override
     public void settlementInitiated(
             SettlementInitiatedRequest request,
             StreamObserver<SettlementInitiatedResponse> responseObserver) {
 
-        log.info("§11 settlement initiated: fiatSettlementId={} lp={} ref={} {} {} covering {}",
+        log.info("SettlementInitiated: fiatSettlementId={} lp={} ref={} {} {} covering {}",
                 request.getFiatSettlementId(),
                 request.getLpId(),
                 request.getBankTransferRef(),
@@ -84,45 +86,45 @@ public class AcquirerCallbackHandler extends AcquirerCallbackServiceGrpc.Acquire
 
         // TODO: Step 3.2 — dedup on fiatSettlementId, then record (lpId, bankTransferRef)
         //       as a transfer to watch for on the bank statement.
-        // TODO: Step 4.1 — when reconciliation matches it, call
-        //       SettlementReceived.confirm(stub, lpId, bankTransferRef, ...) — §12.
+        // See Step 4.1 — when reconciliation matches it, call
+        //       SettlementReceived.confirm(stub, lpId, bankTransferRef, ...).
 
         responseObserver.onNext(SettlementInitiatedResponse.getDefaultInstance());
         responseObserver.onCompleted();
     }
 
     /**
-     * §13 — settlement verified on-chain as reached you. USDt mode only; in fiat
-     * mode your own §12 is terminal and this never fires.
+     * SettlementCompleted — settlement verified on-chain. USDt mode only; in fiat
+     * mode your own SettlementReceived call is terminal and this never fires.
      */
     @Override
     public void settlementCompleted(
             SettlementCompletedRequest request,
             StreamObserver<SettlementCompletedResponse> responseObserver) {
 
-        log.info("§13 settled: settlementId={} amount={} tx={} covering {}",
+        log.info("SettlementCompleted: settlementId={} amount={} tx={} covering {}",
                 request.getSettlementId(),
                 Decimals.format(request.getSettlementAmount()),
                 request.getSettlement().getOnChainTxHash(),
                 request.getSettledPaymentIntentIdsList());
 
-        // TODO: Step 3.3 — dedup on settlementId, then close out every intent in
-        //       settledPaymentIntentIds.
+        // USDt only — leave as a no-op in fiat mode. Dedup on settlementId, then
+        // close out every intent in settledPaymentIntentIds.
 
         responseObserver.onNext(SettlementCompletedResponse.getDefaultInstance());
         responseObserver.onCompleted();
     }
 
     /**
-     * §15 — the intent expired with no payment. Terminal: drop the QR and clear
-     * the pending order.
+     * PaymentExpired — the intent expired with no payment. Terminal: drop the QR
+     * and clear the pending order.
      */
     @Override
     public void paymentExpired(
             AcquirerPaymentExpiredRequest request,
             StreamObserver<AcquirerPaymentExpiredResponse> responseObserver) {
 
-        log.info("§15 expired: intent={} sale={} at {}",
+        log.info("PaymentExpired: intent={} sale={} at {}",
                 request.getPaymentIntentId(),
                 request.getPaymentRef(),
                 Times.format(request.getExpiredAt()));
