@@ -41,8 +41,10 @@ prints it again. Do not overwrite it from `.env.example`.
 ## Prerequisites
 
 - **Java 21 or newer to run what you build.** The jar itself runs on 17, and the
-  Gradle build provisions its own 21 toolchain if your JDK is older — but the binary
-  it produces needs a 21 runtime.
+  Gradle build provisions its own 21 toolchain via `api.foojay.io` if your JDK is
+  older — but the binary it produces needs a 21 runtime. If your network blocks that
+  resolver, or you want to drop the starter to 17, see
+  [Java 21](../README.md#java-21).
 - **The t-0 network public key** — an uncompressed secp256k1 key, `0x04…` and 130 hex
   digits. It comes from your t-0 onboarding contact. The project reads it as
   `NETWORK_PUBLIC_KEY` and will not start without it.
