@@ -4,9 +4,9 @@ You own the merchant relationship. Your POS asks you to price a sale, you open a
 payment intent with t-0, you show the customer a QR, and you learn from t-0's
 callbacks whether the sale was authorized and when it settled.
 
-The §-numbers (§3, §7, …) are shorthand for the endpoints; the table under
-[What you implement](#what-you-implement) maps each to its RPC name. This README says
-what to build — for what every field and decline code means, see the
+The RPC names below (`GetPaymentQuote`, `PaymentAuthorized`, …) match the methods
+in the proto and in the code. This README says what to build — for what every field
+and decline code means, see the
 [acquirer API reference](https://usdt-pay-docs.t-0.network/docs/integration-guidance/api-reference/pay_acquirer/).
 
 ## Prerequisites
@@ -20,6 +20,9 @@ what to build — for what every field and decline code means, see the
 
 ## Run it
 
+If you used the scaffolder, skip the `cp` — your generated `.env` already holds
+your key, and copying the example over it destroys it.
+
 ```bash
 cp .env.example .env      # then fill in PRIVATE_KEY and NETWORK_PUBLIC_KEY
 
@@ -31,26 +34,36 @@ cp .env.example .env      # then fill in PRIVATE_KEY and NETWORK_PUBLIC_KEY
 ```
 
 It prints your public key, starts the callback server, and runs one demo sale
-through §3 → §4. That demo is a **fiat-mode** sale: if you settle in USDt you skip §3
-entirely and set your own rate on §4, so do not read your own first call off it —
-[What you implement](#what-you-implement) says which half is yours. `./gradlew test`
-runs the starter's own tests.
+through `GetPaymentQuote` → `CreatePaymentIntent`. That demo is a **fiat-mode**
+sale: if you settle in USDt you skip `GetPaymentQuote` entirely and set your own
+rate on `CreatePaymentIntent`, so do not read your own first call off it —
+[What you implement](#what-you-implement) says which half is yours.
+
+To run the starter's own tests:
+
+```bash
+# From a clone of the repository:
+(cd ../.. && ./gradlew :starter:acquirer:test)
+
+# From a scaffolded standalone project:
+./gradlew test
+```
 
 ## What you implement
 
-| Direction | Endpoint | Where |
-|---|---|---|
-| you → t-0 | §3 `GetPaymentQuote` | `internal/GetPaymentQuote.java` |
-| you → t-0 | §4 `CreatePaymentIntent` | `internal/CreatePaymentIntent.java` |
-| you → t-0 | §12 `SettlementReceived` | `internal/SettlementReceived.java` |
-| t-0 → you | §7 `PaymentAuthorized` | `handler/AcquirerCallbackHandler.java` |
-| t-0 → you | §11 `SettlementInitiated` | `handler/AcquirerCallbackHandler.java` |
-| t-0 → you | §13 `SettlementCompleted` | `handler/AcquirerCallbackHandler.java` |
-| t-0 → you | §15 `PaymentExpired` | `handler/AcquirerCallbackHandler.java` |
+| Direction | Endpoint | What it does | Where |
+|---|---|---|---|
+| you → t-0 | `GetPaymentQuote` | Prices a fiat sale (fiat only) | `internal/GetPaymentQuote.java` |
+| you → t-0 | `CreatePaymentIntent` | Opens an intent, returns QR options | `internal/CreatePaymentIntent.java` |
+| you → t-0 | `SettlementReceived` | You confirm the fiat landed (fiat only) | `internal/SettlementReceived.java` |
+| t-0 → you | `PaymentAuthorized` | Sale approved, release goods | `handler/AcquirerCallbackHandler.java` |
+| t-0 → you | `SettlementInitiated` | LP sent a bank transfer, pre-notice (fiat only) | `handler/AcquirerCallbackHandler.java` |
+| t-0 → you | `SettlementCompleted` | On-chain settlement verified (USDt only) | `handler/AcquirerCallbackHandler.java` |
+| t-0 → you | `PaymentExpired` | QR expired, cancel the sale | `handler/AcquirerCallbackHandler.java` |
 
-Your settlement mode is fixed at onboarding and decides which half you need.
-**Fiat mode** (you have an assigned LP): §3, §11, §12 — and §13 never fires.
-**USDt mode**: skip §3, §11, §12; you set your own `fxRate` on §4 and finish on §13.
+Your settlement mode decides which endpoints apply. The table above marks each
+endpoint's mode. Fiat mode: `SettlementCompleted` never fires. USDt mode: skip
+`GetPaymentQuote`, `SettlementInitiated`, `SettlementReceived`.
 
 ## Phases
 
@@ -67,44 +80,45 @@ Your settlement mode is fixed at onboarding and decides which half you need.
 
 1. **2.1** Replace the demo sale in `Main.java` — currency, amount and `paymentRef`
    are declared there once and handed to both calls, because a quote and an intent
-   that disagree price one thing and charge another. In USDt mode drop §3 and go
-   straight to §4 with your own rate.
+   that disagree price one thing and charge another. In USDt mode drop
+   `GetPaymentQuote` and go straight to `CreatePaymentIntent` with your own rate.
 2. **2.2** Mint `paymentRef` and `idempotencyKey` when the sale is created rather
    than at call time, and persist the returned `paymentIntentId` against the sale.
-   `paymentRef` is your sale's correlation ref — t-0 echoes it on §7 and §15, and it
-   is explicitly **not** an idempotency key and not required to be unique.
-   `idempotencyKey` is the only thing §4 is keyed on: at most one intent is ever
-   created under one key, repeating a key returns that intent unchanged, and retrying
-   a *declined* sale takes a fresh key under the same `paymentRef`. Keying §4 on
-   `paymentRef` opens a second intent on every retry. Render each
-   `qrOptions[].renderablePayload` as a QR image **as-is** — it is chain-native, and
-   rebuilding it from the address and the amount is how you end up with a QR that
-   pays the wrong thing.
+   `paymentRef` is your sale's correlation ref — t-0 echoes it on `PaymentAuthorized`
+   and `PaymentExpired`, and it is explicitly **not** an idempotency key and not
+   required to be unique.
+   `idempotencyKey` is the only thing `CreatePaymentIntent` is keyed on: at most one
+   intent is ever created under one key, repeating a key returns that intent unchanged,
+   and retrying a *declined* sale takes a fresh key under the same `paymentRef`.
+   Keying `CreatePaymentIntent` on `paymentRef` opens a second intent on every retry.
+   Render each `qrOptions[].renderablePayload` as a QR image **as-is** — it is
+   chain-native, and rebuilding it from the address and the amount is how you end up
+   with a QR that pays the wrong thing.
 3. **2.3** Deploy and give your t-0 onboarding contact the base URL Phase 3's
    callbacks should reach. It has to be openable from outside, so a laptop on
    `localhost:8080` needs a tunnel or a deployed host first.
 
 ### Phase 3 — callbacks
 
-Implement the four methods in `handler/AcquirerCallbackHandler.java`.
+Implement the callbacks in `handler/AcquirerCallbackHandler.java`.
 
-1. **3.1** §7 — mark the sale authorized and release the goods. From here the Issuer
-   is obligated to settle; settlement lands later.
-2. **3.2** §11 — record `(lpId, bankTransferRef)` as a transfer to watch for. Fiat
-   mode only, and *not* proof of receipt.
-3. **3.3** §13 — close out every intent in `settledPaymentIntentIds`. USDt mode only.
-4. **3.4** §15 — cancel the pending sale and take the QR off the POS.
+1. **3.1** `PaymentAuthorized` — mark the sale authorized and release the goods.
+   From here the Issuer is obligated to settle; settlement lands later.
+2. **3.2** `SettlementInitiated` — record `(lpId, bankTransferRef)` as a transfer to
+   watch for. Fiat mode only, and *not* proof of receipt.
+3. **3.3** `SettlementCompleted` — close out every intent in
+   `settledPaymentIntentIds`. USDt mode only; leave as a no-op in fiat mode.
+4. **3.4** `PaymentExpired` — cancel the pending sale and take the QR off the POS.
 
 ### Phase 4 — confirm the fiat leg
 
 Fiat mode only.
 
 1. **4.1** When the LP's transfer shows up on your bank statement, match it on
-   `(lpId, bankTransferRef)` and call `SettlementReceived.confirm(...)` — §12. The
-   intent reaches SETTLED on this call and nothing else; you are the oracle for the
-   bank leg.
-2. **4.2** Retry §12 with backoff until t-0 answers, always with the same
-   `(lpId, bankTransferRef)` pair.
+   `(lpId, bankTransferRef)` and call `SettlementReceived.confirm(...)`. The intent
+   reaches SETTLED on this call and nothing else; you are the oracle for the bank leg.
+2. **4.2** Retry `SettlementReceived` with backoff until t-0 answers, always with the
+   same `(lpId, bankTransferRef)` pair.
 
 ## Callbacks are delivered at least once
 
@@ -118,20 +132,21 @@ repeat under a key you already hold is a no-op you still acknowledge.
 
 | Callback | Dedup key |
 |---|---|
-| §7 `PaymentAuthorized` | `paymentIntentId` |
-| §11 `SettlementInitiated` | `fiatSettlementId` |
-| §13 `SettlementCompleted` | `settlementId` |
-| §15 `PaymentExpired` | `paymentIntentId` |
+| `PaymentAuthorized` | `paymentIntentId` |
+| `SettlementInitiated` | `fiatSettlementId` |
+| `SettlementCompleted` | `settlementId` |
+| `PaymentExpired` | `paymentIntentId` |
 
-Scope the key **per callback**, not globally: §7 and §15 are both keyed on
-`paymentIntentId`, so one shared `processed(key)` table collides an intent's expiry
-with its authorization and drops one of them.
+Scope the key **per callback**, not globally: `PaymentAuthorized` and
+`PaymentExpired` are both keyed on `paymentIntentId`, so one shared
+`processed(key)` table collides an intent's expiry with its authorization and drops
+one of them.
 
-The same discipline applies to what you send: §4 is keyed on your `idempotencyKey`
-and §12 on the pair `(lpId, bankTransferRef)`. Retry with the original key and
-identical content — a fresh key on a retry opens a second intent for one sale.
-Retrying a *declined* sale is the other case: that takes a fresh `idempotencyKey`
-under the same `paymentRef`.
+The same discipline applies to what you send: `CreatePaymentIntent` is keyed on
+your `idempotencyKey` and `SettlementReceived` on the pair
+`(lpId, bankTransferRef)`. Retry with the original key and identical content — a
+fresh key on a retry opens a second intent for one sale. Retrying a *declined* sale
+is the other case: that takes a fresh `idempotencyKey` under the same `paymentRef`.
 
 Every call in `internal/` returns an `Outcome`, which is what tells you which of the
 three you got:
@@ -144,17 +159,75 @@ three you got:
 
 `outcome.shouldRetry()` is true only for `Unknown`.
 
+## Testing your integration
+
+You do not need t-0 to reach you, or a running server, to test the half of this that
+holds your logic. Both directions stub cleanly.
+
+The inbound test worth writing first is redelivery: call your handler **twice** with
+the same dedup key and assert your own store holds one row. That is the at-least-once
+contract, and it is the one that costs money to get wrong.
+
+**Inbound — your callback handler is a plain object.** It extends a generated
+`*ImplBase`, so a test constructs it and calls the method directly, asserting on what
+it hands the `StreamObserver`. No server, no signing, no network:
+
+```java
+var responses = new ArrayList<PaymentAuthorizedResponse>();
+new AcquirerCallbackHandler().paymentAuthorized(
+        PaymentAuthorizedRequest.newBuilder().setPaymentIntentId(1).setPaymentRef("sale-1").build(),
+        new StreamObserver<>() {
+            public void onNext(PaymentAuthorizedResponse r) { responses.add(r); }
+            public void onError(Throwable t) { throw new AssertionError(t); }
+            public void onCompleted() { }
+        });
+
+assertEquals(1, responses.size());
+```
+
+**Outbound — fake t-0, not the stub.** The generated stubs are `final` with private
+constructors, so they cannot be subclassed. Stand a fake service up in
+memory and hand the helper a real stub pointed at it. One test dependency,
+`io.grpc:grpc-inprocess`:
+
+```java
+String name = InProcessServerBuilder.generateName();
+Server server = InProcessServerBuilder.forName(name).directExecutor()
+        .addService(new AcquirerServiceGrpc.AcquirerServiceImplBase() {
+            @Override public void createPaymentIntent(
+                    CreatePaymentIntentRequest request,
+                    StreamObserver<CreatePaymentIntentResponse> observer) {
+                observer.onError(Status.UNAVAILABLE.asRuntimeException());
+            }
+        })
+        .build().start();
+
+var t0 = AcquirerServiceGrpc.newBlockingStub(
+        InProcessChannelBuilder.forName(name).directExecutor().build());
+
+assertTrue(CreatePaymentIntent.create(
+        t0, "sale-1", idempotencyKey, Decimals.of("100000.00"), quoteId).shouldRetry());
+```
+
+`src/test/java/network/t0/pay/acquirer/internal/CreatePaymentIntentTest.java`
+works this out for all three outcomes — copy its shape. Write the `Unknown` one first:
+it is the branch a happy-path test against a sandbox never reaches, and it decides
+whether you open a second intent for one sale by accident.
+
+Point `TZERO_ENDPOINT` at a sandbox only once both sides pass on their own.
+
 ## Layout
 
 ```
 src/main/java/network/t0/pay/acquirer/
 ├── Main.java                            # entry point, phases in order
 ├── Config.java                          # what .env supplies
-├── handler/AcquirerCallbackHandler.java # §7, §11, §13, §15 — t-0 calls you
+├── handler/AcquirerCallbackHandler.java # PaymentAuthorized, SettlementInitiated,
+│                                        # SettlementCompleted, PaymentExpired
 └── internal/
-    ├── GetPaymentQuote.java             # §3
-    ├── CreatePaymentIntent.java         # §4
-    ├── SettlementReceived.java          # §12
+    ├── GetPaymentQuote.java             # prices a fiat sale
+    ├── CreatePaymentIntent.java         # opens an intent, returns QR options
+    ├── SettlementReceived.java          # you confirm the fiat landed
     ├── Outcome.java                     # accepted / rejected / unknown
     ├── Decimals.java                    # unscaled × 10^exponent ↔ BigDecimal
     └── Times.java                       # protobuf Timestamp ↔ Instant

@@ -11,22 +11,17 @@ import "google/protobuf/timestamp.proto";
 import "tzero/v1/pay/common.proto";
 
 /**
- * t-0 endpoints the Issuer calls to report on-chain recognition, settlement,
- * and reservation expiry.
+ * t-0 endpoints the Issuer calls to report what it did with a customer deposit
+ * and the USDt settlements that clear the intents it covers.
  */
 service IssuerService {
-  /** Reports the customer's payment seen on-chain and KYT-cleared; the Issuer now owns on-chain risk. */
+  /** Reports a deposit seen on-chain against an intent and the Issuer's final disposition of it. */
   rpc PaymentReceived(PaymentReceivedRequest) returns (PaymentReceivedResponse) {
     option idempotency_level = IDEMPOTENT;
   }
 
   /** Reports a USDt settlement sent on-chain to the registered destination, for t-0 to verify. */
   rpc SettlementSent(SettlementSentRequest) returns (SettlementSentResponse) {
-    option idempotency_level = IDEMPOTENT;
-  }
-
-  /** Confirms the reservation closed with no valid payment and the deposit addresses are released. */
-  rpc PaymentExpired(IssuerPaymentExpiredRequest) returns (IssuerPaymentExpiredResponse) {
     option idempotency_level = IDEMPOTENT;
   }
 }
@@ -45,10 +40,10 @@ service IssuerCallbackService {
 // ── IssuerService ────────────────────────────────────────────────────
 
 message PaymentReceivedRequest {
-  /** Intent the on-chain payment satisfies. */
+  /** Intent the deposit was made against. */
   uint64 payment_intent_id = 10 [(buf.validate.field).uint64.gt = 0];
 
-  /** Amount credited; must equal the intent's stored amount_usdt exactly. */
+  /** Amount the deposit actually credited, on either outcome. */
   Decimal amount_usdt = 20 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
@@ -63,25 +58,61 @@ message PaymentReceivedRequest {
     UsdtOnChainPayment usdt_on_chain = 30;
   }
 
-  /** Moment the Issuer treated the payment as final. */
+  /** Moment the Issuer observed the deposit as final on-chain. */
   google.protobuf.Timestamp received_at = 40 [(buf.validate.field).required = true];
+
+  /**
+   * The Issuer's final disposition of the deposit. Screening is complete before
+   * the call; a deposit still being screened is not reported at all.
+   */
+  oneof outcome {
+    option (buf.validate.oneof).required = true;
+    Authorized authorized = 50;
+    Unprocessable unprocessable = 60;
+  }
+
+  /**
+   * The deposit passed the Issuer's screening. Once t-0 accepts the report the
+   * Issuer owns the on-chain risk and is obligated to settle the intent.
+   */
+  message Authorized {}
+
+  /**
+   * The Issuer will not process the deposit and the intent ends failed. The
+   * disposition says where the funds go and is final when reported.
+   */
+  message Unprocessable {
+    FundsDisposition disposition = 10 [(buf.validate.field).enum = {
+      defined_only: true
+      not_in: [0]
+    }];
+  }
 }
 
 message PaymentReceivedResponse {
+  /**
+   * Accepted records the report as the intent's disposition (authorized →
+   * AUTHORIZED, unprocessable → FAILED), or replays a disposition already
+   * on file. Rejected means the report was not recorded: for an authorized
+   * report the deposit is refunded to sender_address; for an unprocessable
+   * report the funds follow the reported disposition.
+   */
   oneof result {
     option (buf.validate.oneof).required = true;
     Accepted accepted = 10;
     Rejected rejected = 20;
   }
 
+  /** The disposition is recorded. */
   message Accepted {}
 
+  /** The report was not recorded. */
   message Rejected {
     Reason reason = 10 [(buf.validate.field).enum.not_in = 0];
 
     enum Reason {
       REASON_UNSPECIFIED = 0;
-      // Received after expires_at on t-0's clock.
+      // Processing started after expires_at on t-0's clock.
       REASON_INTENT_EXPIRED = 10;
       // No such intent exists.
       REASON_UNKNOWN_INTENT = 20;
@@ -93,7 +124,10 @@ message PaymentReceivedResponse {
 
 message SettlementSentRequest {
   /** Issuer's id for this USDt settlement; idempotency key, unique per Issuer. */
-  string settlement_ref = 10 [(buf.validate.field).string = {min_len: 1}];
+  string settlement_ref = 10 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 256
+  }];
 
   /** Total USDt settled across the covered intents. */
   Decimal amount_usdt = 20 [
@@ -107,8 +141,14 @@ message SettlementSentRequest {
   /** On-chain transaction, chain, and registered destination wallet for this settlement. */
   OnChainSettlementDetails settlement = 30 [(buf.validate.field).required = true];
 
-  /** Intents this settlement clears; per-intent amounts are resolved by t-0 from the accepted intents. */
-  repeated uint64 settled_payment_intent_ids = 40 [(buf.validate.field).repeated = {min_items: 1}];
+  /** Intents this settlement clears, treated as a set; per-intent amounts come from t-0's ledger. */
+  repeated uint64 settled_payment_intent_ids = 40 [
+    (buf.validate.field).repeated.min_items = 1,
+    (buf.validate.field).repeated.items.uint64 = {
+      gt: 0
+      lte: 9223372036854775807
+    }
+  ];
 
   /** Moment the Issuer broadcast the settlement transaction. */
   google.protobuf.Timestamp settled_at = 50 [(buf.validate.field).required = true];
@@ -123,55 +163,28 @@ message SettlementSentResponse {
 
   message Accepted {}
 
+  /**
+   * The settlement is not recorded. ON_CHAIN_UNCONFIRMED clears on its own and
+   * the report is resubmitted under the same settlement_ref once the transaction
+   * confirms; the other reasons open a manual reconciliation with t-0, and the
+   * corrected report follows from it.
+   */
   message Rejected {
     Reason reason = 10 [(buf.validate.field).enum.not_in = 0];
 
-    /** Intents that failed verification within the batch. */
-    repeated uint64 failing_intent_ids = 20;
-
     enum Reason {
       REASON_UNSPECIFIED = 0;
-      // The on-chain transaction is not yet confirmed.
+      // The on-chain transaction is not yet confirmed. Not returned while t-0 accepts unverified.
       REASON_ON_CHAIN_UNCONFIRMED = 10;
       // The confirmed amount does not equal amount_usdt or the covered intents' sum.
       REASON_AMOUNT_MISMATCH = 20;
       // destination_address (or its chain) is not the expected registered (chain, address) pair for the mode.
       REASON_WRONG_DESTINATION = 30;
-      // A listed intent is not in a settleable state (USDt mode: SETTLEMENT_PENDING; fiat mode: authorized).
+      // A listed intent is unknown, not authorized, or already covered. Fiat mode also accepts a
+      // settled intent, whose Acquirer confirmation may land before this reimbursement.
       REASON_INTENT_NOT_SETTLEABLE = 40;
-    }
-  }
-}
-
-/**
- * PaymentExpired exists on both the acquirer and issuer edges of this flat package,
- * so each side's request and response carry their role as a prefix. This is the
- * issuer's.
- */
-message IssuerPaymentExpiredRequest {
-  /** Intent whose reservation expired. */
-  uint64 payment_intent_id = 10 [(buf.validate.field).uint64.gt = 0];
-
-  /** Moment the Issuer released the deposit addresses. */
-  google.protobuf.Timestamp expired_at = 20 [(buf.validate.field).required = true];
-}
-
-message IssuerPaymentExpiredResponse {
-  oneof result {
-    option (buf.validate.oneof).required = true;
-    Accepted accepted = 10;
-    Rejected rejected = 20;
-  }
-
-  message Accepted {}
-
-  message Rejected {
-    Reason reason = 10 [(buf.validate.field).enum.not_in = 0];
-
-    enum Reason {
-      REASON_UNSPECIFIED = 0;
-      // payment_intent_id is one t-0 never opened.
-      REASON_UNKNOWN_INTENT = 10;
+      // This on-chain transfer is already recorded under a different settlement_ref.
+      REASON_SETTLEMENT_REF_CONFLICT = 50;
     }
   }
 }
@@ -195,8 +208,8 @@ message CreatePaymentInstructionsRequest {
   ];
 
   /**
-   * Absolute moment t-0 requires the reservation held until, on t-0's clock
-   * (t-0 currently sets a 60–120 second window).
+   * Absolute moment t-0 requires the reservation held until, on t-0's clock.
+   * t-0 sizes the window per intent rather than to a fixed value.
    */
   google.protobuf.Timestamp expires_at = 40 [(buf.validate.field).timestamp.gt_now = true];
 }
@@ -212,7 +225,7 @@ message CreatePaymentInstructionsResponse {
     /** One option per chain the Issuer supports for this intent. */
     repeated QrOption qr_options = 10 [(buf.validate.field).repeated = {min_items: 1}];
 
-    /** Absolute expiry of the reservation. */
+    /** Absolute expiry of the reservation; at or after the commanded expires_at. */
     google.protobuf.Timestamp expires_at = 20 [(buf.validate.field).required = true];
   }
 

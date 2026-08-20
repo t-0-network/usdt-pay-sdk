@@ -11,13 +11,13 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
- * §3 GetPaymentQuote — prices an upcoming fiat sale against your LP's standing
+ * GetPaymentQuote — prices an upcoming fiat sale against your LP's standing
  * quotes. Fiat-settlement acquirers only; in USDt mode you run your own FX and
- * pass the rate straight to §4.
+ * pass the rate straight to CreatePaymentIntent.
  *
  * <p>Stateless lookup, no idempotency key: it always returns the current standing
  * quote, so an {@link Outcome.Unknown} here is safe to retry as often as you like.
- * The returned quoteId is what §4 references.
+ * The returned quoteId is what CreatePaymentIntent references.
  */
 public final class GetPaymentQuote {
 
@@ -54,7 +54,7 @@ public final class GetPaymentQuote {
                 }
                 case FAILURE -> {
                     // QUOTE_UNAVAILABLE — your LP is not quoting this currency right now.
-                    // TODO: Step 2.1 — tell the POS the sale cannot be priced.
+                    // See Step 2.1 — tell the POS the sale cannot be priced.
                     String reason = response.getFailure().getReason().name();
                     log.warn("No quote for {} {}: {}",
                             Decimals.format(localAmount), localCurrency, reason);

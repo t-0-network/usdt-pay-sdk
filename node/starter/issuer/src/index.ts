@@ -39,15 +39,14 @@ async function main(): Promise<void> {
   // Nothing runs at startup: every outbound call is driven by your chain watcher,
   // not by a timer.
   //
-  // TODO: Step 3.1 — when a deposit address funds and clears KYT, call
-  //       reportPaymentReceived(t0, ...) — §6.
+  // TODO: Step 3.1 — when a deposit lands and passes your screening, call
+  //       reportPaymentReceived(t0, ...) with outcome `authorized`.
   // TODO: Step 3.2 — after you broadcast a settlement transfer, call
-  //       reportSettlementSent(t0, ...) — §9.
-  // TODO: Step 3.3 — when a reservation lapses and you release its addresses, call
-  //       reportPaymentExpired(t0, ...) — §14.
+  //       reportSettlementSent(t0, ...).
   //
-  // t0 is not passed into the handler on purpose: §5 must answer inline with reserved
-  // addresses and nothing else. Hand `t0` to your chain watcher.
+  // t0 is not passed into the handler on purpose: CreatePaymentInstructions must
+  // answer inline with reserved addresses and nothing else. Hand `t0` to your
+  // chain watcher.
   // ──────────────────────────────────────────────────────────────────
   void t0;
 

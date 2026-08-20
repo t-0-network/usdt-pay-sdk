@@ -27,8 +27,8 @@ import java.util.regex.Pattern;
  * Acquirer starter for the t-0 QR payment flow.
  *
  * <p>Work through the numbered TODOs in order; the README explains each phase.
- * Numbers such as §4 are shorthand for the endpoints — the README maps them to RPC
- * names, and the
+ * The RPC names ({@code GetPaymentQuote}, {@code CreatePaymentIntent}, …) match the
+ * methods in the proto and in the code; the
  * <a href="https://usdt-pay-docs.t-0.network/docs/integration-guidance/api-reference/pay_acquirer/">acquirer
  * API reference</a> documents every field.
  */
@@ -65,19 +65,17 @@ public final class Main {
         Config config = loadConfig();
         Signer signer = Signer.fromHex(config.privateKey());
 
-        log.info("Acquirer public key: {}", signer.getPublicKeyHexPrefixed());
-        // TODO: Step 1.2 — send this public key to the t-0 team so they can verify your calls.
-
-        // Outbound: everything you call on t-0 (§3, §4, §12).
+        // Outbound: GetPaymentQuote, CreatePaymentIntent, SettlementReceived.
         // BlockingNetworkClient signs each request with your private key, and
         // CallDeadline bounds every call at 10s. A call that needs a different
-        // deadline sets one at its own call site and this steps aside — see §3.
+        // deadline sets one at its own call site and this steps aside —
+        // see GetPaymentQuote.
         var t0 = BlockingNetworkClient.create(
                 config.tzeroEndpoint(), signer,
                 channel -> AcquirerServiceGrpc.newBlockingStub(channel)
                         .withInterceptors(new CallDeadline(Duration.ofSeconds(10))));
 
-        // Inbound: the callbacks t-0 pushes to you (§7, §11, §13, §15).
+        // Inbound: PaymentAuthorized, SettlementInitiated, SettlementCompleted, PaymentExpired.
         // Every inbound signature is verified against NETWORK_PUBLIC_KEY.
         UsdtPayServer server = startCallbackServer(config);
 
@@ -91,37 +89,39 @@ public final class Main {
         // TODO: Step 2.1 — replace the demo sale with a real one from your POS. One
         //       sale is one currency, one amount and one paymentRef: quote and intent
         //       must describe the same sale or you price one thing and charge another.
+        //       In USDt mode drop GetPaymentQuote and go straight to
+        //       CreatePaymentIntent with your own rate.
         String localCurrency = "COP";
         var localAmount = Decimals.of("100000.00");
-        // paymentRef identifies the sale in your own ledger; t-0 echoes it on §7 and
-        // §15 and does not require it to be unique.
+        // paymentRef identifies the sale in your own ledger; t-0 echoes it on
+        // PaymentAuthorized and PaymentExpired and does not require it to be unique.
         String paymentRef = UUID.randomUUID().toString();
-        // idempotencyKey is the key for §4. Mint it with the sale and persist it — a
-        // fresh key on a retry opens a second intent for one sale.
+        // idempotencyKey is the key for CreatePaymentIntent. Mint it with the sale
+        // and persist it — a fresh key on a retry opens a second intent for one sale.
         String idempotencyKey = UUID.randomUUID().toString();
 
         // Both calls return an Outcome, and neither should be dropped on the floor —
         // Rejected and Unknown mean different things and want different handling.
         var quoted = GetPaymentQuote.fetch(t0.stub(), localCurrency, localAmount);
         if (quoted.shouldRetry()) {
-            // TODO: Step 2.1 — §3 is a stateless lookup with no idempotency key, so an
-            //       unanswered quote is safe to re-ask as often as you like.
-            log.warn("No answer from §3 — the lookup is safe to retry");
+            // See Step 2.1 — GetPaymentQuote is a stateless lookup with no
+            // idempotency key, so an unanswered quote is safe to re-ask.
+            log.warn("No answer from GetPaymentQuote — the lookup is safe to retry");
         }
 
         quoted.value()
-                // TODO: Step 2.2 — render the returned qrOptions as QR codes on the POS.
                 .ifPresent(quote -> {
                     var intent = CreatePaymentIntent.create(
                             t0.stub(), paymentRef, idempotencyKey, localAmount, quote.getQuoteId());
 
-                    // §4 is the opposite case: it is keyed, and Unknown means t-0 may
-                    // already have opened the intent. Resending the same idempotencyKey
-                    // is what makes the retry safe rather than a second sale.
+                    // CreatePaymentIntent is the opposite case: it is keyed, and
+                    // Unknown means t-0 may already have opened the intent. Resending
+                    // the same idempotencyKey is what makes the retry safe rather than
+                    // a second sale.
                     if (intent.shouldRetry()) {
-                        // TODO: Step 2.2 — hand this to your retry path, resending the
-                        //       same idempotencyKey with identical content until t-0
-                        //       answers. A fresh key here is a second sale.
+                        // See Step 2.2 — hand this to your retry path, resending
+                        // the same idempotencyKey with identical content until
+                        // t-0 answers. A fresh key here is a second sale.
                         log.warn("Intent for sale {} is unresolved — retry the same idempotencyKey",
                                 paymentRef);
                     }
@@ -162,6 +162,11 @@ public final class Main {
                                     + ".env holds the key generated for you — or, in a project you "
                                     + "built by hand, set PRIVATE_KEY in the environment.");
         }
+
+        // Print the public key early — Phase 1 needs it before NETWORK_PUBLIC_KEY
+        // arrives, so a missing network key must not block the print.
+        log.info("Acquirer public key: {}", Signer.fromHex(privateKey).getPublicKeyHexPrefixed());
+        // TODO: Step 1.2 — send this public key to the t-0 team so they can verify your calls.
 
         if (networkPublicKey == null || networkPublicKey.isBlank()) {
             throw new ConfigurationException(

@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file tzero/v1/pay/common.proto.
  */
 export const file_tzero_v1_pay_common: GenFile = /*@__PURE__*/
-  fileDesc("Chl0emVyby92MS9wYXkvY29tbW9uLnByb3RvEgx0emVyby52MS5wYXkiQQoHRGVjaW1hbBIQCgh1bnNjYWxlZBgKIAEoAxIkCghleHBvbmVudBgUIAEoBUISukgPGg0YCCj4//////////8BIo0BChJVc2R0T25DaGFpblBheW1lbnQSMwoFY2hhaW4YCiABKA4yGC50emVyby52MS5wYXkuQmxvY2tjaGFpbkIKukgHggEEEAEgABIhChBvbl9jaGFpbl90eF9oYXNoGBQgASgJQge6SARyAhABEh8KDnNlbmRlcl9hZGRyZXNzGB4gASgJQge6SARyAhABIoYBCghRck9wdGlvbhIzCgVjaGFpbhgKIAEoDjIYLnR6ZXJvLnYxLnBheS5CbG9ja2NoYWluQgq6SAeCAQQQASAAEiAKD2RlcG9zaXRfYWRkcmVzcxgUIAEoCUIHukgEcgIQARIjChJyZW5kZXJhYmxlX3BheWxvYWQYHiABKAlCB7pIBHICEAEimAEKGE9uQ2hhaW5TZXR0bGVtZW50RGV0YWlscxIhChBvbl9jaGFpbl90eF9oYXNoGAogASgJQge6SARyAhABEjMKBWNoYWluGBQgASgOMhgudHplcm8udjEucGF5LkJsb2NrY2hhaW5CCrpIB4IBBBABIAASJAoTZGVzdGluYXRpb25fYWRkcmVzcxgeIAEoCUIHukgEcgIQASplCgpCbG9ja2NoYWluEhoKFkJMT0NLQ0hBSU5fVU5TUEVDSUZJRUQQABITCg9CTE9DS0NIQUlOX1RST04QChISCg5CTE9DS0NIQUlOX0VUSBAUEhIKDkJMT0NLQ0hBSU5fQlNDEB5iBnByb3RvMw", [file_buf_validate_validate]);
+  fileDesc("Chl0emVyby92MS9wYXkvY29tbW9uLnByb3RvEgx0emVyby52MS5wYXkiQQoHRGVjaW1hbBIQCgh1bnNjYWxlZBgKIAEoAxIkCghleHBvbmVudBgUIAEoBUISukgPGg0YCCj4//////////8BIo0BChJVc2R0T25DaGFpblBheW1lbnQSMwoFY2hhaW4YCiABKA4yGC50emVyby52MS5wYXkuQmxvY2tjaGFpbkIKukgHggEEEAEgABIhChBvbl9jaGFpbl90eF9oYXNoGBQgASgJQge6SARyAhABEh8KDnNlbmRlcl9hZGRyZXNzGB4gASgJQge6SARyAhABIoYBCghRck9wdGlvbhIzCgVjaGFpbhgKIAEoDjIYLnR6ZXJvLnYxLnBheS5CbG9ja2NoYWluQgq6SAeCAQQQASAAEiAKD2RlcG9zaXRfYWRkcmVzcxgUIAEoCUIHukgEcgIQARIjChJyZW5kZXJhYmxlX3BheWxvYWQYHiABKAlCB7pIBHICEAEimAEKGE9uQ2hhaW5TZXR0bGVtZW50RGV0YWlscxIhChBvbl9jaGFpbl90eF9oYXNoGAogASgJQge6SARyAhABEjMKBWNoYWluGBQgASgOMhgudHplcm8udjEucGF5LkJsb2NrY2hhaW5CCrpIB4IBBBABIAASJAoTZGVzdGluYXRpb25fYWRkcmVzcxgeIAEoCUIHukgEcgIQASplCgpCbG9ja2NoYWluEhoKFkJMT0NLQ0hBSU5fVU5TUEVDSUZJRUQQABITCg9CTE9DS0NIQUlOX1RST04QChISCg5CTE9DS0NIQUlOX0VUSBAUEhIKDkJMT0NLQ0hBSU5fQlNDEB4qiQEKEEZ1bmRzRGlzcG9zaXRpb24SIQodRlVORFNfRElTUE9TSVRJT05fVU5TUEVDSUZJRUQQABIoCiRGVU5EU19ESVNQT1NJVElPTl9SRVRVUk5FRF9UT19TRU5ERVIQChIoCiRGVU5EU19ESVNQT1NJVElPTl9SRVRBSU5FRF9CWV9JU1NVRVIQFGIGcHJvdG8z", [file_buf_validate_validate]);
 
 /**
  * *
@@ -159,8 +159,9 @@ export const OnChainSettlementDetailsSchema: GenMessage<OnChainSettlementDetails
  * *
  * On-chain network a USDt leg moves over. Local to the pay contract, which is
  * an independent service and shares no types with `tzero.v1.common`.
- * Launch-live: TRON, ETH, BSC. Six more (Polygon, Arbitrum, Optimism, Base,
- * Avalanche, Solana) are announced as upcoming and added here as they go live.
+ * Launch-live: ETH, BSC. TRON is committed for a later phase and already carries
+ * a value here; Arbitrum, Polygon, and Avalanche are announced as upcoming and
+ * added here as they go live.
  *
  * @generated from enum tzero.v1.pay.Blockchain
  */
@@ -191,4 +192,39 @@ export enum Blockchain {
  */
 export const BlockchainSchema: GenEnum<Blockchain> = /*@__PURE__*/
   enumDesc(file_tzero_v1_pay_common, 0);
+
+/**
+ * *
+ * Where a deposit's funds end up when the sale will not settle. Final when
+ * reported: whether a retained deposit is later released is decided out of band
+ * and is not part of this contract.
+ *
+ * @generated from enum tzero.v1.pay.FundsDisposition
+ */
+export enum FundsDisposition {
+  /**
+   * @generated from enum value: FUNDS_DISPOSITION_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * The Issuer returns the deposit to the customer's sender_address.
+   *
+   * @generated from enum value: FUNDS_DISPOSITION_RETURNED_TO_SENDER = 10;
+   */
+  RETURNED_TO_SENDER = 10,
+
+  /**
+   * The Issuer keeps the deposit; the customer resolves it with the Issuer out of band.
+   *
+   * @generated from enum value: FUNDS_DISPOSITION_RETAINED_BY_ISSUER = 20;
+   */
+  RETAINED_BY_ISSUER = 20,
+}
+
+/**
+ * Describes the enum tzero.v1.pay.FundsDisposition.
+ */
+export const FundsDispositionSchema: GenEnum<FundsDisposition> = /*@__PURE__*/
+  enumDesc(file_tzero_v1_pay_common, 1);
 

@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * §4 CreatePaymentIntent — opens an intent for a sale. t-0 calls the Issuer inline
+ * CreatePaymentIntent — opens an intent for a sale. t-0 calls the Issuer inline
  * and returns the QR options the customer picks from, which makes this the slowest
  * call on the POS path — it runs on the default 10s deadline.
  *
@@ -19,18 +19,19 @@ import org.slf4j.LoggerFactory;
  * {@link Outcome.Unknown} resend the same key with identical content and t-0 replays
  * the original result; a fresh key per attempt opens a second intent for one sale.
  *
- * <p>{@code paymentRef} is your sale's correlation ref, echoed back on §7 and §15.
- * It need not be unique, and it is not the key: retrying a <em>declined</em> sale
- * takes a fresh idempotencyKey under the same paymentRef.
+ * <p>{@code paymentRef} is your sale's correlation ref, echoed back on
+ * PaymentAuthorized and PaymentExpired. It need not be unique, and it is not the
+ * key: retrying a <em>declined</em> sale takes a fresh idempotencyKey under the
+ * same paymentRef.
  */
 public final class CreatePaymentIntent {
 
     private static final Logger log = LoggerFactory.getLogger(CreatePaymentIntent.class);
 
     /**
-     * @param paymentRef     your sale id, echoed on §7 and §15
+     * @param paymentRef     your sale id, echoed on PaymentAuthorized and PaymentExpired
      * @param idempotencyKey the retry identity, stable across retries of this call
-     * @param quoteId        the standing quote from §3 — it carries the currency and the rate
+     * @param quoteId        the standing quote from GetPaymentQuote — it carries the currency and the rate
      */
     public static Outcome<CreatePaymentIntentResponse.Success> create(
             AcquirerServiceGrpc.AcquirerServiceBlockingStub t0,

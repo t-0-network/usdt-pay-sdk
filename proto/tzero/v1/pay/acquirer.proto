@@ -33,7 +33,8 @@ service AcquirerService {
 
 /**
  * Acquirer-implemented callbacks t-0 pushes — authorization, settlement
- * progress, and expiry. Delivered at least once and deduped on the t-0 id.
+ * progress, expiry, and payment failure. Delivered at least once and deduped on
+ * the t-0 id.
  */
 service AcquirerCallbackService {
   /** Tells the merchant the sale is approved; from here the Issuer is obligated to settle. */
@@ -51,8 +52,13 @@ service AcquirerCallbackService {
     option idempotency_level = IDEMPOTENT;
   }
 
-  /** Intent expired with no payment; clear the pending order and drop the QR. */
+  /** The QR window lapsed with no payment; clear the pending order and drop the QR. */
   rpc PaymentExpired(AcquirerPaymentExpiredRequest) returns (AcquirerPaymentExpiredResponse) {
+    option idempotency_level = IDEMPOTENT;
+  }
+
+  /** A deposit arrived that the Issuer will not process; the sale is over and will not settle. */
+  rpc PaymentFailed(PaymentFailedRequest) returns (PaymentFailedResponse) {
     option idempotency_level = IDEMPOTENT;
   }
 }
@@ -122,8 +128,9 @@ message GetPaymentQuoteResponse {
 
 message CreatePaymentIntentRequest {
   /**
-   * Sale identifier from the Acquirer's own ledger, echoed on PaymentAuthorized and
-   * PaymentExpired. Not an idempotency key, and not required to be unique.
+   * Sale identifier from the Acquirer's own ledger, echoed on PaymentAuthorized,
+   * PaymentExpired, and PaymentFailed. Not an idempotency key, and not required
+   * to be unique.
    */
   string payment_ref = 10 [(buf.validate.field).string = {
     min_len: 1
@@ -402,9 +409,8 @@ message SettlementCompletedRequest {
 message SettlementCompletedResponse {}
 
 /**
- * PaymentExpired exists on both the acquirer and issuer edges of this flat package,
- * so each side's request and response carry their role as a prefix. This is the
- * acquirer's.
+ * The QR window lapsed on t-0's clock with no payment reported; the sale is
+ * over and nothing will settle for it.
  */
 message AcquirerPaymentExpiredRequest {
   /** Intent that expired. */
@@ -421,3 +427,43 @@ message AcquirerPaymentExpiredRequest {
 }
 
 message AcquirerPaymentExpiredResponse {}
+
+/**
+ * A customer deposit against this intent will not settle and the intent is
+ * terminally failed: clear the pending order and drop the QR. Sent only while
+ * the QR window is still open; once an intent has expired, its expiry notice is
+ * the last word on that sale.
+ */
+message PaymentFailedRequest {
+  /** Intent the deposit was made against. */
+  uint64 payment_intent_id = 10 [(buf.validate.field).uint64.gt = 0];
+
+  /** Echo of the Acquirer's CreatePaymentIntent payment_ref, alongside payment_intent_id. */
+  string payment_ref = 20 [(buf.validate.field).string = {min_len: 1}];
+
+  /** Amount the deposit credited, relayed from PaymentReceived; may differ from the intent's amount. */
+  Decimal amount_usdt = 30 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      message: "amount_usdt must be greater than zero"
+      expression: "this.unscaled > 0"
+    }
+  ];
+
+  /** How the customer paid, relayed from PaymentReceived. */
+  oneof payment_method {
+    option (buf.validate.oneof).required = true;
+    UsdtOnChainPayment usdt_on_chain = 40;
+  }
+
+  /** Where the funds go, so the merchant can tell the customer what to expect. */
+  FundsDisposition disposition = 50 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+
+  /** Moment the intent became terminally failed. */
+  google.protobuf.Timestamp failed_at = 60 [(buf.validate.field).required = true];
+}
+
+message PaymentFailedResponse {}

@@ -65,14 +65,14 @@ export async function reportSettlementSent(
 
       case "rejected": {
         // ON_CHAIN_UNCONFIRMED — resend the same ref once the tx confirms.
-        // AMOUNT_MISMATCH / WRONG_DESTINATION / INTENT_NOT_SETTLEABLE — fix the fields
-        // named by failingIntentIds and resend the same ref.
-        const { reason, failingIntentIds } = response.result.value;
+        // AMOUNT_MISMATCH / WRONG_DESTINATION / INTENT_NOT_SETTLEABLE — reconcile
+        // with t-0 and resend the corrected report under the same ref.
+        const { reason } = response.result.value;
         const name = SettlementSentResponse_Rejected_Reason[reason] ?? String(reason);
         console.warn(
-          `§9 rejected for ref ${settlement.settlementRef}: ${name} (failing intents ${failingIntentIds})`,
+          `SettlementSent rejected for ref ${settlement.settlementRef}: ${name}`,
         );
-        return rejected(name, failingIntentIds);
+        return rejected(name);
       }
 
       default:

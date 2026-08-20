@@ -62,7 +62,6 @@ test("rejected is an answer, so do not retry it", async () => {
       case: "rejected",
       value: {
         reason: SettlementSentResponse_Rejected_Reason.WRONG_DESTINATION,
-        failingIntentIds: [8n],
       },
     },
   }));
@@ -72,7 +71,6 @@ test("rejected is an answer, so do not retry it", async () => {
   assert.equal(outcome.kind, "rejected");
   assert.equal(outcome.shouldRetry, false);
   assert.equal(outcome.kind === "rejected" && outcome.reason, "WRONG_DESTINATION");
-  assert.deepEqual(outcome.kind === "rejected" ? outcome.failingIds : [], [8n]);
 });
 
 /**

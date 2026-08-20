@@ -133,6 +133,17 @@ public final class TemplateExtractor {
         }
         String content = Files.readString(readme);
 
+        // The test block offers both clone and standalone variants; only the
+        // standalone one makes sense in an extracted project.
+        content = content.replace(
+                """
+                # From a clone of the repository:
+                (cd ../.. && ./gradlew :starter:acquirer:test)
+
+                # From a scaffolded standalone project:
+                ./gradlew test""",
+                "./gradlew test");
+
         // The whole Run-it block, not the build line inside it. The first line of the
         // in-repo version is `cp .env.example .env`, and following it in a scaffolded
         // project overwrites the .env EnvFileWriter just produced — destroying the only

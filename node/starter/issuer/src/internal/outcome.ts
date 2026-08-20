@@ -21,7 +21,6 @@ export type Outcome<T> =
   | {
       readonly kind: "rejected";
       readonly reason: string;
-      readonly failingIds: readonly bigint[];
       readonly shouldRetry: false;
     }
   /**
@@ -37,10 +36,9 @@ export const accepted = <T>(value: T): Outcome<T> => ({
   shouldRetry: false,
 });
 
-export const rejected = (reason: string, failingIds: readonly bigint[] = []): Outcome<never> => ({
+export const rejected = (reason: string): Outcome<never> => ({
   kind: "rejected",
   reason,
-  failingIds,
   shouldRetry: false,
 });
 

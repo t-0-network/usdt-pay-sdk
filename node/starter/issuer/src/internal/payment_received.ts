@@ -49,6 +49,7 @@ export async function reportPaymentReceived(
           },
         },
         receivedAt: timestampFromDate(payment.receivedAt),
+        outcome: { case: "authorized", value: {} },
       },
       { timeoutMs: TIMEOUT_MS },
     );
