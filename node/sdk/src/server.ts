@@ -1,7 +1,22 @@
 import http from "node:http";
 import type { DescService } from "@bufbuild/protobuf";
+import { createRegistry } from "@bufbuild/protobuf";
 import type { ServiceImpl } from "@connectrpc/connect";
 import { createService, nodeAdapter, signatureValidation } from "@t-0/provider-sdk";
+import { file_tzero_v1_pay_issuer } from "./gen/tzero/v1/pay/issuer_pb.js";
+import { file_tzero_v1_pay_acquirer } from "./gen/tzero/v1/pay/acquirer_pb.js";
+import { file_tzero_v1_pay_lp } from "./gen/tzero/v1/pay/lp_pb.js";
+
+/**
+ * Registry covering the pay contract protos. Service file descriptors pull in
+ * their full dependency graph, so new messages, fields, and validation rules
+ * added to existing protos are covered automatically after `buf:generate`.
+ */
+export const payRegistry = createRegistry(
+  file_tzero_v1_pay_issuer,
+  file_tzero_v1_pay_acquirer,
+  file_tzero_v1_pay_lp,
+);
 
 /**
  * Where you mount the callback services t-0 calls on you. One `service()` call
@@ -54,7 +69,13 @@ export function createUsdtPayServer(
   register: (router: UsdtPayRouter) => void,
 ): Promise<http.Server> {
   const server = http.createServer(
-    signatureValidation(nodeAdapter(createService(networkPublicKey, register))),
+    signatureValidation(
+      nodeAdapter(
+        createService(networkPublicKey, register, {
+          registry: payRegistry,
+        }),
+      ),
+    ),
   );
 
   // Resolve on `listening` rather than handing back a server that is not up yet:
