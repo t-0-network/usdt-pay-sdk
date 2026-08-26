@@ -1,0 +1,24 @@
+syntax = "proto2";
+
+// Reusable protovalidate predefined rules for on-chain identifiers.
+// Proto2 syntax is required for `extend buf.validate.StringRules`.
+
+package tzero.v1.pay;
+
+import "buf/validate/validate.proto";
+
+extend buf.validate.StringRules {
+  // Length bound for on-chain transaction hashes across supported chains.
+  // Shortest: TRON (64 hex). Longest: EVM with 0x prefix (66).
+  optional bool valid_tx_hash = 50001 [(buf.validate.predefined).cel = {
+    id: "string.valid_tx_hash"
+    expression: "this.size() >= 64 && this.size() <= 66 ? '' : 'must be 64-66 characters'"
+  }];
+
+  // Length bound for on-chain wallet addresses across supported chains.
+  // Shortest: TRON base58 (34). Longest: EVM / TRON hex (42).
+  optional bool valid_address = 50002 [(buf.validate.predefined).cel = {
+    id: "string.valid_address"
+    expression: "this.size() >= 34 && this.size() <= 42 ? '' : 'must be 34-42 characters'"
+  }];
+}

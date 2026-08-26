@@ -1,0 +1,288 @@
+syntax = "proto3";
+
+// The LP ↔ t-0 edge:
+// LpService is hosted by t-0 and called by the LP;
+// LpCallbackService is implemented by the LP and called by t-0.
+
+package tzero.v1.pay.lp;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+import "tzero/v1/pay/common.proto";
+
+/**
+ * t-0 endpoints the LP calls to push and withdraw standing quotes and to report
+ * its self-initiated fiat settlements. Fiat mode only.
+ */
+service LpService {
+  /** Pushes immutable standing quotes into t-0's Order Book, at most one per currency per call; each is multi-consumable while it stands. */
+  rpc PublishQuote(PublishQuoteRequest) returns (PublishQuoteResponse) {
+    option idempotency_level = IDEMPOTENT;
+  }
+
+  /** Removes one standing quote before expiry; intents already accepted against it are unaffected. */
+  rpc WithdrawQuote(WithdrawQuoteRequest) returns (WithdrawQuoteResponse) {
+    option idempotency_level = IDEMPOTENT;
+  }
+
+  /**
+   * Reports a fiat bank-rails settlement the LP made on its own initiative against accepted quote executions.
+   * An execution still awaiting its durable result returns FAILED_PRECONDITION; retry the same request.
+   */
+  rpc FiatSettlementSent(FiatSettlementSentRequest) returns (FiatSettlementSentResponse) {
+    option idempotency_level = IDEMPOTENT;
+  }
+}
+
+/**
+ * LP-implemented endpoint t-0 calls to request the LP's durable decision on a
+ * standing quote execution for one authorized sale. Fiat mode only.
+ */
+service LpCallbackService {
+  /** Requests a durable Accepted or Rejected result; only Accepted creates the LP's firm per-sale obligation. */
+  rpc ExecuteQuote(ExecuteQuoteRequest) returns (ExecuteQuoteResponse) {
+    option idempotency_level = IDEMPOTENT;
+  }
+}
+
+// ── LpService ────────────────────────────────────────────────────────
+
+message PublishQuoteRequest {
+  /**
+   * Standing quotes to publish in one call, at most one per currency, each
+   * under its own quoteRef. The batch is atomic: one invalid quote declines
+   * the whole call and consumes no quoteRef.
+   */
+  repeated Quote quotes = 10 [(buf.validate.field).repeated = {
+    min_items: 1
+    max_items: 100
+  }];
+
+  message Quote {
+    /** LP's identifier for this quote; idempotency key, unique per LP. */
+    string quote_ref = 10 [(buf.validate.field).string = {
+      min_len: 1
+      max_len: 64
+    }];
+
+    /** ISO 4217 currency the quote prices (e.g. COP). */
+    string local_currency = 20 [(buf.validate.field).string = {
+      len: 3
+      pattern: "^[A-Z]{3}$"
+    }];
+
+    /** Published rate, in units of local_currency per 1 USDt. */
+    tzero.v1.pay.Decimal fx_rate = 30 [
+      (buf.validate.field).required = true,
+      (buf.validate.field).cel = {
+        message: "fx_rate must be greater than zero"
+        expression: "this.unscaled > 0"
+      }
+    ];
+
+    /**
+     * Moment the quote stops standing, on t-0's clock. Validity bounds are a
+     * business decline (VALIDITY_INVALID), not request validation.
+     */
+    google.protobuf.Timestamp expires_at = 40 [(buf.validate.field).required = true];
+  }
+}
+
+message PublishQuoteResponse {
+  oneof result {
+    option (buf.validate.oneof).required = true;
+    Success success = 10;
+    Failure failure = 20;
+  }
+
+  message Success {
+    /** One entry per published quote, in request order. */
+    repeated PublishedQuote quotes = 10 [(buf.validate.field).repeated = {min_items: 1}];
+
+    message PublishedQuote {
+      /** Echo of the quote's quoteRef. */
+      string quote_ref = 10 [(buf.validate.field).string = {min_len: 1}];
+
+      /** t-0's id for the standing quote, used everywhere downstream. */
+      uint64 quote_id = 20 [(buf.validate.field).uint64.gt = 0];
+    }
+  }
+
+  message Failure {
+    Reason reason = 10 [(buf.validate.field).enum.not_in = 0];
+
+    enum Reason {
+      REASON_UNSPECIFIED = 0;
+      // A quote's expires_at is in the past, too short to be usable, or beyond
+      // the max window; the whole batch is declined.
+      REASON_VALIDITY_INVALID = 30;
+    }
+  }
+}
+
+message WithdrawQuoteRequest {
+  /** The standing quote to withdraw; must have been minted for this LP. */
+  uint64 quote_id = 10 [(buf.validate.field).uint64.gt = 0];
+}
+
+message WithdrawQuoteResponse {
+  oneof result {
+    option (buf.validate.oneof).required = true;
+    Success success = 10;
+    Failure failure = 20;
+  }
+
+  message Success {}
+
+  message Failure {
+    Reason reason = 10 [(buf.validate.field).enum.not_in = 0];
+
+    enum Reason {
+      REASON_UNSPECIFIED = 0;
+      // quote_id is unknown or belongs to another LP.
+      REASON_QUOTE_UNKNOWN = 10;
+    }
+  }
+}
+
+message FiatSettlementSentRequest {
+  /** Reference on the bank-rails transfer; idempotency key, unique per LP. */
+  string bank_transfer_ref = 10 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 256
+  }];
+
+  /** Accepted executions this settlement clears, treated as a set (duplicates collapse, order is not significant). */
+  repeated uint64 settled_execution_ids = 20 [
+    (buf.validate.field).repeated.min_items = 1,
+    (buf.validate.field).repeated.items.uint64 = {
+      gt: 0
+      lte: 9223372036854775807
+    }
+  ];
+
+  /** ISO 4217 currency delivered; matches the covered executions' currency. */
+  string local_currency = 30 [(buf.validate.field).string = {
+    len: 3
+    pattern: "^[A-Z]{3}$"
+  }];
+
+  /** Local-fiat amount delivered; must equal the sum of the covered executions' local amounts. */
+  tzero.v1.pay.Decimal settlement_amount = 40 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      message: "settlement_amount must be greater than zero"
+      expression: "this.unscaled > 0"
+    }
+  ];
+
+  /** Moment the LP released the bank-rails transfer. */
+  google.protobuf.Timestamp settled_at = 60 [(buf.validate.field).required = true];
+}
+
+message FiatSettlementSentResponse {
+  oneof result {
+    option (buf.validate.oneof).required = true;
+    Accepted accepted = 10;
+    Rejected rejected = 20;
+  }
+
+  message Accepted {}
+
+  message Rejected {
+    Reason reason = 10 [(buf.validate.field).enum.not_in = 0];
+
+    enum Reason {
+      REASON_UNSPECIFIED = 0;
+      // A listed execution was never created for this LP or has a durable Rejected result; do not settle it.
+      REASON_EXECUTION_UNKNOWN = 10;
+      // A listed execution is already covered by an accepted settlement.
+      REASON_EXECUTION_ALREADY_COVERED = 20;
+      // local_currency does not match the covered executions' currency.
+      REASON_CURRENCY_MISMATCH = 30;
+      // settlement_amount does not equal the covered executions' sum.
+      REASON_AMOUNT_MISMATCH = 40;
+      // The covered executions span more than one Acquirer (one transfer credits one account).
+      REASON_ACQUIRER_MIXED = 60;
+      // bank_transfer_ref is already settled with different content; a genuinely different
+      // money movement is reported under a different reference.
+      REASON_BANK_TRANSFER_REF_CONFLICT = 70;
+    }
+  }
+}
+
+// ── LpCallbackService ───────────────────────────────────────────────────────
+
+message ExecuteQuoteRequest {
+  /** t-0's id for this execution command; idempotency key and, after Accepted, the LP's obligation handle. */
+  uint64 execution_id = 10 [(buf.validate.field).uint64.gt = 0];
+
+  /** t-0's id for the standing quote this execution is under. */
+  uint64 quote_id = 20 [(buf.validate.field).uint64.gt = 0];
+
+  /**
+   * LP's own identifier for that quote — a non-authoritative correlation echo.
+   * Lets the LP attribute the execution even when it arrives before the LP has
+   * recorded t-0's quote_id (publish-vs-execute race).
+   */
+  string quote_ref = 30 [(buf.validate.field).string = {min_len: 1}];
+
+  /** t-0's stable id for the Acquirer whose local-fiat obligation is being executed. */
+  uint64 acquirer_id = 40 [(buf.validate.field).uint64.gt = 0];
+
+  /** Fiat amount owed to the Acquirer for this sale, in the standing quote's currency. */
+  tzero.v1.pay.Decimal local_amount = 50 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      message: "local_amount must be greater than zero"
+      expression: "this.unscaled > 0"
+    }
+  ];
+
+  /** USDt the LP receives at settlement for this sale. */
+  tzero.v1.pay.Decimal amount_usdt = 60 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      message: "amount_usdt must be greater than zero"
+      expression: "this.unscaled > 0"
+    }
+  ];
+
+  /** Moment t-0 created this durable execution command at authorization. */
+  google.protobuf.Timestamp executed_at = 70 [(buf.validate.field).required = true];
+}
+
+/** The LP's durable decision on one ExecuteQuote command. */
+message ExecuteQuoteResponse {
+  /** The LP's final business decision. */
+  oneof result {
+    option (buf.validate.oneof).required = true;
+    /** The LP accepts the execution. */
+    Accepted accepted = 10;
+    /** The LP declines the execution. */
+    Rejected rejected = 20;
+  }
+
+  /** Acceptance creates the LP's firm per-sale obligation. */
+  message Accepted {}
+
+  /** Rejection leaves the payment intent authorized for manual handling. */
+  message Rejected {
+    /** Stable business classification for declining the command. */
+    Reason reason = 10 [(buf.validate.field).enum.not_in = 0];
+
+    /** Human-readable business details for declining the command. */
+    string details = 20 [(buf.validate.field).string = {
+      min_len: 1
+      max_len: 1024
+      pattern: ".*\\S.*"
+    }];
+
+    enum Reason {
+      REASON_UNSPECIFIED = 0;
+      // The LP declines for a business reason not otherwise classified; t-0
+      // persists details and routes the authorized payment to manual handling.
+      REASON_OTHER = 10;
+    }
+  }
+}
