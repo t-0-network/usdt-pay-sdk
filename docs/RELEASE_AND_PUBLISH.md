@@ -172,12 +172,17 @@ dependency bump.
          \                    |                    /
           \-------------------+-------------------/
                               |
-          /-------------------+-------------------\
-         /                    |                    \
-publish-node-sdk    publish-node-starter    publish-java
+                   /----------+----------\
+                  /                       \
+        publish-node-sdk              publish-java
+                  |
+        publish-node-starter
 ```
 
 Nothing publishes until everything builds and the shared **`preflight`** job passes.
+`publish-node-starter` additionally waits for `publish-node-sdk`: the scaffolder's tarball pins
+`@t-0/usdt-pay-sdk@^X.Y.Z`, and publishing it first would ship a scaffolder whose pin nothing on
+the registry satisfies yet.
 
 `preflight` checks *both* registries' prerequisites in one place:
 
@@ -233,6 +238,9 @@ Version-matches-tag, `./gradlew build --no-daemon` (also the only thing that pro
 bounded poll for the Release and `gh release upload` of both
 `usdt-pay-init-<version>.jar` and an unversioned `usdt-pay-init.jar` copy. The unversioned copy is
 what lets the README name a download URL that survives every release.
+
+JitPack needs no job at all: it builds from the tag on demand, the first time someone requests the
+coordinate.
 
 ---
 
@@ -341,10 +349,12 @@ What a failure costs depends on where it happened, and the two cases are not the
 - **The publish landed and something after it failed.** That version is spent. If the fix needs a
   new commit, recovery is a new patch release, decided deliberately — not a re-run.
 
-The three publish jobs are independent — one failing does not stop the others — so a partial
-release across registries is possible in either direction: npm published and Central not, or the
-reverse. Neither is worse than the other to sit in, and both recover the same way, with *Re-run
-failed jobs* at the same version.
+`publish-java` and the npm pair run independently of each other — one side failing does not stop
+the other — so a partial release across registries is possible in either direction: npm published
+and Central not, or the reverse. Neither is worse than the other to sit in, and both recover the
+same way, with *Re-run failed jobs* at the same version. Within the npm pair,
+`publish-node-starter` waits on `publish-node-sdk`, so an SDK-side failure holds the starter back
+too — which is the safe direction, and a *Re-run failed jobs* picks both up in order.
 
 **Re-running after a partial success:** use *Re-run failed jobs*, never *Re-run all jobs* — the
 latter re-enters a publish that already succeeded and fails on the duplicate. Because each npm
@@ -369,3 +379,63 @@ gh release upload vX.Y.Z \
 `publish.yaml` validates that the **tagged commit** still agrees with the tag — which catches a
 hand-pushed tag, a revert that left a tag behind, or a new version site added to one workflow but
 not the other. Both are a few greps.
+
+---
+
+## Adding an ecosystem
+
+provider-sdk already ships every ecosystem planned here; copy its workflow structure rather than
+inventing one. Its [`RELEASE_AND_PUBLISH.md`](https://github.com/t-0-network/provider-sdk/blob/master/docs/RELEASE_AND_PUBLISH.md)
+is the canonical reference for the two-stage flow, and its
+[`VERSIONING.md`](https://github.com/t-0-network/provider-sdk/blob/master/docs/VERSIONING.md) for
+the version-site taxonomy.
+
+Every ecosystem needs the same three version sites, wired into both workflows:
+
+- **A — package version**: the package manager's field (`package.json`, `gradle.properties`,
+  `pyproject.toml`, `.csproj <Version>`, the Go module's tag).
+- **B — starter template pin**: the starter's dependency on the SDK.
+- **C — runtime constant**: the file a running server reports its version from.
+
+And the same four workflow touchpoints: a bump step for A+B+C in `release.yaml`, a validate
+assertion there for each, a `build-*` job in `publish.yaml`'s gate, and a `publish-*` job with the
+version-matches-tag assertion. The [version sites table](#version-sites) above grows a row per site
+— `publish.yaml`'s validation must grow with it, or the twice-validation stops catching drift.
+
+### Go
+
+Copy provider-sdk's [`publish-go` job](https://github.com/t-0-network/provider-sdk/blob/master/.github/workflows/publish.yaml)
+wholesale — Go publishing has the most moving parts and all of them were learned the hard way
+(provider-sdk [#251](https://github.com/t-0-network/provider-sdk/pull/251),
+[#255](https://github.com/t-0-network/provider-sdk/pull/255)):
+
+- Multi-module tags `go/vX.Y.Z` per module, created in **`publish.yaml`**, not `release.yaml` —
+  they must not exist before the modules' `go.sum`s are proven.
+- **sumtool** precomputes `go.sum` against a local `file://` GOPROXY before the tag exists, and the
+  publish step verifies with `-mod=readonly` — a missing or wrong hash fails there.
+- `GOPROXY="file://${PROXY_DIR},direct"` in CI, **never `proxy.golang.org`**: its negative caching
+  races the fresh tag and can poison the module for everyone (that race is what broke
+  provider-sdk's v1.1.29). `GONOSUMDB` covers our own modules so `sum.golang.org` is not consulted
+  for tags it has not seen.
+- A `LICENSE` file must sit **in each module directory**. `cmd/go` synthesizes the repo-root
+  LICENSE into the module zip; `x/mod/zip.CreateFromDir` does not — and the two producing
+  different zips is a checksum divergence users see as a security error.
+
+### Python
+
+Copy provider-sdk's `publish-python-sdk` / `publish-python-starter` jobs:
+
+- PyPI trusted publishing — OIDC via `uv publish --trusted-publishing always`, no API tokens.
+- One GitHub environment per package (`pypi-sdk`, `pypi-starter`) — PyPI's trusted-publisher
+  config names the environment, so they cannot share one.
+- `uv build --package <name>` for targeted builds in the monorepo.
+- Version site C is `_version.py`.
+
+### C# / NuGet
+
+Copy provider-sdk's `publish-csharp` job:
+
+- OIDC login via `NuGet/login@v1`, a dedicated `nuget` GitHub environment, no long-lived API key.
+- `dotnet pack`, then `dotnet nuget push --skip-duplicate` — the skip is what makes the job
+  re-runnable after a partial failure.
+- `<Version>` in the `.csproj` is the single version source (site A and C in one).
