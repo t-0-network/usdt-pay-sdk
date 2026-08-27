@@ -57,7 +57,7 @@ func main() {
 		}
 		if projectName == "" {
 			fmt.Fprintf(os.Stderr, "%s project name is required\n\n", color(red, "[ERROR]"))
-			fmt.Fprintf(os.Stderr, "Usage: %s <project-name> --lang=<language>\n", Config.Command)
+			fmt.Fprintf(os.Stderr, "Usage: %s --lang=<language> <project-name>\n", Config.Command)
 			os.Exit(2)
 		}
 
@@ -247,7 +247,7 @@ func printUsage() {
 	fmt.Printf("Usage: %s <command> [options]\n", Config.ProductName)
 	fmt.Println()
 	fmt.Println("Commands:")
-	fmt.Printf("  init <project-name>  Initialize a new T-0 Network provider project\n")
+	fmt.Printf("  init [options] <project-name>  Initialize a new project\n")
 	fmt.Printf("  keygen               Generate a new secp256k1 keypair\n")
 	fmt.Printf("  version              Show version\n")
 	fmt.Println()

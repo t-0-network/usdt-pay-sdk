@@ -108,9 +108,9 @@ func scaffold(opts ScaffoldOpts) error {
 }
 
 func applyOverlay(opts ScaffoldOpts) error {
-	overlayRoot := filepath.Join("overlay", opts.Lang)
+	overlayRoot := path.Join("overlay", opts.Lang)
 	if opts.Role != "" {
-		overlayRoot = filepath.Join(overlayRoot, opts.Role)
+		overlayRoot = path.Join(overlayRoot, opts.Role)
 	}
 
 	if _, err := overlayFiles.ReadDir(overlayRoot); err != nil {
@@ -125,10 +125,7 @@ func applyOverlay(opts ScaffoldOpts) error {
 			return nil
 		}
 
-		rel, err := filepath.Rel(overlayRoot, src)
-		if err != nil {
-			return err
-		}
+		rel := strings.TrimPrefix(src, overlayRoot+"/")
 
 		data, err := overlayFiles.ReadFile(src)
 		if err != nil {
