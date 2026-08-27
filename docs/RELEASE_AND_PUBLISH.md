@@ -123,8 +123,8 @@ dependency bump.
           \-------------------+-------------------/
                               |
                    /----------+----------\
-                  /                       \
-        publish-node-sdk              publish-java
+                  /           |           \
+        publish-node-sdk  publish-java  publish-cli
 ```
 
 Nothing publishes until everything builds and the shared **`preflight`** job passes.
@@ -164,10 +164,17 @@ publish.
 
 ### `publish-java`
 
-Version-matches-tag, `./gradlew build --no-daemon`, `publishAggregationToCentralPortal`.
+Version-matches-tag (including `Version.java` and `java/starter/acquirer/gradle.properties`),
+`./gradlew build --no-daemon`, `publishAggregationToCentralPortal`.
 
 JitPack needs no job at all: it builds from the tag on demand, the first time someone requests the
 coordinate.
+
+### `publish-cli`
+
+Cross-compiles the unified Go CLI for linux/darwin/windows × amd64/arm64, injecting the release
+version via `-ldflags "-X main.Version=${VERSION}"`. Uploads the binaries as release assets named
+`usdt-pay-<os>-<arch>[.exe]` — these are what `cli/install.sh` and `cli/install.ps1` download.
 
 ---
 
@@ -175,8 +182,8 @@ coordinate.
 
 | Name | Kind | Used by | Provisioned by |
 |---|---|---|---|
-| `CI_APP_CLIENT_ID` | org variable | `release.yaml` | already org-wide, visibility `all` |
-| `CI_APP_PRIVATE_KEY` | org secret | `release.yaml` | already org-wide, visibility `all` |
+| `CI_APP_CLIENT_ID` | org variable | both workflows | already org-wide, visibility `all` |
+| `CI_APP_PRIVATE_KEY` | org secret | both workflows | already org-wide, visibility `all` |
 | `OSSRH_USERNAME` | repo variable | `publish-java` | `backend/infra` |
 | `OSSRH_PASSWORD` | repo secret | `publish-java` | `backend/infra` |
 | `GPG_PRIVATE_KEY` | repo secret | `publish-java` | `backend/infra` |

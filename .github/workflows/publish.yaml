@@ -8,7 +8,8 @@ on:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+"
 
-# npm through OIDC, Java through Maven Central credentials. No job needs write here.
+# npm through OIDC, Java through Maven Central credentials, CLI through the App token.
+# Only publish-cli needs contents: write (for release asset upload); the others are read-only.
 permissions:
   contents: read
 
@@ -264,3 +265,68 @@ jobs:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           MAVEN_CENTRAL_USERNAME: ${{ vars.OSSRH_USERNAME }}
           MAVEN_CENTRAL_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+
+  publish-cli:
+    name: Publish CLI
+    needs: [preflight, build-java, build-node]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.CI_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: usdt-pay-sdk
+          permission-contents: write
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          show-progress: false
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: cli/go.mod
+
+      - name: Get version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+
+      - name: Sync templates
+        working-directory: cli
+        run: go generate ./...
+
+      - name: Cross-compile
+        working-directory: cli
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          LDFLAGS="-X main.Version=${VERSION}"
+          mkdir -p ../dist
+          PLATFORMS="linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64"
+          for PLATFORM in $PLATFORMS; do
+            OS="${PLATFORM%/*}"
+            ARCH="${PLATFORM#*/}"
+            EXT=""
+            if [ "$OS" = "windows" ]; then EXT=".exe"; fi
+            OUTPUT="usdt-pay-${OS}-${ARCH}${EXT}"
+            echo "Building $OUTPUT..."
+            GOOS="$OS" GOARCH="$ARCH" go build -ldflags "$LDFLAGS" -o "../dist/${OUTPUT}" .
+          done
+
+      - name: Upload CLI binaries to GitHub Release
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          for _ in $(seq 1 30); do
+            gh release view "v${VERSION}" >/dev/null 2>&1 && break
+            sleep 10
+          done
+          gh release view "v${VERSION}" >/dev/null 2>&1 \
+            || gh release create "v${VERSION}" --verify-tag --generate-notes --title "${VERSION}" \
+            || gh release view "v${VERSION}" >/dev/null
+          gh release upload "v${VERSION}" dist/usdt-pay-* --clobber
