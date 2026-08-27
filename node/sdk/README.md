@@ -40,6 +40,112 @@ The returned value is a listening `http.Server`: `close()` it to shut down, and 
 Mount one service per role edge you implement — `IssuerCallbackService`,
 `AcquirerCallbackService`, `LpCallbackService`.
 
+## Mounting into a server you already run
+
+`createUsdtPayHandler` is the same thing as `createUsdtPayServer` minus the
+`http.Server`: a plain `(req, res)` handler you mount wherever you want —
+Express, Fastify (via its middleware bridge), or a raw `http` server you
+multiplex yourself.
+
+```ts
+import express from "express";
+import { createUsdtPayHandler, IssuerCallbackService } from "@t-0/usdt-pay-sdk";
+
+const app = express();
+
+// Mount BEFORE any body parser — the handler must see the raw bytes.
+app.use(
+  "/sda/payments/t0",
+  createUsdtPayHandler(process.env.NETWORK_PUBLIC_KEY!, (r) => {
+    r.service(IssuerCallbackService, issuerCallbackHandler);
+  }),
+);
+
+app.use(express.json()); // parsers for the rest of the app go after
+app.listen(3000);
+```
+
+Two constraints, both about bytes:
+
+- **Mount it before anything that touches the body.** The signature is verified
+  against the raw bytes as they stream in; `express.json()` and friends consume
+  the stream, and anything that decompresses changes the bytes. Order the
+  middleware so the handler is first.
+- **Prefix mounting works because Express strips the prefix** from `req.url`
+  before the handler routes on the Connect path
+  (`/<package>.<Service>/<Method>`). A framework that passes the full URL
+  through needs the handler at the root, or the prefix removed first.
+
+The health service t-0 probes (`grpc.health.v1.Health/Check`) is inside the
+handler, behind the same signature check — mounting the handler mounts it.
+
+## Verifying requests without the SDK's server
+
+For a stack that cannot hand Node's `(req, res)` pair to a handler at all —
+Effect, Hono, Koa, anything that owns its own HTTP layer —
+`@t-0/usdt-pay-sdk/crypto` exports the verification the handler uses, for
+wiring up yourself: `createRequestVerifier` (setup-time config → per-request
+verifier), `rejectRequest` (failure → the HTTP error to send), the
+`NetworkHeaders` enum, and the primitives under them (`verifySignature`,
+`computeDigest`, `keccak256`, `parsePublicKey`, `publicKeysEqual`).
+
+```ts
+import { fromBinary, fromJson } from "@bufbuild/protobuf";
+import {
+  createRequestVerifier,
+  NetworkHeaders,
+  rejectRequest,
+} from "@t-0/usdt-pay-sdk/crypto";
+
+const verifyRequest = createRequestVerifier({
+  networkPublicKey: T0_NETWORK_PUBLIC_KEY, // "0x04..." uncompressed secp256k1
+});
+
+// In your framework's handler:
+const rawBody = new Uint8Array(await request.arrayBuffer()); // the exact wire bytes
+
+const result = verifyRequest({
+  body: rawBody, // Uint8Array — not the bare ArrayBuffer
+  signatureHeader: headers[NetworkHeaders.Signature.toLowerCase()],
+  publicKeyHeader: headers[NetworkHeaders.PublicKey.toLowerCase()],
+  timestampHeader: headers[NetworkHeaders.SignatureTimestamp.toLowerCase()],
+});
+
+if (!result.valid) {
+  const err = rejectRequest(result.reason);
+  return respond(err.body, err.status, err.headers);
+}
+```
+
+**Verify the exact bytes that arrived.** No body parsers, no auto-decompression,
+never re-serialized protobuf — protobuf encoding is not canonical, so a
+re-encoded message is a different message to secp256k1. This is the rule the
+rest of the SDK exists to enforce for you; here it is yours to keep.
+
+What the working parts around the verifier look like:
+
+- **Headers**: `NetworkHeaders` values are title-case (`X-Signature`); Node and
+  most frameworks hand you incoming headers lowercased. Look them up by
+  `NetworkHeaders.Signature.toLowerCase()`, as above.
+- **Body format follows `Content-Type`.** A Connect unary body is JSON
+  (`application/json` → `fromJson`) or binary protobuf (`application/proto` →
+  `fromBinary`), and the response answers in the same format with the same
+  `Content-Type`. Handle both — this SDK's own client sends JSON, and other
+  callers may send proto.
+- **Errors go through `rejectRequest(result.reason)`.** It returns the status,
+  headers and serialized body of the Connect error the caller expects — the
+  same statuses the SDK's transport answers for the same failures. Send it
+  verbatim. `VerifyRequestFailure` is an open union: reasons this SDK version
+  has never heard of map to 401, so an unknown failure still denies.
+- **Route the health check too.** t-0 probes `/grpc.health.v1.Health/Check` as
+  part of the signed contract; a standalone integration must answer it. The
+  wire contract is in
+  [HEALTH_SERVICE.md](https://github.com/t-0-network/provider-sdk/blob/master/docs/HEALTH_SERVICE.md).
+
+`node/sdk/test/crypto.test.ts` is this section as a running program — a raw
+`http` server verifying, parsing and answering a signed SDK client, with
+nothing from `createUsdtPayServer` in it.
+
 ## Calling t-0
 
 ```ts

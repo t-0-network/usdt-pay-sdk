@@ -33,6 +33,53 @@ export interface UsdtPayRouter {
 }
 
 /**
+ * The pay endpoints as a plain `(req, res)` handler, for mounting into an HTTP
+ * server you already run instead of letting {@link createUsdtPayServer} own one.
+ * Signature verification, response validation and the health service are all
+ * inside — it is the same handler that server wraps.
+ *
+ * ```ts
+ * const app = express();
+ * // Mount BEFORE any body parser — the handler must see the raw bytes.
+ * app.use("/sda/payments/t0", createUsdtPayHandler(networkPublicKey, (r) => {
+ *   r.service(IssuerCallbackService, issuerCallbackHandler);
+ * }));
+ * app.use(express.json()); // parsers for the rest of the app go after
+ * ```
+ *
+ * Two constraints, both about bytes:
+ *
+ * - **Mount it before anything that touches the body.** The signature is
+ *   verified against the raw bytes as they stream in; `express.json()` and
+ *   friends consume the stream and the handler would see nothing. The same goes
+ *   for anything that decompresses.
+ * - **Mounting under a prefix works because Express strips it** from `req.url`
+ *   before the handler routes on the Connect path
+ *   (`/<package>.<Service>/<Method>`). A framework that passes the full URL
+ *   through needs the handler mounted at the root, or the prefix removed first.
+ *
+ * For a stack that cannot hand this handler Node's `(req, res)` pair at all
+ * (Effect, Hono, …), drop a level: `@t-0/usdt-pay-sdk/crypto` has the request
+ * verifier this handler uses, for wiring up yourself.
+ *
+ * @param networkPublicKey t-0's public key — inbound calls that do not verify
+ *                         against it are refused
+ * @param register         mounts your callback handlers
+ */
+export function createUsdtPayHandler(
+  networkPublicKey: string,
+  register: (router: UsdtPayRouter) => void,
+): (request: http.IncomingMessage, response: http.ServerResponse) => void {
+  return signatureValidation(
+    nodeAdapter(
+      createService(networkPublicKey, register, {
+        registry: payRegistry,
+      }),
+    ),
+  );
+}
+
+/**
  * The server a pay participant runs so t-0 can call it: acquirers host §7/§11/§13/§15,
  * issuers host §5, LPs host §8.
  *
@@ -74,15 +121,7 @@ export function createUsdtPayServer(
   networkPublicKey: string,
   register: (router: UsdtPayRouter) => void,
 ): Promise<http.Server> {
-  const server = http.createServer(
-    signatureValidation(
-      nodeAdapter(
-        createService(networkPublicKey, register, {
-          registry: payRegistry,
-        }),
-      ),
-    ),
-  );
+  const server = http.createServer(createUsdtPayHandler(networkPublicKey, register));
 
   // Resolve on `listening` rather than handing back a server that is not up yet:
   // `address()` is null until then, and a port already in use has to surface as a

@@ -28,6 +28,16 @@
         "types": "./lib/cjs/index.d.ts",
         "default": "./lib/cjs/index.js"
       }
+    },
+    "./crypto": {
+      "import": {
+        "types": "./lib/esm/crypto.d.ts",
+        "default": "./lib/esm/crypto.js"
+      },
+      "require": {
+        "types": "./lib/cjs/crypto.d.ts",
+        "default": "./lib/cjs/crypto.js"
+      }
     }
   },
   "dependencies": {
@@ -48,7 +58,7 @@
     "build:esm": "tsc -p tsconfig.esm.json",
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:post": "node -e \"require('fs').writeFileSync('lib/cjs/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\"",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.test.json",
     "test": "node --import tsx --test test/*.test.ts"
   }
 }
