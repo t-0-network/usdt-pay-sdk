@@ -39,6 +39,13 @@ curl -fsSL https://raw.githubusercontent.com/t-0-network/usdt-pay-sdk/master/cli
 curl -fsSL https://raw.githubusercontent.com/t-0-network/usdt-pay-sdk/master/cli/install.sh | sh -s -- init --lang=node --role=issuer my-issuer
 ```
 
+**Windows (PowerShell):**
+
+```powershell
+iwr -Uri https://raw.githubusercontent.com/t-0-network/usdt-pay-sdk/master/cli/install.ps1 -OutFile install.ps1
+.\install.ps1 init --lang=java --role=acquirer my-acquirer
+```
+
 Then follow your project's README.
 See [java/](java/) or [node/](node/) for SDK-only usage without the scaffolder.
 

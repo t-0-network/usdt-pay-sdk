@@ -26,7 +26,6 @@ func main() {
 	lang := initCmd.String("lang", "", "Language/ecosystem: "+strings.Join(Config.Languages, ", "))
 	role := initCmd.String("role", Config.DefaultRole, "Role (required for some products)")
 	dir := initCmd.String("dir", "", "Target directory (defaults to ./<project-name>)")
-	javaRepo := initCmd.String("repository", "jitpack", "Java SDK repository: jitpack (default) or maven-central")
 	modulePath := initCmd.String("module", "", "Go module path (defaults to project name)")
 	noColorFlag := initCmd.Bool("no-color", false, "Disable colored output")
 	showVersion := initCmd.Bool("version", false, "Show version")
@@ -109,7 +108,6 @@ func main() {
 			ProjectName: projectName,
 			ProjectDir:  projectDir,
 			ModulePath:  modPath,
-			JavaRepo:    *javaRepo,
 			Version:     Version,
 		}); err != nil {
 			fmt.Fprintf(os.Stderr, "%s %v\n", color(red, "[ERROR]"), err)
@@ -222,22 +220,24 @@ func printCompletion(opts ScaffoldOpts, kp KeyPair) {
 	fmt.Println("  1. Navigate to your project:")
 	fmt.Printf("     %s\n", color(blue, "cd "+opts.ProjectDir))
 	fmt.Println()
+	fmt.Println("  2. Add NETWORK_PUBLIC_KEY to .env — your t-0 onboarding contact gives you this")
+	fmt.Println()
 
 	switch opts.Lang {
 	case "go":
-		fmt.Println("  2. Run the application:")
+		fmt.Println("  3. Run the application:")
 		fmt.Printf("     %s\n", color(blue, "go run ./cmd"))
 	case "node":
-		fmt.Println("  2. Install dependencies and run:")
+		fmt.Println("  3. Install dependencies and run:")
 		fmt.Printf("     %s\n", color(blue, "npm install && npm run dev"))
 	case "python":
-		fmt.Println("  2. Install dependencies and run:")
+		fmt.Println("  3. Install dependencies and run:")
 		fmt.Printf("     %s\n", color(blue, "uv sync && uv run python -m provider.main"))
 	case "java":
-		fmt.Println("  2. Run the application:")
+		fmt.Println("  3. Run the application:")
 		fmt.Printf("     %s\n", color(blue, "./gradlew run"))
 	case "csharp":
-		fmt.Println("  2. Run the application:")
+		fmt.Println("  3. Run the application:")
 		fmt.Printf("     %s\n", color(blue, "dotnet run"))
 	}
 	fmt.Println()
@@ -256,7 +256,6 @@ func printUsage() {
 	fmt.Println("Init options:")
 	fmt.Println("  --lang string        Language/ecosystem (required)")
 	fmt.Println("  --module string      Go module path (Go only)")
-	fmt.Println("  --repository string  Java SDK repository: jitpack|maven-central (Java only)")
 	fmt.Println("  --dir string         Target directory (default: ./<project-name>)")
 	fmt.Println("  --no-color           Disable colored output")
 	fmt.Println("  --version            Show version")

@@ -33,9 +33,7 @@ type ScaffoldOpts struct {
 	ProjectDir  string
 	// Go-specific: module path for import rewriting
 	ModulePath string
-	// Java-specific: SDK repository (jitpack or maven-central)
-	JavaRepo string
-	// CLI version (injected into Java template's SDK version)
+	// CLI version (injected at build time via ldflags)
 	Version string
 }
 
@@ -166,18 +164,6 @@ func processPlaceholders(content string, opts ScaffoldOpts, pascalName string) s
 	// Go: module path replacement (injected by sync tool as {{MODULE_PATH}})
 	if opts.ModulePath != "" {
 		content = strings.ReplaceAll(content, "{{MODULE_PATH}}", opts.ModulePath)
-	}
-
-	// Java: SDK version pinning
-	if opts.Lang == "java" {
-		if opts.Version != "" && opts.Version != "dev" {
-			content = strings.ReplaceAll(content, `:+"`, `:`+opts.Version+`"`)
-		}
-		if opts.JavaRepo == "maven-central" {
-			content = strings.ReplaceAll(content,
-				`val sdkRepository = "jitpack"`,
-				`val sdkRepository = "maven-central"`)
-		}
 	}
 
 	return content
