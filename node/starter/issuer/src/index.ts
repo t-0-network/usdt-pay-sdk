@@ -1,7 +1,7 @@
 import type { Server } from "node:http";
 import {
-  createUsdtPayClient,
-  createUsdtPayServer,
+  createClient,
+  createServer,
   IssuerCallbackService,
   IssuerService,
 } from "@t-0/usdt-pay-sdk";
@@ -24,11 +24,11 @@ async function main(): Promise<void> {
 
   // Outbound: everything you call on t-0 (§6, §9, §14). Each internal/ helper sets its
   // own timeout — a Connect deadline is per call, so there is nothing to install here.
-  const t0 = createUsdtPayClient(config.tzeroEndpoint, config.privateKey, IssuerService);
+  const t0 = createClient(config.tzeroEndpoint, config.privateKey, IssuerService);
 
   // Inbound: the one callback t-0 pushes to you (§5).
   // Every inbound signature is verified against NETWORK_PUBLIC_KEY.
-  const server = await createUsdtPayServer(config.port, config.networkPublicKey, (router) => {
+  const server = await createServer(config.port, config.networkPublicKey, (router) => {
     router.service(IssuerCallbackService, issuerCallbackHandler);
   });
   console.log(`Callback server listening on port ${config.port}`);

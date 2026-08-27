@@ -58,7 +58,9 @@ Each directory has its own README:
 - [`java/cli/`](java/cli/) — the scaffolder (`usdt-pay-init.jar`)
 - [`java/starter/acquirer/`](java/starter/acquirer/) — acquirer integration guide
 - [`node/`](node/) — SDK install, scaffolder, starter
-- [`node/sdk/`](node/sdk/) — `createUsdtPayClient`, `createUsdtPayServer`
+- [`node/sdk/`](node/sdk/) — `createClient`, `createServer`,
+  `createHandler` for mounting into an existing server, and
+  `@t-0/usdt-pay-sdk/crypto` for verifying requests in any HTTP stack
 - [`node/cli/`](node/cli/) — the scaffolder (`@t-0/usdt-pay-starter-ts`)
 - [`node/starter/issuer/`](node/starter/issuer/) — issuer integration guide
 
