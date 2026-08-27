@@ -1,13 +1,13 @@
 import http from "node:http";
-import type { DescService } from "@bufbuild/protobuf";
 import { createRegistry } from "@bufbuild/protobuf";
-import type { ServiceImpl } from "@connectrpc/connect";
-import { createService, nodeAdapter, signatureValidation } from "@t-0/provider-sdk";
+import { createHandler as createProviderHandler, type Router } from "@t-0/provider-sdk";
 import { file_tzero_v1_pay_issuer_issuer } from "./gen/tzero/v1/pay/issuer/issuer_pb.js";
 import { file_tzero_v1_pay_acquirer_acquirer } from "./gen/tzero/v1/pay/acquirer/acquirer_pb.js";
 import { file_tzero_v1_pay_lp_lp } from "./gen/tzero/v1/pay/lp/lp_pb.js";
 import { file_tzero_v1_pay_common } from "./gen/tzero/v1/pay/common_pb.js";
 import { file_tzero_v1_pay_validate } from "./gen/tzero/v1/pay/validate_pb.js";
+
+export type { Router } from "@t-0/provider-sdk";
 
 /**
  * Registry covering the pay contract protos. Every file is listed explicitly:
@@ -23,14 +23,6 @@ export const payRegistry = createRegistry(
   file_tzero_v1_pay_common,
   file_tzero_v1_pay_validate,
 );
-
-/**
- * Where you mount the callback services t-0 calls on you. One `service()` call
- * per service you implement.
- */
-export interface Router {
-  service<T extends DescService>(service: T, implementation: Partial<ServiceImpl<T>>): void;
-}
 
 /**
  * The pay endpoints as a plain `(req, res)` handler, for mounting into an HTTP
@@ -70,13 +62,9 @@ export function createHandler(
   networkPublicKey: string,
   register: (router: Router) => void,
 ): (request: http.IncomingMessage, response: http.ServerResponse) => void {
-  return signatureValidation(
-    nodeAdapter(
-      createService(networkPublicKey, register, {
-        registry: payRegistry,
-      }),
-    ),
-  );
+  return createProviderHandler(networkPublicKey, register, {
+    registry: payRegistry,
+  });
 }
 
 /**
@@ -123,9 +111,6 @@ export function createServer(
 ): Promise<http.Server> {
   const server = http.createServer(createHandler(networkPublicKey, register));
 
-  // Resolve on `listening` rather than handing back a server that is not up yet:
-  // `address()` is null until then, and a port already in use has to surface as a
-  // rejected promise instead of an unhandled 'error' event.
   return new Promise((resolve, reject) => {
     server.once("error", reject);
     server.listen(port, () => {
