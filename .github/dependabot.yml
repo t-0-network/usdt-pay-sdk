@@ -17,6 +17,11 @@ updates:
         patterns:
           - "@bufbuild/*"
 
+  - package-ecosystem: "gomod"
+    directory: "/cli"
+    schedule:
+      interval: "weekly"
+
   - package-ecosystem: "gradle"
     directory: "/java"
     schedule:

@@ -22,12 +22,10 @@ blocking and non-blocking stubs, `CallDeadline`, V2 checked exceptions.
 
 ## Starter
 
-Download `usdt-pay-init.jar` from
-[Releases](https://github.com/t-0-network/usdt-pay-sdk/releases):
+Scaffold with the [CLI](../cli/):
 
 ```bash
-curl -LO https://github.com/t-0-network/usdt-pay-sdk/releases/latest/download/usdt-pay-init.jar
-java -jar usdt-pay-init.jar my-acquirer acquirer
+curl -fsSL https://raw.githubusercontent.com/t-0-network/usdt-pay-sdk/master/cli/install.sh | sh -s -- init --lang=java --role=acquirer my-acquirer
 ```
 
 | Role | Template |
@@ -44,7 +42,6 @@ cd my-acquirer
 ```
 
 Then follow your project's README.
-See [cli/](cli/) for scaffolder details.
 
 ### Java 21
 

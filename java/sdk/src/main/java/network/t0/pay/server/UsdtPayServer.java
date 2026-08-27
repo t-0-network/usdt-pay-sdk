@@ -81,7 +81,7 @@ public final class UsdtPayServer implements Closeable {
         private final ProviderServer.Builder delegate;
 
         private Builder(ProviderServer.Builder delegate) {
-            this.delegate = delegate;
+            this.delegate = delegate.withSdkVersion(Version.SDK_VERSION);
         }
 
         /** Mounts one of your callback handlers. Call it once per service you implement. */

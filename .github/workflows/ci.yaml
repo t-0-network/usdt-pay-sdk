@@ -30,8 +30,6 @@ jobs:
         with:
           cache-read-only: true
 
-      # Compiles the SDK (buf generates the stubs first), runs the starter's tests,
-      # and builds usdt-pay-init.jar with the starter packed into it.
       - name: Build
         working-directory: java
         run: ./gradlew build --no-daemon
@@ -71,3 +69,29 @@ jobs:
       - name: Audit runtime dependencies
         working-directory: node
         run: npm audit --omit=dev --audit-level=high
+
+  go:
+    name: Go
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          show-progress: false
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: cli/go.mod
+
+      - name: Generate templates
+        working-directory: cli
+        run: go generate ./...
+
+      - name: Build
+        working-directory: cli
+        run: go build ./...
+
+      - name: Test
+        working-directory: cli
+        run: go test ./...

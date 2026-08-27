@@ -31,10 +31,10 @@ See [sdk/](sdk/) for `createClient`, `createServer` and `createHandler` in full.
 
 ## Starter
 
-Node 22 or newer.
+Node 22 or newer. Scaffold with the [CLI](../cli/):
 
 ```bash
-npx @t-0/usdt-pay-starter-ts my-issuer issuer
+curl -fsSL https://raw.githubusercontent.com/t-0-network/usdt-pay-sdk/master/cli/install.sh | sh -s -- init --lang=node --role=issuer my-issuer
 ```
 
 | Role | Template |
@@ -51,4 +51,3 @@ npm start
 ```
 
 Then follow your project's README.
-See [cli/](cli/) for scaffolder details.
