@@ -9,8 +9,9 @@ protos are not authored here.
 ```
 proto/tzero/v1/pay/      the contract: common.proto + validate.proto in package
                          tzero.v1.pay; acquirer/, issuer/, lp/ as per-role packages
-java/                    Gradle build: sdk, starter/* (live subprojects), cli
-node/                    npm workspace: sdk, starter/issuer, cli (the scaffolder)
+java/                    Gradle build: sdk, starter/acquirer
+node/                    npm workspace: sdk, starter/issuer
+cli/                     unified scaffolder (Go) — `usdt-pay init`
 docs/RELEASE_AND_PUBLISH.md   the release process — read before touching versions,
                               tags, or the publish workflows
 ```
@@ -69,9 +70,9 @@ integrations.
 - **Never `git tag vX.Y.Z` and never trigger `publish.yaml` by hand.** A release
   is `gh workflow run release.yaml -f bump=… --ref master`, and the tag it pushes
   fires the publish. Both registries are immutable; there is no undo.
-- **A failed publish is recovered with “Re-run failed jobs” on that run** — a
+- **A failed publish is recovered with "Re-run failed jobs" on that run** — a
   re-dispatch of `release.yaml` would mint the next version and strand the tag.
 
 Version sites (all moved together by `release.yaml`, validated twice) are listed
-in the doc. Adding an ecosystem? The doc's “Adding an ecosystem” section is the
+in the doc. Adding an ecosystem? The doc's "Adding an ecosystem" section is the
 checklist.

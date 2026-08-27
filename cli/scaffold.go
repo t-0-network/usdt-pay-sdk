@@ -14,6 +14,9 @@ import (
 //go:embed all:internal/embed
 var embeddedTemplates embed.FS
 
+//go:embed all:overlay
+var overlayFiles embed.FS
+
 type CLIConfig struct {
 	ProductName  string
 	Command      string
@@ -53,7 +56,7 @@ func scaffold(opts ScaffoldOpts) error {
 
 	pascalName := toPascalCase(opts.ProjectName)
 
-	return fs.WalkDir(embeddedTemplates, templateRoot, func(src string, d fs.DirEntry, err error) error {
+	if err := fs.WalkDir(embeddedTemplates, templateRoot, func(src string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -95,6 +98,48 @@ func scaffold(opts ScaffoldOpts) error {
 		content = processPlaceholders(content, opts, pascalName)
 
 		return writeFileWithMode(destPath, []byte(content), src)
+	}); err != nil {
+		return err
+	}
+
+	// Apply overlay files (standalone Dockerfiles, .dockerignore, etc.) that
+	// replace the in-repo versions with ones suited for a scaffolded project.
+	return applyOverlay(opts)
+}
+
+func applyOverlay(opts ScaffoldOpts) error {
+	overlayRoot := filepath.Join("overlay", opts.Lang)
+	if opts.Role != "" {
+		overlayRoot = filepath.Join(overlayRoot, opts.Role)
+	}
+
+	if _, err := overlayFiles.ReadDir(overlayRoot); err != nil {
+		return nil
+	}
+
+	return fs.WalkDir(overlayFiles, overlayRoot, func(src string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+
+		rel, err := filepath.Rel(overlayRoot, src)
+		if err != nil {
+			return err
+		}
+
+		data, err := overlayFiles.ReadFile(src)
+		if err != nil {
+			return fmt.Errorf("reading overlay file %s: %w", src, err)
+		}
+
+		destPath := filepath.Join(opts.ProjectDir, rel)
+		if err := os.MkdirAll(filepath.Dir(destPath), 0777); err != nil {
+			return err
+		}
+		return os.WriteFile(destPath, data, 0666)
 	})
 }
 

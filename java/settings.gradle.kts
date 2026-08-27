@@ -19,4 +19,3 @@ rootProject.name = "usdt-pay-sdk-java"
 
 include("sdk")
 include("starter:acquirer")
-include("cli")

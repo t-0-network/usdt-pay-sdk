@@ -121,14 +121,14 @@ jobs:
 
       # The same bootstrap gate publish.yaml's preflight carries, but ahead of the tag.
       # A trusted publisher can only be attached to a package that already exists, so
-      # until both packages are bootstrapped the publish half cannot authenticate at
-      # all. Failing there would leave a public tag and a Release with no artifacts
-      # behind it, and a re-dispatch — the intuitive recovery — would compute the next
+      # until the package is bootstrapped the publish half cannot authenticate at all.
+      # Failing there would leave a public tag and a Release with no artifacts behind
+      # it, and a re-dispatch — the intuitive recovery — would compute the next
       # version and strand that tag empty forever. Failing here costs nothing.
-      - name: npm packages must already exist
+      - name: npm package must already exist
         run: |
           ERRORS=0
-          for PKG in @t-0/usdt-pay-sdk @t-0/usdt-pay-starter-ts; do
+          for PKG in @t-0/usdt-pay-sdk; do
             # `versions`, not `version`: the question is whether the package exists,
             # and `version` answers a different one — what its `latest` dist-tag
             # resolves to. They coincide today only because npm sets `latest` on a
@@ -189,16 +189,15 @@ jobs:
           #
           # --no-workspaces-update is load-bearing. Without it `npm version -w` does an
           # implicit workspace reify; at that instant sdk is already at the new version
-          # while cli and the starter still pin ^OLD, the workspace links no longer
-          # satisfy those pins, and npm goes to the registry — where
-          # @t-0/usdt-pay-sdk@^OLD may not exist. That 404s after every package.json
-          # was already rewritten.
+          # while the starter still pins ^OLD, the workspace links no longer satisfy
+          # those pins, and npm goes to the registry — where @t-0/usdt-pay-sdk@^OLD
+          # may not exist. That 404s after every package.json was already rewritten.
           npm version "$VERSION" --no-git-tag-version --allow-same-version --no-workspaces-update \
-            -w sdk -w cli -w starter/issuer
+            -w sdk -w starter/issuer
 
           # Before the lockfile regen below, so the lockfile is built against the
           # already-corrected pins rather than the stale ones.
-          npm pkg set "dependencies.@t-0/usdt-pay-sdk=^$VERSION" -w cli -w starter/issuer
+          npm pkg set "dependencies.@t-0/usdt-pay-sdk=^$VERSION" -w starter/issuer
 
           npm install --package-lock-only
 
@@ -210,6 +209,7 @@ jobs:
         run: |
           sed -i "s/^version=.*/version=${VERSION}/" java/gradle.properties
           sed -i "s/^usdtPaySdkVersion=.*/usdtPaySdkVersion=${VERSION}/" java/starter/acquirer/gradle.properties
+          sed -i "s/SDK_VERSION = \".*\"/SDK_VERSION = \"${VERSION}\"/" java/sdk/src/main/java/network/t0/pay/server/Version.java
 
       - name: Validate updated files
         env:
@@ -227,22 +227,16 @@ jobs:
             "$(grep '^version=' java/gradle.properties | cut -d= -f2)" "$VERSION"
           check "java/starter/acquirer/gradle.properties SDK pin" \
             "$(grep '^usdtPaySdkVersion=' java/starter/acquirer/gradle.properties | cut -d= -f2)" "$VERSION"
+          check "Version.java SDK_VERSION" \
+            "$(grep -oP '(?<=SDK_VERSION = \")[^\"]+' java/sdk/src/main/java/network/t0/pay/server/Version.java)" "$VERSION"
           check "node/sdk/package.json .version" \
             "$(node -p "require('./node/sdk/package.json').version")" "$VERSION"
-          check "node/cli/package.json .version" \
-            "$(node -p "require('./node/cli/package.json').version")" "$VERSION"
-          check "node/cli/package.json SDK pin" \
-            "$(node -p "require('./node/cli/package.json').dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
           check "node/starter/issuer/package.json .version" \
             "$(node -p "require('./node/starter/issuer/package.json').version")" "$VERSION"
           check "node/starter/issuer/package.json SDK pin" \
             "$(node -p "require('./node/starter/issuer/package.json').dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
           check "package-lock.json packages.sdk.version" \
             "$(node -p "require('./node/package-lock.json').packages['sdk'].version")" "$VERSION"
-          check "package-lock.json packages.cli.version" \
-            "$(node -p "require('./node/package-lock.json').packages['cli'].version")" "$VERSION"
-          check "package-lock.json cli SDK pin" \
-            "$(node -p "require('./node/package-lock.json').packages['cli'].dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
           check "package-lock.json packages['starter/issuer'].version" \
             "$(node -p "require('./node/package-lock.json').packages['starter/issuer'].version")" "$VERSION"
           check "package-lock.json starter SDK pin" \
@@ -274,9 +268,8 @@ jobs:
           # already carries the bump commit — a double bump.
           git push --atomic origin HEAD:master "v$VERSION"
 
-      # `view || create` alone is not atomic: publish.yaml (already running against the
-      # tag we just pushed) can create the Release in the gap and take this job down.
-      # The trailing view treats "already exists" as success.
+      # The trailing `view` makes this idempotent: if the Release already exists
+      # (e.g. created manually or by a future workflow), it succeeds.
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}

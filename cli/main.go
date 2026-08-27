@@ -167,7 +167,7 @@ func run(opts ScaffoldOpts) error {
 	// Product-specific post-scaffold hook
 	if Config.PostScaffold != nil {
 		if err := Config.PostScaffold(opts); err != nil {
-			os.RemoveAll(opts.ProjectDir)
+			cleanup()
 			return fmt.Errorf("post-scaffold: %w", err)
 		}
 	}

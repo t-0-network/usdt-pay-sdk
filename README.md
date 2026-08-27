@@ -30,14 +30,13 @@ Scaffold a project with one command:
 **Java (acquirer):**
 
 ```bash
-curl -LO https://github.com/t-0-network/usdt-pay-sdk/releases/latest/download/usdt-pay-init.jar
-java -jar usdt-pay-init.jar my-acquirer acquirer
+curl -fsSL https://raw.githubusercontent.com/t-0-network/usdt-pay-sdk/master/cli/install.sh | sh -s -- init --lang=java --role=acquirer my-acquirer
 ```
 
 **Node (issuer):**
 
 ```bash
-npx @t-0/usdt-pay-starter-ts my-issuer issuer
+curl -fsSL https://raw.githubusercontent.com/t-0-network/usdt-pay-sdk/master/cli/install.sh | sh -s -- init --lang=node --role=issuer my-issuer
 ```
 
 Then follow your project's README.
@@ -47,21 +46,20 @@ See [java/](java/) or [node/](node/) for SDK-only usage without the scaffolder.
 
 ```
 proto/tzero/v1/pay/      protocol definitions, snapshot-synced from the t-0 backend
-java/                    Java SDK + scaffolder + acquirer starter
-node/                    Node SDK + scaffolder + issuer starter
+java/                    Java SDK + acquirer starter
+node/                    Node SDK + issuer starter
+cli/                     unified scaffolder (Go) — `usdt-pay init`
 ```
 
 Each directory has its own README:
 
-- [`java/`](java/) — SDK coordinates, scaffolder, starter
+- [`java/`](java/) — SDK coordinates, starter
 - [`java/sdk/`](java/sdk/) — client patterns: blocking, non-blocking, V2 stubs
-- [`java/cli/`](java/cli/) — the scaffolder (`usdt-pay-init.jar`)
 - [`java/starter/acquirer/`](java/starter/acquirer/) — acquirer integration guide
-- [`node/`](node/) — SDK install, scaffolder, starter
+- [`node/`](node/) — SDK install, starter
 - [`node/sdk/`](node/sdk/) — `createClient`, `createServer`,
   `createHandler` for mounting into an existing server, and
   `@t-0/usdt-pay-sdk/crypto` for verifying requests in any HTTP stack
-- [`node/cli/`](node/cli/) — the scaffolder (`@t-0/usdt-pay-starter-ts`)
 - [`node/starter/issuer/`](node/starter/issuer/) — issuer integration guide
 
 ## Before you write code

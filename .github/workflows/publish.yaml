@@ -8,7 +8,7 @@ on:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+"
 
-# Release writes go through the App token, npm through OIDC. No job needs write here.
+# npm through OIDC, Java through Maven Central credentials. No job needs write here.
 permissions:
   contents: read
 
@@ -50,14 +50,14 @@ jobs:
           echo "Maven Central credentials present"
 
       # A trusted publisher can only be attached to a package that already exists on
-      # the registry, so the very first version of each package has to be published by
-      # hand. Until that bootstrap has happened these jobs cannot authenticate at all —
-      # and without this check the failure lands *after* publish-java has spent the
-      # version on Maven Central, which is permanent. See docs/RELEASE_AND_PUBLISH.md.
-      - name: npm packages must already exist
+      # the registry, so the first version has to be published by hand. Until that
+      # bootstrap has happened this job cannot authenticate at all — and without this
+      # check the failure lands *after* publish-java has spent the version on Maven
+      # Central, which is permanent. See docs/RELEASE_AND_PUBLISH.md.
+      - name: npm package must already exist
         run: |
           ERRORS=0
-          for PKG in @t-0/usdt-pay-sdk @t-0/usdt-pay-starter-ts; do
+          for PKG in @t-0/usdt-pay-sdk; do
             # `versions`, not `version`: the question is whether the package exists,
             # and `version` answers a different one — what its `latest` dist-tag
             # resolves to. They coincide today only because npm sets `latest` on a
@@ -138,10 +138,6 @@ jobs:
         working-directory: node
         run: npm test
 
-  # The two npm packages publish from separate jobs, as provider-sdk's do. Not
-  # cosmetic: npm refuses to replace a published version, so if both lived in one job
-  # and the second publish failed, re-running that job would die on the *first*
-  # package's duplicate and never reach the one that still needs publishing.
   publish-node-sdk:
     name: Publish Node SDK
     needs: [preflight, build-java, build-node]
@@ -218,167 +214,11 @@ jobs:
         working-directory: node/sdk
         run: npm publish --provenance --access public
 
-  # The one publish job here that is NOT independent. It ships the template pinning
-  # `@t-0/usdt-pay-sdk` at `^X.Y.Z`, and its own package.json depends on that SDK —
-  # so a starter on the registry ahead of the SDK is a starter that cannot work:
-  # `npx @t-0/usdt-pay-starter-ts` fails outright, because npx installs the CLI's
-  # dependencies. Ordering it after the SDK costs nothing that independence bought.
-  # If the SDK publish fails this is skipped rather than failed, and *Re-run failed
-  # jobs* still lands both.
-  publish-node-starter:
-    name: Publish Node starter
-    needs: [preflight, build-java, build-node, publish-node-sdk]
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          show-progress: false
-
-      - name: Setup Node
-        uses: actions/setup-node@v7
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: node/package-lock.json
-
-      - name: Upgrade npm for trusted publishing
-        run: |
-          npm install -g npm@^11.5.1
-          NPM_VERSION=$(npm -v)
-          echo "npm $NPM_VERSION"
-          printf '11.5.1\n%s\n' "$NPM_VERSION" | sort -V -C || {
-            echo "::error::npm $NPM_VERSION < 11.5.1, trusted publishing unsupported"
-            exit 1
-          }
-
-      # The starter is checked here too, not just in release.yaml: prepack copies it
-      # into the tarball, so a hand-pushed tag could otherwise ship a scaffolder whose
-      # template still pins an older SDK.
-      - name: Verify versions match tag
-        run: |
-          VERSION="${GITHUB_REF#refs/tags/v}"
-          ERRORS=0
-          check() { # <label> <actual> <expected>
-            if [ "$2" != "$3" ]; then
-              echo "::error::$1 has $2, expected $3"
-              ERRORS=$((ERRORS + 1))
-            fi
-          }
-          check "node/cli/package.json .version" \
-            "$(node -p "require('./node/cli/package.json').version")" "$VERSION"
-          check "node/cli/package.json SDK pin" \
-            "$(node -p "require('./node/cli/package.json').dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
-          check "node/starter/issuer/package.json .version" \
-            "$(node -p "require('./node/starter/issuer/package.json').version")" "$VERSION"
-          check "node/starter/issuer/package.json SDK pin" \
-            "$(node -p "require('./node/starter/issuer/package.json').dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
-          [ "$ERRORS" -eq 0 ] || { echo "::error::tag is v$VERSION"; exit 1; }
-          echo "Scaffolder and packed starter match tag v$VERSION"
-
-      - name: Install
-        working-directory: node
-        run: npm ci
-
-      - name: Build
-        working-directory: node
-        run: |
-          npm run build -w cli
-          npm run typecheck -w cli
-
-      - name: Verify the package about to be published
-        working-directory: node/cli
-        run: |
-          NAME=$(node -p "require('./package.json').name")
-          PRIVATE=$(node -p "String(require('./package.json').private)")
-          [ "$NAME" = "@t-0/usdt-pay-starter-ts" ] || { echo "::error::expected @t-0/usdt-pay-starter-ts, got $NAME"; exit 1; }
-          case "$PRIVATE" in
-            undefined|false) ;;
-            *) echo "::error::$NAME is marked private"; exit 1 ;;
-          esac
-
-      # This is both the pack dry-run and the check that prepack's copy is right. The
-      # scaffolder ships the starter as template/, and a starter directory can hold a
-      # live .env — only the example may ever be published.
-      - name: Pack (dry run) and verify the template
-        working-directory: node/cli
-        run: |
-          npm pack --dry-run --json > /tmp/pack.json
-          FILES=$(node -p "require('/tmp/pack.json')[0].files.map(f => f.path).join('\n')")
-          echo "$FILES"
-
-          ERRORS=0
-
-          # Space-separated and sorted. The role set is a published contract —
-          # `npx @t-0/usdt-pay-starter-ts <name> <role>` is in every README — so a role
-          # appearing, vanishing or being renamed is a CLI API change, and it has to be
-          # made here deliberately. Deriving the list from the tarball instead would
-          # only ever confirm the tarball matches itself: it catches an empty
-          # template/ and nothing else, and says nothing the day a second role lands.
-          EXPECTED_ROLES='issuer'
-
-          ROLES=$(printf '%s\n' "$FILES" | sed -n 's#^template/\([^/]*\)/.*#\1#p' | sort -u | tr '\n' ' ' | sed 's/ *$//')
-          echo "roles in tarball: ${ROLES:-(none)}"
-          if [ "$ROLES" != "$EXPECTED_ROLES" ]; then
-            echo "::error::tarball carries roles '${ROLES:-(none)}', expected '$EXPECTED_ROLES' — if that change is intended, update EXPECTED_ROLES in this workflow"
-            ERRORS=$((ERRORS + 1))
-          fi
-
-          # Driven by the expected list, not the tarball's: a role missing from the
-          # tarball has to fail here too, not slip through because nothing iterated
-          # over it. Also why this is a plain `for` and no longer a heredoc-fed
-          # `while` — there is no subshell to lose the ERRORS increments in.
-          #
-          # gitignore is undotted on purpose — npm drops a nested .gitignore from the
-          # tarball, and the CLI restores the name when it scaffolds. Its absence
-          # would mean scaffolded projects commit their own .env.
-          for ROLE in $EXPECTED_ROLES; do
-            for REQUIRED in '.env.example' 'gitignore' 'package.json'; do
-              if ! printf '%s\n' "$FILES" | grep -qx "template/$ROLE/$REQUIRED"; then
-                echo "::error::template/$ROLE/$REQUIRED is missing from the tarball"
-                ERRORS=$((ERRORS + 1))
-              fi
-            done
-          done
-
-          # Anything env-ish other than the examples, any credential-shaped file, any
-          # installed tree. Matched as patterns, not exact names: .env.local and
-          # id_rsa are just as unpublishable as .env.
-          LEAKS=$(printf '%s\n' "$FILES" | grep -E '(^|/)(\.env($|\..*)|\.npmrc|\.git$|id_[a-z]+|.*\.(pem|key|p12|jks|keystore))$' \
-            | grep -v '/\.env\.example$' || true)
-          if [ -n "$LEAKS" ]; then
-            echo "::error::these would be published: $LEAKS"
-            ERRORS=$((ERRORS + 1))
-          fi
-          if printf '%s\n' "$FILES" | grep -q 'node_modules'; then
-            echo "::error::node_modules would be published"
-            ERRORS=$((ERRORS + 1))
-          fi
-          [ "$ERRORS" -eq 0 ] || exit 1
-          echo "Every template carries .env.example and no secrets"
-
-      - name: Publish to npm
-        working-directory: node/cli
-        run: npm publish --provenance --access public
-
   publish-java:
     name: Publish Java
     needs: [preflight, build-java, build-node]
     runs-on: ubuntu-latest
     steps:
-      - name: Generate GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@v3
-        with:
-          client-id: ${{ vars.CI_APP_CLIENT_ID }}
-          private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: usdt-pay-sdk
-          permission-contents: write
-
       - name: Checkout
         uses: actions/checkout@v7
         with:
@@ -398,21 +238,21 @@ jobs:
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
 
       # Central will not let you replace a version, so a tag that disagrees with
-      # gradle.properties has to fail here rather than half-way through the upload.
+      # the version sites has to fail here rather than half-way through the upload.
       - name: Verify version matches tag
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
+          ERRORS=0
           PKG=$(grep '^version=' java/gradle.properties | cut -d= -f2)
-          [ "$PKG" = "$VERSION" ] || { echo "::error::java/gradle.properties has $PKG, tag is v$VERSION"; exit 1; }
-          echo "java/gradle.properties version $PKG matches tag v$VERSION"
-
+          [ "$PKG" = "$VERSION" ] || { echo "::error::java/gradle.properties has $PKG, tag is v$VERSION"; ERRORS=$((ERRORS + 1)); }
+          SDK=$(grep -oP '(?<=SDK_VERSION = \")[^\"]+' java/sdk/src/main/java/network/t0/pay/server/Version.java)
+          [ "$SDK" = "$VERSION" ] || { echo "::error::Version.java has $SDK, tag is v$VERSION"; ERRORS=$((ERRORS + 1)); }
           SDK_PIN=$(grep '^usdtPaySdkVersion=' java/starter/acquirer/gradle.properties | cut -d= -f2)
-          [ "$SDK_PIN" = "$VERSION" ] || { echo "::error::java/starter/acquirer/gradle.properties has usdtPaySdkVersion=$SDK_PIN, tag is v$VERSION"; exit 1; }
-          echo "java/starter/acquirer/gradle.properties SDK pin $SDK_PIN matches tag v$VERSION"
+          [ "$SDK_PIN" = "$VERSION" ] || { echo "::error::java/starter/acquirer/gradle.properties has usdtPaySdkVersion=$SDK_PIN, tag is v$VERSION"; ERRORS=$((ERRORS + 1)); }
+          [ "$ERRORS" -eq 0 ] || exit 1
+          echo "Java version sites match tag v$VERSION"
 
-      # The build gate, and also the only thing that produces usdt-pay-init.jar —
-      # publishAggregationToCentralPortal does not build the CLI.
       - name: Build
         working-directory: java
         run: ./gradlew build --no-daemon
@@ -424,32 +264,3 @@ jobs:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           MAVEN_CENTRAL_USERNAME: ${{ vars.OSSRH_USERNAME }}
           MAVEN_CENTRAL_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-
-      # An unversioned copy alongside the versioned one, so the docs can link a URL
-      # that does not change every release.
-      #
-      # Known limitation, documented rather than fixed: this sits *after* the
-      # non-idempotent Central publish, so if only the upload fails, a job re-run dies
-      # earlier at Central's duplicate-version rejection and never gets here. Recovery
-      # is a manual `gh release upload` — see docs/RELEASE_AND_PUBLISH.md.
-      - name: Upload usdt-pay-init.jar to the GitHub release
-        working-directory: java
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          # Poll rather than create immediately: release.yaml creates the Release
-          # seconds after pushing the tag that started this run.
-          for _ in $(seq 1 30); do
-            gh release view "v${VERSION}" >/dev/null 2>&1 && break
-            sleep 10
-          done
-          # Same non-atomic race as in release.yaml; the trailing view closes it.
-          # --verify-tag is a remote check, so the shallow checkout above is fine.
-          gh release view "v${VERSION}" >/dev/null 2>&1 \
-            || gh release create "v${VERSION}" --verify-tag --generate-notes --title "${VERSION}" \
-            || gh release view "v${VERSION}" >/dev/null
-          cp "cli/build/libs/usdt-pay-init-${VERSION}.jar" cli/build/libs/usdt-pay-init.jar
-          gh release upload "v${VERSION}" \
-            "cli/build/libs/usdt-pay-init-${VERSION}.jar" \
-            cli/build/libs/usdt-pay-init.jar --clobber

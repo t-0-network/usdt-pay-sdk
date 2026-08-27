@@ -8,8 +8,8 @@ Start from a role's starter rather than from here:
 
 ## Install
 
-`network.t-0:usdt-pay-sdk-java` on Maven Central. Scaffolding a project with
-[`usdt-pay-init.jar`](../cli/) adds this dependency for you.
+`network.t-0:usdt-pay-sdk-java` on Maven Central. Scaffolding a project with the
+CLI (`usdt-pay init`) adds this dependency for you.
 
 **Gradle:**
 

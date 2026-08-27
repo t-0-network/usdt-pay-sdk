@@ -13,10 +13,8 @@ Start from a role's starter rather than from here:
 npm install @t-0/usdt-pay-sdk
 ```
 
-Scaffolding a project with
-[`@t-0/usdt-pay-starter-ts`](https://www.npmjs.com/package/@t-0/usdt-pay-starter-ts)
-adds this dependency for you. Working inside a clone of the repo instead? The starters
-resolve the SDK through the `node/` npm workspace, so no install is needed.
+Scaffolding a project with the CLI (`usdt-pay init`) adds this dependency for you. Working inside a clone of the repo instead? The starters resolve the SDK through
+the `node/` npm workspace, so no install is needed.
 
 ## Serving the callbacks t-0 pushes to you
 
