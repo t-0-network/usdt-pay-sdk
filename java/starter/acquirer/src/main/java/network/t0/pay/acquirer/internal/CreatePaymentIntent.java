@@ -1,9 +1,9 @@
 package network.t0.pay.acquirer.internal;
 
 import io.grpc.StatusRuntimeException;
-import network.t0.pay.proto.tzero.v1.pay.AcquirerServiceGrpc;
-import network.t0.pay.proto.tzero.v1.pay.CreatePaymentIntentRequest;
-import network.t0.pay.proto.tzero.v1.pay.CreatePaymentIntentResponse;
+import network.t0.pay.proto.tzero.v1.pay.acquirer.AcquirerServiceGrpc;
+import network.t0.pay.proto.tzero.v1.pay.acquirer.CreatePaymentIntentRequest;
+import network.t0.pay.proto.tzero.v1.pay.acquirer.CreatePaymentIntentResponse;
 import network.t0.pay.proto.tzero.v1.pay.Decimal;
 import network.t0.pay.proto.tzero.v1.pay.QrOption;
 import org.slf4j.Logger;
