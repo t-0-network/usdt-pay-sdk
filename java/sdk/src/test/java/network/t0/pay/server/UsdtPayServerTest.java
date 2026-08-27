@@ -1,12 +1,17 @@
 package network.t0.pay.server;
 
 import io.grpc.CallOptions;
+import io.grpc.ClientInterceptors;
 import io.grpc.ManagedChannel;
+import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import io.grpc.health.v1.HealthCheckRequest;
+import io.grpc.health.v1.HealthGrpc;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.ClientCalls;
+import io.grpc.stub.MetadataUtils;
 import io.grpc.stub.StreamObserver;
 import network.t0.pay.proto.tzero.v1.pay.acquirer.AcquirerCallbackServiceGrpc;
 import network.t0.pay.proto.tzero.v1.pay.acquirer.PaymentAuthorizedRequest;
@@ -19,6 +24,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -28,15 +34,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * {@code grpc.health.v1.Health} is on the port alongside the services you registered —
  * the transport mounts it so t-0 can see the endpoint is up.
  *
- * <p>Health is called by raw method name rather than through a generated stub: the claim
- * is about a wire path, and stating it that way keeps the pay tests free of protocols
- * they do not serve.
- *
- * <p>The calls are unsigned on purpose. gRPC resolves the method before any per-service
- * interceptor runs, so an unrouted service is {@code UNIMPLEMENTED} while a routed one
- * gets as far as the signature check and is refused {@code INVALID_ARGUMENT}. So that
- * code here means routed — and the second test is the other half, that a properly signed
- * callback to a service you did register still answers.
+ * <p>The routing test calls health by raw method name (unsigned) rather than through a
+ * generated stub: the claim is about a wire path, and stating it that way keeps that
+ * test free of protocols it does not serve. An unrouted service is
+ * {@code UNIMPLEMENTED}; a routed one gets as far as the signature check and is refused
+ * {@code INVALID_ARGUMENT} — that code means routed. The version-header test uses the
+ * generated {@code HealthGrpc} stub with a signed call because the SDK identity headers
+ * only ride on a successful response.
  */
 class UsdtPayServerTest {
 
@@ -71,6 +75,37 @@ class UsdtPayServerTest {
             } finally {
                 channel.shutdownNow();
                 channel.awaitTermination(5, TimeUnit.SECONDS);
+            }
+        }
+    }
+
+    @Test
+    void healthResponseCarriesSdkVersion() throws Exception {
+        try (UsdtPayServer server = UsdtPayServer.create(0, NETWORK_PUBLIC_KEY)
+                .withService(new AcquirerCallbackServiceGrpc.AcquirerCallbackServiceImplBase() {})
+                .start()) {
+
+            var headersCapture = new AtomicReference<Metadata>();
+            var trailersCapture = new AtomicReference<Metadata>();
+
+            try (var t0 = BlockingNetworkClient.create(
+                    "http://localhost:" + server.getPort(),
+                    Signer.fromHex(NETWORK_PRIVATE_KEY),
+                    channel -> HealthGrpc.newBlockingStub(
+                            ClientInterceptors.intercept(channel,
+                                    MetadataUtils.newCaptureMetadataInterceptor(
+                                            headersCapture, trailersCapture))))) {
+
+                t0.stub().check(HealthCheckRequest.getDefaultInstance());
+
+                Metadata headers = headersCapture.get();
+                assertNotNull(headers, "response headers must be present");
+                assertEquals(Version.SDK_VERSION,
+                        headers.get(Metadata.Key.of("t0-sdk-version",
+                                Metadata.ASCII_STRING_MARSHALLER)));
+                assertEquals("java",
+                        headers.get(Metadata.Key.of("t0-sdk-ecosystem",
+                                Metadata.ASCII_STRING_MARSHALLER)));
             }
         }
     }

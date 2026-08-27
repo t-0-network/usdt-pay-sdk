@@ -5,7 +5,9 @@ import { after, test } from "node:test";
 import { create } from "@bufbuild/protobuf";
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { ConnectError, Code } from "@connectrpc/connect";
+import { secp256k1 } from "@noble/curves/secp256k1.js";
 import {
+  computeDigest,
   createClient,
   createHandler,
   CreatePaymentInstructionsResponse_Failure_Reason,
@@ -14,6 +16,7 @@ import {
   IssuerCallbackService,
   publicKeyFromPrivateKey,
 } from "../src/index.js";
+import { SDK_VERSION } from "../src/version.js";
 
 // The test plays t-0: it signs with the key the handler is told to trust.
 const NETWORK_PRIVATE_KEY = "0x" + "11".repeat(32);
@@ -87,4 +90,30 @@ test("the health service is mounted and behind the same signature check", async 
     body: new Uint8Array(0),
   });
   assert.notEqual(probe.status, 200);
+});
+
+test("health response carries the SDK version", async () => {
+  const body = new Uint8Array(0);
+  const ts = Date.now();
+  const digest = computeDigest(Buffer.from(body), ts);
+
+  const privateKeyBuf = Buffer.from(NETWORK_PRIVATE_KEY.replace(/^0x/, ""), "hex");
+  const sig = secp256k1.sign(digest, privateKeyBuf, { prehash: false });
+  const pubKey = publicKeyFromPrivateKey(NETWORK_PRIVATE_KEY);
+
+  const probe = await fetch(`${base}${PREFIX}/grpc.health.v1.Health/Check`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/proto",
+      "connect-protocol-version": "1",
+      "x-public-key": pubKey,
+      "x-signature": Buffer.from(sig).toString("hex"),
+      "x-signature-timestamp": String(ts),
+    },
+    body,
+  });
+
+  assert.equal(probe.status, 200);
+  assert.equal(probe.headers.get("t0-sdk-version"), SDK_VERSION);
+  assert.equal(probe.headers.get("t0-sdk-ecosystem"), "node");
 });
