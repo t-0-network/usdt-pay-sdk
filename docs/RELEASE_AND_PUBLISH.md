@@ -65,7 +65,7 @@ build. Deliberately not a `+` range, because an SDK bump is the consumer's decis
 
 Dispatch input `bump` — `patch` (default) / `minor` / `major`.
 
-1. **Build gate** — `build-java` and `build-node`, the same two jobs as `ci.yaml` including
+1. **Build gate** — `build-java` and `build-node`, the same three jobs as `ci-java.yaml` / `ci-node.yaml` / `ci-go.yaml` including
    `npm audit --omit=dev --audit-level=high`. A red tree cannot be released.
 2. **`release` job**, guarded by `if: github.ref == 'refs/heads/master'` so a dispatch against a
    feature branch cannot tag.

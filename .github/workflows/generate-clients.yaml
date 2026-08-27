@@ -15,7 +15,7 @@ jobs:
 
     steps:
       # An App token, not GITHUB_TOKEN: a GITHUB_TOKEN push does not retrigger
-      # workflows, and ci.yaml re-running on the regenerated head SHA is the whole
+      # workflows, and CI re-running on the regenerated head SHA is the whole
       # verification story for an incoming sync.
       - name: Generate GitHub APP Token
         uses: actions/create-github-app-token@v3

@@ -29,7 +29,7 @@ cd node && npm install && npm run build && npm run typecheck && npm test
 cd java && ./gradlew build --no-daemon
 ```
 
-CI (`ci.yaml`) runs exactly these two builds; if they pass locally the tree is
+CI (`ci-java.yaml`, `ci-node.yaml`, `ci-go.yaml`) runs exactly these builds; if they pass locally the tree is
 releasable.
 
 ## The proto sync
