@@ -19,15 +19,20 @@ func writeEnvFile(projectDir string, kp KeyPair) error {
 
 	content := string(data)
 
-	// Replace private key placeholder — templates use PROVIDER_PRIVATE_KEY:
-	//   PROVIDER_PRIVATE_KEY=your_private_key_here  (Go, Python, Node)
-	//   PROVIDER_PRIVATE_KEY=                        (Java, C#)
+	// Replace private key placeholder — templates use various patterns:
+	//   PRIVATE_KEY=your_private_key_here
+	//   PRIVATE_KEY=
+	//   PROVIDER_PRIVATE_KEY=your_private_key_here  (provider-sdk default)
+	//   PROVIDER_PRIVATE_KEY=                        (provider-sdk default)
 	for _, pattern := range []string{
+		"PRIVATE_KEY=your_private_key_here",
+		"PRIVATE_KEY=",
 		"PROVIDER_PRIVATE_KEY=your_private_key_here",
 		"PROVIDER_PRIVATE_KEY=",
 	} {
 		if strings.Contains(content, pattern) {
-			content = strings.Replace(content, pattern, "PROVIDER_PRIVATE_KEY="+kp.PrivateKey, 1)
+			varName := pattern[:strings.Index(pattern, "=")]
+			content = strings.Replace(content, pattern, varName+"="+kp.PrivateKey, 1)
 			break
 		}
 	}
