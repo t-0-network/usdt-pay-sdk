@@ -207,7 +207,9 @@ jobs:
       - name: Update Java version
         env:
           VERSION: ${{ steps.version.outputs.version }}
-        run: sed -i "s/^version=.*/version=${VERSION}/" java/gradle.properties
+        run: |
+          sed -i "s/^version=.*/version=${VERSION}/" java/gradle.properties
+          sed -i "s/^usdtPaySdkVersion=.*/usdtPaySdkVersion=${VERSION}/" java/starter/acquirer/gradle.properties
 
       - name: Validate updated files
         env:
@@ -223,6 +225,8 @@ jobs:
 
           check "java/gradle.properties" \
             "$(grep '^version=' java/gradle.properties | cut -d= -f2)" "$VERSION"
+          check "java/starter/acquirer/gradle.properties SDK pin" \
+            "$(grep '^usdtPaySdkVersion=' java/starter/acquirer/gradle.properties | cut -d= -f2)" "$VERSION"
           check "node/sdk/package.json .version" \
             "$(node -p "require('./node/sdk/package.json').version")" "$VERSION"
           check "node/cli/package.json .version" \

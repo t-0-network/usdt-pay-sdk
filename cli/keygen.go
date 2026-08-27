@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/rand"
 	"encoding/hex"
 	"fmt"
 
@@ -14,23 +13,13 @@ type KeyPair struct {
 }
 
 func generateKeyPair() (KeyPair, error) {
-	var privKeyBytes [32]byte
-	for {
-		if _, err := rand.Read(privKeyBytes[:]); err != nil {
-			return KeyPair{}, fmt.Errorf("generating random bytes: %w", err)
-		}
-		privKey := secp256k1.PrivKeyFromBytes(privKeyBytes[:])
-		if privKey == nil {
-			continue
-		}
-		// Verify the key is valid (not zero, not >= curve order)
-		pubKey := privKey.PubKey()
-		if pubKey == nil {
-			continue
-		}
-		return KeyPair{
-			PrivateKey: "0x" + hex.EncodeToString(privKey.Serialize()),
-			PublicKey:  "0x" + hex.EncodeToString(pubKey.SerializeUncompressed()),
-		}, nil
+	privKey, err := secp256k1.GeneratePrivateKey()
+	if err != nil {
+		return KeyPair{}, fmt.Errorf("generating private key: %w", err)
 	}
+	pubKey := privKey.PubKey()
+	return KeyPair{
+		PrivateKey: "0x" + hex.EncodeToString(privKey.Serialize()),
+		PublicKey:  "0x" + hex.EncodeToString(pubKey.SerializeUncompressed()),
+	}, nil
 }

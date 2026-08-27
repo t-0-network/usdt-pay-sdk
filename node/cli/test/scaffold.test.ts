@@ -135,12 +135,12 @@ describe("scaffold", () => {
     assert.match(readFileSync(join(target, ".gitignore"), "utf8"), /^\.env$/m);
 
     const env = readFileSync(join(target, ".env"), "utf8");
-    assert.match(env, new RegExp(`^PRIVATE_KEY=${keyPair.privateKeyHex}$`, "m"));
+    assert.match(env, new RegExp(`^PROVIDER_PRIVATE_KEY=${keyPair.privateKeyHex}$`, "m"));
     assert.match(env, new RegExp(`^# 0x${keyPair.publicKeyHex}$`, "m"));
     // The rest of .env.example survives, and only the empty assignment was filled.
     assert.match(env, /^NETWORK_PUBLIC_KEY=$/m);
     assert.match(env, /^PORT=8080$/m);
-    assert.equal(env.match(/^PRIVATE_KEY=/gm)?.length, 1);
+    assert.equal(env.match(/^PROVIDER_PRIVATE_KEY=/gm)?.length, 1);
   });
 
   it("replaces the in-repo Dockerfile and README instructions", () => {

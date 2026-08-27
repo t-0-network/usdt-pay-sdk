@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"unicode"
@@ -19,6 +20,7 @@ type CLIConfig struct {
 	RoleRequired bool
 	DefaultRole  string
 	Languages    []string
+	PostScaffold func(ScaffoldOpts) error
 }
 
 type ScaffoldOpts struct {
@@ -35,9 +37,9 @@ type ScaffoldOpts struct {
 }
 
 func scaffold(opts ScaffoldOpts) error {
-	templateRoot := filepath.Join("internal/embed", opts.Lang)
+	templateRoot := path.Join("internal/embed", opts.Lang)
 	if opts.Role != "" {
-		templateRoot = filepath.Join(templateRoot, opts.Role)
+		templateRoot = path.Join(templateRoot, opts.Role)
 	}
 
 	// Verify the template exists in the embed
@@ -162,7 +164,7 @@ func writeFileWithMode(dest string, data []byte, src string) error {
 }
 
 func listRoles(lang string) ([]string, error) {
-	templateRoot := filepath.Join("internal/embed", lang)
+	templateRoot := path.Join("internal/embed", lang)
 	entries, err := embeddedTemplates.ReadDir(templateRoot)
 	if err != nil {
 		return nil, err

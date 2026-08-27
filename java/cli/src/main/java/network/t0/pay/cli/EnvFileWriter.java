@@ -21,11 +21,11 @@ public final class EnvFileWriter {
     public static void write(Path targetDir, KeyGenerator.KeyPair keyPair) throws IOException {
         String content = Files.readString(targetDir.resolve(".env.example"));
 
-        // Line-anchored so this cannot hit a PRIVATE_KEY mentioned in a comment, and
-        // so it fills the empty assignment rather than appending to a set one.
+        // Line-anchored so this cannot hit a PROVIDER_PRIVATE_KEY mentioned in a
+        // comment, and so it fills the empty assignment rather than appending to a set one.
         content = content.replaceFirst(
-                "(?m)^PRIVATE_KEY=$",
-                "PRIVATE_KEY=" + keyPair.privateKeyHex()
+                "(?m)^PROVIDER_PRIVATE_KEY=$",
+                "PROVIDER_PRIVATE_KEY=" + keyPair.privateKeyHex()
                         + "\n\n# The public half of the key above — send this to the t-0 team."
                         + "\n# 0x" + keyPair.publicKeyHex());
 

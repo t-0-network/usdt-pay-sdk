@@ -13,7 +13,7 @@ npx @t-0/usdt-pay-starter-ts my-issuer issuer
 
 ```
 my-issuer/
-├── .env                 your generated PRIVATE_KEY, ready to use — keep it
+├── .env                 your generated PROVIDER_PRIVATE_KEY, ready to use — keep it
 ├── .env.example         the template it was written from
 ├── .gitignore           excludes .env
 ├── package.json         named after your project, depending on @t-0/usdt-pay-sdk

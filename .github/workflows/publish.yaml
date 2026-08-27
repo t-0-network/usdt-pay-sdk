@@ -197,7 +197,7 @@ jobs:
           npm run typecheck -w sdk
 
       # Explicit so no future refactor can point this at the private workspace root or
-      # at usdt-pay-issuer-starter. npm refuses "private": true anyway, but the assert
+      # at the issuer starter. npm refuses "private": true anyway, but the assert
       # is what makes it reviewable.
       - name: Verify the package about to be published
         working-directory: node/sdk
@@ -406,6 +406,10 @@ jobs:
           PKG=$(grep '^version=' java/gradle.properties | cut -d= -f2)
           [ "$PKG" = "$VERSION" ] || { echo "::error::java/gradle.properties has $PKG, tag is v$VERSION"; exit 1; }
           echo "java/gradle.properties version $PKG matches tag v$VERSION"
+
+          SDK_PIN=$(grep '^usdtPaySdkVersion=' java/starter/acquirer/gradle.properties | cut -d= -f2)
+          [ "$SDK_PIN" = "$VERSION" ] || { echo "::error::java/starter/acquirer/gradle.properties has usdtPaySdkVersion=$SDK_PIN, tag is v$VERSION"; exit 1; }
+          echo "java/starter/acquirer/gradle.properties SDK pin $SDK_PIN matches tag v$VERSION"
 
       # The build gate, and also the only thing that produces usdt-pay-init.jar —
       # publishAggregationToCentralPortal does not build the CLI.

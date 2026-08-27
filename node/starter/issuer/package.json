@@ -1,5 +1,5 @@
 {
-  "name": "usdt-pay-issuer-starter",
+  "name": "my-provider",
   "version": "0.1.5",
   "private": true,
   "description": "Starter for the t-0 QR payment flow, issuer role",

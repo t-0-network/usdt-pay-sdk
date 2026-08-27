@@ -102,11 +102,17 @@ public final class TemplateExtractor {
     /** The starter's standalone mode reads exactly this property. */
     private static void pinSdkVersion(Path targetDir) throws IOException {
         Path props = targetDir.resolve("gradle.properties");
-        String line = "usdtPaySdkVersion=" + Version.get() + "\n";
+        String version = Version.get();
         if (Files.exists(props)) {
-            Files.writeString(props, Files.readString(props) + "\n" + line);
+            String content = Files.readString(props);
+            content = content.replaceFirst(
+                    "(?m)^usdtPaySdkVersion=.*$",
+                    Matcher.quoteReplacement("usdtPaySdkVersion=" + version));
+            Files.writeString(props, content);
         } else {
-            Files.writeString(props, "# The published SDK this project builds against.\n" + line);
+            Files.writeString(props,
+                    "# The published SDK this project builds against.\n"
+                            + "usdtPaySdkVersion=" + version + "\n");
         }
     }
 
@@ -151,12 +157,12 @@ public final class TemplateExtractor {
         // told to send to the t-0 team.
         content = content.replace(
                 """
-                cp .env.example .env      # then fill in PRIVATE_KEY and NETWORK_PUBLIC_KEY
+                cp .env.example .env      # then fill in PROVIDER_PRIVATE_KEY and NETWORK_PUBLIC_KEY
 
                 # Build from the java/ root — the starter compiles against the local :sdk project.
                 (cd ../.. && ./gradlew :starter:acquirer:installDist)""",
                 """
-                # .env already exists and holds the PRIVATE_KEY generated for you. Do not
+                # .env already exists and holds the PROVIDER_PRIVATE_KEY generated for you. Do not
                 # overwrite it — add NETWORK_PUBLIC_KEY, which the t-0 team gives you.
 
                 ./gradlew installDist""");

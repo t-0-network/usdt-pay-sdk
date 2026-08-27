@@ -18,7 +18,7 @@ This README says what to build — for what every field and decline code means, 
 ## Run it
 
 ```bash
-cp .env.example .env      # then fill in PRIVATE_KEY and NETWORK_PUBLIC_KEY
+cp .env.example .env      # then fill in PROVIDER_PRIVATE_KEY and NETWORK_PUBLIC_KEY
 
 # Install and build from node/ — the starter compiles against the local sdk workspace.
 (cd ../.. && npm install && npm run build)
@@ -52,7 +52,7 @@ an echo of its own input.
 
 ### Phase 1 — server
 
-1. **1.1** With `PRIVATE_KEY` set in `.env`, start the app and see it print your public key.
+1. **1.1** With `PROVIDER_PRIVATE_KEY` set in `.env`, start the app and see it print your public key.
 2. **1.2** Send that public key to your t-0 onboarding contact, together with the
    base URL where this service listens. Onboarding runs through the contact you
    already have at t-0 — there is no self-service channel, and the same exchange is

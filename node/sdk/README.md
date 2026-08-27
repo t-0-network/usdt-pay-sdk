@@ -181,7 +181,7 @@ or KMS and never reaches this process.
 ```ts
 import { publicKeyFromPrivateKey } from "@t-0/usdt-pay-sdk";
 
-console.log(publicKeyFromPrivateKey(process.env.PRIVATE_KEY!));
+console.log(publicKeyFromPrivateKey(process.env.PROVIDER_PRIVATE_KEY!));
 ```
 
 Send it to the t-0 team — that is step 1 of every role's integration. Calling it at

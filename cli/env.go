@@ -19,7 +19,7 @@ func writeEnvFile(projectDir string, kp KeyPair) error {
 
 	content := string(data)
 
-	// Replace private key placeholder — templates use various patterns:
+	// Replace private key placeholder — templates use PROVIDER_PRIVATE_KEY:
 	//   PROVIDER_PRIVATE_KEY=your_private_key_here  (Go, Python, Node)
 	//   PROVIDER_PRIVATE_KEY=                        (Java, C#)
 	for _, pattern := range []string{

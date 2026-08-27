@@ -37,7 +37,7 @@ export function loadConfig(): Config {
   }
   dotenv.config({ quiet: true });
 
-  const privateKey = process.env.PRIVATE_KEY;
+  const privateKey = process.env.PROVIDER_PRIVATE_KEY;
   const networkPublicKey = process.env.NETWORK_PUBLIC_KEY;
   const tzeroEndpoint = process.env.TZERO_ENDPOINT ?? "https://usdt-pay-api-sandbox.t-0.network";
 
@@ -48,9 +48,9 @@ export function loadConfig(): Config {
     // not read — nearly always the working directory, since dotenv looks there and
     // nowhere up the tree — or a project that genuinely has none yet.
     throw new ConfigurationError(
-      "PRIVATE_KEY is not set",
+      "PROVIDER_PRIVATE_KEY is not set",
       `.env is read from the working directory, and we looked in ${envPath}. Run the app ` +
-        "from the directory holding your .env, or set PRIVATE_KEY in the environment. " +
+        "from the directory holding your .env, or set PROVIDER_PRIVATE_KEY in the environment. " +
         "Only a project with no .env at all starts one from .env.example — an existing " +
         ".env holds the key generated for you, and its private half is not recoverable.",
     );
@@ -88,7 +88,7 @@ export function loadConfig(): Config {
     publicKey = publicKeyFromPrivateKey(privateKey);
   } catch (error) {
     throw new ConfigurationError(
-      `PRIVATE_KEY is not usable: ${(error as Error).message}`,
+      `PROVIDER_PRIVATE_KEY is not usable: ${(error as Error).message}`,
       "Any 32 random bytes will do: openssl rand -hex 32.",
     );
   }
