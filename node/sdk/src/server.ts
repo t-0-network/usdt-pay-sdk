@@ -85,9 +85,8 @@ export function createHandler(
  *
  * - **The hasher has to see the raw bytes.** Signatures are verified against the
  *   bytes that arrived, never against a re-serialization — protobuf encoding is not
- *   canonical, so a re-encoded message is a different message to secp256k1. That is
- *   what `signatureValidation` wrapping the adapter does, and forgetting it is a
- *   verification bug you would only notice in production. Here it is not optional.
+ *   canonical, so a re-encoded message is a different message to secp256k1.
+ *   {@link createHandler} wires the raw-body hasher in for you.
  * - **You do not import a type called `provider`** to run a server that is not a
  *   provider's. This delegates to the transport in `@t-0/provider-sdk`, which is
  *   signed Connect and carries nothing provider-specific; the wrapper goes away once
