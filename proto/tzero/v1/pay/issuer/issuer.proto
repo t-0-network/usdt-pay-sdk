@@ -118,6 +118,9 @@ message PaymentReceivedResponse {
       REASON_UNKNOWN_INTENT = 20;
       // amount_usdt is not exactly the intent's stored amount.
       REASON_AMOUNT_MISMATCH = 30;
+      // The transfer is already another intent's recorded deposit; no refund or
+      // disposition action follows — reconciled out of band.
+      REASON_TRANSFER_RECORDED_FOR_ANOTHER_INTENT = 40;
     }
   }
 }

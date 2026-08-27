@@ -8,11 +8,11 @@ package tzero.v1.pay;
 import "buf/validate/validate.proto";
 
 extend buf.validate.StringRules {
-  // Length bound for on-chain transaction hashes across supported chains.
-  // Shortest: TRON (64 hex). Longest: EVM with 0x prefix (66).
+  // Shape of an on-chain transaction hash across supported chains: 32 bytes of
+  // hex, spelled bare (TRON) or with the 0x prefix (EVM).
   optional bool valid_tx_hash = 50001 [(buf.validate.predefined).cel = {
     id: "string.valid_tx_hash"
-    expression: "this.size() >= 64 && this.size() <= 66 ? '' : 'must be 64-66 characters'"
+    expression: "this.matches('^(0x)?[0-9a-fA-F]{64}$') ? '' : 'must be 64 hex characters, optionally 0x-prefixed'"
   }];
 
   // Length bound for on-chain wallet addresses across supported chains.
