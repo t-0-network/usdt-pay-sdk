@@ -27,6 +27,7 @@ any site disagrees.
 | File | Field |
 |---|---|
 | `java/gradle.properties` | `version=X.Y.Z` |
+| `node/sdk/src/version.ts` | `SDK_VERSION` |
 | `node/sdk/package.json` | `.version` |
 | `node/cli/package.json` | `.version` |
 | `node/cli/package.json` | `.dependencies["@t-0/usdt-pay-sdk"]` = `^X.Y.Z` |
