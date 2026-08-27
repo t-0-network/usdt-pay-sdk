@@ -14,11 +14,11 @@ import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.js
  * Describes the file tzero/v1/pay/validate.proto.
  */
 export const file_tzero_v1_pay_validate: GenFile = /*@__PURE__*/
-  fileDesc("Cht0emVyby92MS9wYXkvdmFsaWRhdGUucHJvdG8SDHR6ZXJvLnYxLnBheTqmAQoNdmFsaWRfdHhfaGFzaBIZLmJ1Zi52YWxpZGF0ZS5TdHJpbmdSdWxlcxjRhgMgASgIQmXCSGIKYAoUc3RyaW5nLnZhbGlkX3R4X2hhc2gaSHRoaXMuc2l6ZSgpID49IDY0ICYmIHRoaXMuc2l6ZSgpIDw9IDY2ID8gJycgOiAnbXVzdCBiZSA2NC02NiBjaGFyYWN0ZXJzJ1ILdmFsaWRUeEhhc2g6pwEKDXZhbGlkX2FkZHJlc3MSGS5idWYudmFsaWRhdGUuU3RyaW5nUnVsZXMY0oYDIAEoCEJlwkhiCmAKFHN0cmluZy52YWxpZF9hZGRyZXNzGkh0aGlzLnNpemUoKSA+PSAzNCAmJiB0aGlzLnNpemUoKSA8PSA0MiA/ICcnIDogJ211c3QgYmUgMzQtNDIgY2hhcmFjdGVycydSDHZhbGlkQWRkcmVzcw", [file_buf_validate_validate]);
+  fileDesc("Cht0emVyby92MS9wYXkvdmFsaWRhdGUucHJvdG8SDHR6ZXJvLnYxLnBheTq/AQoNdmFsaWRfdHhfaGFzaBIZLmJ1Zi52YWxpZGF0ZS5TdHJpbmdSdWxlcxjRhgMgASgIQn7CSHsKeQoUc3RyaW5nLnZhbGlkX3R4X2hhc2gaYXRoaXMubWF0Y2hlcygnXigweCk/WzAtOWEtZkEtRl17NjR9JCcpID8gJycgOiAnbXVzdCBiZSA2NCBoZXggY2hhcmFjdGVycywgb3B0aW9uYWxseSAweC1wcmVmaXhlZCdSC3ZhbGlkVHhIYXNoOqcBCg12YWxpZF9hZGRyZXNzEhkuYnVmLnZhbGlkYXRlLlN0cmluZ1J1bGVzGNKGAyABKAhCZcJIYgpgChRzdHJpbmcudmFsaWRfYWRkcmVzcxpIdGhpcy5zaXplKCkgPj0gMzQgJiYgdGhpcy5zaXplKCkgPD0gNDIgPyAnJyA6ICdtdXN0IGJlIDM0LTQyIGNoYXJhY3RlcnMnUgx2YWxpZEFkZHJlc3M", [file_buf_validate_validate]);
 
 /**
- * Length bound for on-chain transaction hashes across supported chains.
- * Shortest: TRON (64 hex). Longest: EVM with 0x prefix (66).
+ * Shape of an on-chain transaction hash across supported chains: 32 bytes of
+ * hex, spelled bare (TRON) or with the 0x prefix (EVM).
  *
  * @generated from extension: optional bool valid_tx_hash = 50001;
  */
