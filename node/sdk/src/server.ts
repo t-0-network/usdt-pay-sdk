@@ -1,6 +1,7 @@
 import http from "node:http";
 import { createRegistry } from "@bufbuild/protobuf";
 import { createHandler as createProviderHandler, type Router } from "@t-0/provider-sdk";
+import { SDK_VERSION } from "./version.js";
 import { file_tzero_v1_pay_issuer_issuer } from "./gen/tzero/v1/pay/issuer/issuer_pb.js";
 import { file_tzero_v1_pay_acquirer_acquirer } from "./gen/tzero/v1/pay/acquirer/acquirer_pb.js";
 import { file_tzero_v1_pay_lp_lp } from "./gen/tzero/v1/pay/lp/lp_pb.js";
@@ -64,6 +65,7 @@ export function createHandler(
 ): (request: http.IncomingMessage, response: http.ServerResponse) => void {
   return createProviderHandler(networkPublicKey, register, {
     registry: payRegistry,
+    version: SDK_VERSION,
   });
 }
 

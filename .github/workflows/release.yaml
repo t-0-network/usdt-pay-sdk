@@ -202,6 +202,8 @@ jobs:
 
           npm install --package-lock-only
 
+          sed -i "s/SDK_VERSION = \".*\"/SDK_VERSION = \"${VERSION}\"/" sdk/src/version.ts
+
       - name: Update Java version
         env:
           VERSION: ${{ steps.version.outputs.version }}
@@ -241,6 +243,8 @@ jobs:
             "$(node -p "require('./node/package-lock.json').packages['starter/issuer'].version")" "$VERSION"
           check "package-lock.json starter SDK pin" \
             "$(node -p "require('./node/package-lock.json').packages['starter/issuer'].dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
+          check "node/sdk/src/version.ts SDK_VERSION" \
+            "$(grep -oP '(?<=SDK_VERSION = \")[^\"]+' node/sdk/src/version.ts)" "$VERSION"
 
           if [ "$ERRORS" -gt 0 ]; then
             echo "::error::$ERRORS version validation(s) failed — nothing pushed"
