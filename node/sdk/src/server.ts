@@ -28,20 +28,20 @@ export const payRegistry = createRegistry(
  * Where you mount the callback services t-0 calls on you. One `service()` call
  * per service you implement.
  */
-export interface UsdtPayRouter {
+export interface Router {
   service<T extends DescService>(service: T, implementation: Partial<ServiceImpl<T>>): void;
 }
 
 /**
  * The pay endpoints as a plain `(req, res)` handler, for mounting into an HTTP
- * server you already run instead of letting {@link createUsdtPayServer} own one.
+ * server you already run instead of letting {@link createServer} own one.
  * Signature verification, response validation and the health service are all
  * inside — it is the same handler that server wraps.
  *
  * ```ts
  * const app = express();
  * // Mount BEFORE any body parser — the handler must see the raw bytes.
- * app.use("/sda/payments/t0", createUsdtPayHandler(networkPublicKey, (r) => {
+ * app.use("/sda/payments/t0", createHandler(networkPublicKey, (r) => {
  *   r.service(IssuerCallbackService, issuerCallbackHandler);
  * }));
  * app.use(express.json()); // parsers for the rest of the app go after
@@ -66,9 +66,9 @@ export interface UsdtPayRouter {
  *                         against it are refused
  * @param register         mounts your callback handlers
  */
-export function createUsdtPayHandler(
+export function createHandler(
   networkPublicKey: string,
-  register: (router: UsdtPayRouter) => void,
+  register: (router: Router) => void,
 ): (request: http.IncomingMessage, response: http.ServerResponse) => void {
   return signatureValidation(
     nodeAdapter(
@@ -88,7 +88,7 @@ export function createUsdtPayHandler(
  * contract's constraints on the way out.
  *
  * ```ts
- * const server = await createUsdtPayServer(port, networkPublicKey, (r) => {
+ * const server = await createServer(port, networkPublicKey, (r) => {
  *   r.service(IssuerCallbackService, issuerCallbackHandler);
  * });
  * ```
@@ -116,12 +116,12 @@ export function createUsdtPayHandler(
  * @returns the listening server. `close()` it to shut down; `address()` reports the
  *          bound port, which is what you want when `port` was 0.
  */
-export function createUsdtPayServer(
+export function createServer(
   port: number,
   networkPublicKey: string,
-  register: (router: UsdtPayRouter) => void,
+  register: (router: Router) => void,
 ): Promise<http.Server> {
-  const server = http.createServer(createUsdtPayHandler(networkPublicKey, register));
+  const server = http.createServer(createHandler(networkPublicKey, register));
 
   // Resolve on `listening` rather than handing back a server that is not up yet:
   // `address()` is null until then, and a port already in use has to surface as a

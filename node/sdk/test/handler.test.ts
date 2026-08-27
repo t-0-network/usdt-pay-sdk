@@ -6,8 +6,8 @@ import { create } from "@bufbuild/protobuf";
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { ConnectError, Code } from "@connectrpc/connect";
 import {
-  createUsdtPayClient,
-  createUsdtPayHandler,
+  createClient,
+  createHandler,
   CreatePaymentInstructionsResponse_Failure_Reason,
   CreatePaymentInstructionsResponseSchema,
   DecimalSchema,
@@ -25,7 +25,7 @@ const decline = create(CreatePaymentInstructionsResponseSchema, {
   },
 });
 
-const handler = createUsdtPayHandler(publicKeyFromPrivateKey(NETWORK_PRIVATE_KEY), (r) => {
+const handler = createHandler(publicKeyFromPrivateKey(NETWORK_PRIVATE_KEY), (r) => {
   r.service(IssuerCallbackService, {
     createPaymentInstructions: () => decline,
   });
@@ -61,13 +61,13 @@ const request = {
 };
 
 test("the handler serves a signed call under an Express-style mount prefix", async () => {
-  const t0 = createUsdtPayClient(`${base}${PREFIX}`, NETWORK_PRIVATE_KEY, IssuerCallbackService);
+  const t0 = createClient(`${base}${PREFIX}`, NETWORK_PRIVATE_KEY, IssuerCallbackService);
   const response = await t0.createPaymentInstructions(request);
   assert.equal(response.result.case, "failure");
 });
 
 test("a call signed by anyone but t-0 is refused before the handler runs", async () => {
-  const impostor = createUsdtPayClient(
+  const impostor = createClient(
     `${base}${PREFIX}`,
     "0x" + "22".repeat(32),
     IssuerCallbackService,

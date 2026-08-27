@@ -4,8 +4,8 @@ import { after, test } from "node:test";
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import {
   CreatePaymentInstructionsResponse_Failure_Reason,
-  createUsdtPayClient,
-  createUsdtPayServer,
+  createClient,
+  createServer,
   IssuerCallbackService,
   publicKeyFromPrivateKey,
 } from "@t-0/usdt-pay-sdk";
@@ -16,7 +16,7 @@ import { issuerCallbackHandler } from "../src/handler.js";
 // plays t-0, so it signs with the key the server is told to trust.
 const NETWORK_PRIVATE_KEY = "0x" + "11".repeat(32);
 
-const server = await createUsdtPayServer(0, publicKeyFromPrivateKey(NETWORK_PRIVATE_KEY), (r) => {
+const server = await createServer(0, publicKeyFromPrivateKey(NETWORK_PRIVATE_KEY), (r) => {
   r.service(IssuerCallbackService, issuerCallbackHandler);
 });
 after(() => {
@@ -24,7 +24,7 @@ after(() => {
   server.closeAllConnections();
 });
 
-const t0 = createUsdtPayClient(
+const t0 = createClient(
   `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
   NETWORK_PRIVATE_KEY,
   IssuerCallbackService,
@@ -56,7 +56,7 @@ test("§5 declines until the addresses are yours", async () => {
 });
 
 test("a call signed by anyone but t-0 never reaches the handler", async () => {
-  const impostor = createUsdtPayClient(
+  const impostor = createClient(
     `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
     "0x" + "22".repeat(32),
     IssuerCallbackService,

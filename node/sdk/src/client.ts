@@ -1,13 +1,13 @@
 import type { DescService } from "@bufbuild/protobuf";
 import type { Client } from "@connectrpc/connect";
-import { createClient, type SignerFunction } from "@t-0/provider-sdk";
+import { createClient as createProviderClient, type SignerFunction } from "@t-0/provider-sdk";
 
 /**
  * A client for the t-0 endpoints your role calls. Every request is signed with your
  * private key; t-0 knows you by the matching public key.
  *
  * ```ts
- * const t0 = createUsdtPayClient(config.tzeroEndpoint, config.privateKey, IssuerService);
+ * const t0 = createClient(config.tzeroEndpoint, config.privateKey, IssuerService);
  * const response = await t0.paymentReceived(request, { timeoutMs: 10_000 });
  * ```
  *
@@ -28,10 +28,10 @@ import { createClient, type SignerFunction } from "@t-0/provider-sdk";
  * @param service   the service descriptor for your role — `IssuerService`,
  *                  `AcquirerService` or `LpService`
  */
-export function createUsdtPayClient<T extends DescService>(
+export function createClient<T extends DescService>(
   endpoint: string,
   signer: string | SignerFunction,
   service: T,
 ): Client<T> {
-  return createClient(signer, endpoint, service);
+  return createProviderClient(signer, endpoint, service);
 }

@@ -21,9 +21,9 @@ resolve the SDK through the `node/` npm workspace, so no install is needed.
 ## Serving the callbacks t-0 pushes to you
 
 ```ts
-import { createUsdtPayServer, IssuerCallbackService } from "@t-0/usdt-pay-sdk";
+import { createServer, IssuerCallbackService } from "@t-0/usdt-pay-sdk";
 
-const server = await createUsdtPayServer(8080, process.env.NETWORK_PUBLIC_KEY!, (r) => {
+const server = await createServer(8080, process.env.NETWORK_PUBLIC_KEY!, (r) => {
   r.service(IssuerCallbackService, issuerCallbackHandler);
 });
 ```
@@ -32,7 +32,7 @@ Every inbound request is verified against t-0's public key before it reaches you
 handler, and every response is validated against the contract's `buf.validate`
 constraints on the way out. Verification runs over the bytes that arrived — protobuf
 encoding is not canonical, so a re-serialized message is a different message to
-secp256k1, and `createUsdtPayServer` wires the raw-body hasher in for you.
+secp256k1, and `createServer` wires the raw-body hasher in for you.
 
 The returned value is a listening `http.Server`: `close()` it to shut down, and read
 `address()` when you passed port 0.
@@ -42,21 +42,21 @@ Mount one service per role edge you implement — `IssuerCallbackService`,
 
 ## Mounting into a server you already run
 
-`createUsdtPayHandler` is the same thing as `createUsdtPayServer` minus the
+`createHandler` is the same thing as `createServer` minus the
 `http.Server`: a plain `(req, res)` handler you mount wherever you want —
 Express, Fastify (via its middleware bridge), or a raw `http` server you
 multiplex yourself.
 
 ```ts
 import express from "express";
-import { createUsdtPayHandler, IssuerCallbackService } from "@t-0/usdt-pay-sdk";
+import { createHandler, IssuerCallbackService } from "@t-0/usdt-pay-sdk";
 
 const app = express();
 
 // Mount BEFORE any body parser — the handler must see the raw bytes.
 app.use(
   "/sda/payments/t0",
-  createUsdtPayHandler(process.env.NETWORK_PUBLIC_KEY!, (r) => {
+  createHandler(process.env.NETWORK_PUBLIC_KEY!, (r) => {
     r.service(IssuerCallbackService, issuerCallbackHandler);
   }),
 );
@@ -89,6 +89,9 @@ verifier), `rejectRequest` (failure → the HTTP error to send), the
 `NetworkHeaders` enum, and the primitives under them (`verifySignature`,
 `computeDigest`, `keccak256`, `parsePublicKey`, `publicKeysEqual`).
 
+Two imports: verification from `./crypto`, proto message schemas from the
+package root:
+
 ```ts
 import { fromBinary, fromJson } from "@bufbuild/protobuf";
 import {
@@ -96,6 +99,10 @@ import {
   NetworkHeaders,
   rejectRequest,
 } from "@t-0/usdt-pay-sdk/crypto";
+import {
+  CreatePaymentInstructionsRequestSchema,
+  CreatePaymentInstructionsResponseSchema,
+} from "@t-0/usdt-pay-sdk";
 
 const verifyRequest = createRequestVerifier({
   networkPublicKey: T0_NETWORK_PUBLIC_KEY, // "0x04..." uncompressed secp256k1
@@ -144,14 +151,14 @@ What the working parts around the verifier look like:
 
 `node/sdk/test/crypto.test.ts` is this section as a running program — a raw
 `http` server verifying, parsing and answering a signed SDK client, with
-nothing from `createUsdtPayServer` in it.
+nothing from `createServer` in it.
 
 ## Calling t-0
 
 ```ts
-import { createUsdtPayClient, IssuerService } from "@t-0/usdt-pay-sdk";
+import { createClient, IssuerService } from "@t-0/usdt-pay-sdk";
 
-const t0 = createUsdtPayClient(process.env.TZERO_ENDPOINT!, privateKeyHex, IssuerService);
+const t0 = createClient(process.env.TZERO_ENDPOINT!, privateKeyHex, IssuerService);
 const response = await t0.paymentReceived(request, { timeoutMs: 10_000 });
 ```
 
