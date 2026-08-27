@@ -18,7 +18,7 @@ java -jar usdt-pay-init.jar my-acquirer acquirer
 
 ```
 my-acquirer/
-├── .env                 your generated PRIVATE_KEY, ready to use — keep it
+├── .env                 your generated PROVIDER_PRIVATE_KEY, ready to use — keep it
 ├── .env.example         the template it was written from
 ├── .gitignore           excludes .env
 ├── .dockerignore        keeps .env out of the image

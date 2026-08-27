@@ -27,6 +27,7 @@ any site disagrees.
 | File | Field |
 |---|---|
 | `java/gradle.properties` | `version=X.Y.Z` |
+| `java/starter/acquirer/gradle.properties` | `usdtPaySdkVersion=X.Y.Z` |
 | `node/sdk/src/version.ts` | `SDK_VERSION` |
 | `node/sdk/package.json` | `.version` |
 | `node/cli/package.json` | `.version` |
@@ -97,18 +98,19 @@ Two further details in the Node packer that are not obvious:
   the mutated defaults mid-build in a reused daemon and fails the next Copy task in the build
   with "Cannot change default excludes during the build".
 
-The generated `.env` is written from `.env.example` by filling the empty `PRIVATE_KEY=` line — the
-same contract, and the same line-anchored substitution, as `EnvFileWriter.java`. The keypair is
-derived through the SDK's own `publicKeyFromPrivateKey`, mirroring `KeyGenerator.java` going
-through `Signer`: a key generated here has to be one the runtime accepts.
+The generated `.env` is written from `.env.example` by filling the empty `PROVIDER_PRIVATE_KEY=`
+line — the same contract, and the same line-anchored substitution, as `EnvFileWriter.java`. The
+keypair is derived through the SDK's own `publicKeyFromPrivateKey`, mirroring `KeyGenerator.java`
+going through `Signer`: a key generated here has to be one the runtime accepts.
 
 ---
 
 **Not a version site:** `java/starter/acquirer/build.gradle.kts`'s `version = "0.1.0-SNAPSHOT"`.
 That is the *scaffolded project's own* version — the file ships as a template inside
-`usdt-pay-init.jar` and is never published. The same file takes no SDK pin either: standalone
-builds pass `-PusdtPaySdkVersion=<version>`, deliberately not a `+` range, because an SDK bump is
-the consumer's decision. Left alone on purpose; don't "fix" it.
+`usdt-pay-init.jar` and is never published. The SDK pin lives in
+`java/starter/acquirer/gradle.properties` as `usdtPaySdkVersion` (a version site — see the table
+above); `-PusdtPaySdkVersion=<version>` overrides it for a one-off build. Deliberately not a `+`
+range, because an SDK bump is the consumer's decision.
 
 ---
 

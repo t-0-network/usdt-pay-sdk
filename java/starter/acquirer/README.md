@@ -24,7 +24,7 @@ If you used the scaffolder, skip the `cp` — your generated `.env` already hold
 your key, and copying the example over it destroys it.
 
 ```bash
-cp .env.example .env      # then fill in PRIVATE_KEY and NETWORK_PUBLIC_KEY
+cp .env.example .env      # then fill in PROVIDER_PRIVATE_KEY and NETWORK_PUBLIC_KEY
 
 # Build from the java/ root — the starter compiles against the local :sdk project.
 (cd ../.. && ./gradlew :starter:acquirer:installDist)
@@ -69,7 +69,7 @@ endpoint's mode. Fiat mode: `SettlementCompleted` never fires. USDt mode: skip
 
 ### Phase 1 — keys and server
 
-1. **1.1** With `PRIVATE_KEY` set in `.env`, start the app and see it print your public key.
+1. **1.1** With `PROVIDER_PRIVATE_KEY` set in `.env`, start the app and see it print your public key.
 2. **1.2** Send that public key to your t-0 onboarding contact. Until they have it,
    every call you make is rejected. Onboarding runs through the contact you already
    have at t-0 — there is no self-service channel, and the same exchange is where

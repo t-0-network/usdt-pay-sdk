@@ -53,11 +53,11 @@ export function generateKeyPair(): KeyPair {
 export function writeEnvFile(targetDir: string, keyPair: KeyPair): void {
   const example = readFileSync(join(targetDir, ".env.example"), "utf8");
 
-  // Line-anchored so this cannot hit a PRIVATE_KEY mentioned in a comment, and so it
-  // fills the empty assignment rather than appending to a set one.
+  // Line-anchored so this cannot hit a PROVIDER_PRIVATE_KEY mentioned in a comment,
+  // and so it fills the empty assignment rather than appending to a set one.
   const content = example.replace(
-    /^PRIVATE_KEY=$/m,
-    `PRIVATE_KEY=${keyPair.privateKeyHex}\n` +
+    /^PROVIDER_PRIVATE_KEY=$/m,
+    `PROVIDER_PRIVATE_KEY=${keyPair.privateKeyHex}\n` +
       `\n# The public half of the key above — send this to the t-0 team.` +
       `\n# 0x${keyPair.publicKeyHex}`,
   );
@@ -99,10 +99,10 @@ function deRepoReadme(targetDir: string, role: string): void {
   // copy of the generated private key, whose public half the user has already sent to
   // the t-0 team. The scaffold test asserts neither line survives here.
   content = content.replace(
-    "cp .env.example .env      # then fill in PRIVATE_KEY and NETWORK_PUBLIC_KEY\n" +
+    "cp .env.example .env      # then fill in PROVIDER_PRIVATE_KEY and NETWORK_PUBLIC_KEY\n" +
       "\n# Install and build from node/ — the starter compiles against the local sdk workspace.\n" +
       "(cd ../.. && npm install && npm run build)",
-    "# .env already exists and holds the PRIVATE_KEY generated for you. Do not\n" +
+    "# .env already exists and holds the PROVIDER_PRIVATE_KEY generated for you. Do not\n" +
       "# overwrite it — add NETWORK_PUBLIC_KEY, which the t-0 team gives you.\n" +
       "\nnpm install && npm run build",
   );

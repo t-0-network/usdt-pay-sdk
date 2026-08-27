@@ -144,7 +144,7 @@ public final class Main {
         }
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
-        String privateKey = dotenv.get("PRIVATE_KEY");
+        String privateKey = dotenv.get("PROVIDER_PRIVATE_KEY");
         String networkPublicKey = dotenv.get("NETWORK_PUBLIC_KEY");
         String endpoint = dotenv.get("TZERO_ENDPOINT", "https://usdt-pay-api-sandbox.t-0.network");
 
@@ -155,12 +155,12 @@ public final class Main {
             // With no .env in sight the likelier cause is the working directory, since
             // that is where it is read from.
             throw new ConfigurationException(
-                    "PRIVATE_KEY is not set",
+                    "PROVIDER_PRIVATE_KEY is not set",
                     hasEnvFile
                             ? "Add it to " + env + ", editing that file in place."
                             : "There is no .env here. Run this from your project directory, whose "
                                     + ".env holds the key generated for you — or, in a project you "
-                                    + "built by hand, set PRIVATE_KEY in the environment.");
+                                    + "built by hand, set PROVIDER_PRIVATE_KEY in the environment.");
         }
 
         // Print the public key early — Phase 1 needs it before NETWORK_PUBLIC_KEY
