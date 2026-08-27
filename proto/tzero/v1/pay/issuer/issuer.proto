@@ -4,7 +4,7 @@ syntax = "proto3";
 // IssuerService is hosted by t-0 and called by the Issuer;
 // IssuerCallbackService is implemented by the Issuer and called by t-0.
 
-package tzero.v1.pay;
+package tzero.v1.pay.issuer;
 
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
@@ -44,7 +44,7 @@ message PaymentReceivedRequest {
   uint64 payment_intent_id = 10 [(buf.validate.field).uint64.gt = 0];
 
   /** Amount the deposit actually credited, on either outcome. */
-  Decimal amount_usdt = 20 [
+  tzero.v1.pay.Decimal amount_usdt = 20 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
       message: "amount_usdt must be greater than zero"
@@ -55,7 +55,7 @@ message PaymentReceivedRequest {
   /** The payment instrument; the MVP's only variant is usdt_on_chain. */
   oneof payment_method {
     option (buf.validate.oneof).required = true;
-    UsdtOnChainPayment usdt_on_chain = 30;
+    tzero.v1.pay.UsdtOnChainPayment usdt_on_chain = 30;
   }
 
   /** Moment the Issuer observed the deposit as final on-chain. */
@@ -82,7 +82,7 @@ message PaymentReceivedRequest {
    * disposition says where the funds go and is final when reported.
    */
   message Unprocessable {
-    FundsDisposition disposition = 10 [(buf.validate.field).enum = {
+    tzero.v1.pay.FundsDisposition disposition = 10 [(buf.validate.field).enum = {
       defined_only: true
       not_in: [0]
     }];
@@ -130,7 +130,7 @@ message SettlementSentRequest {
   }];
 
   /** Total USDt settled across the covered intents. */
-  Decimal amount_usdt = 20 [
+  tzero.v1.pay.Decimal amount_usdt = 20 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
       message: "amount_usdt must be greater than zero"
@@ -139,7 +139,7 @@ message SettlementSentRequest {
   ];
 
   /** On-chain transaction, chain, and registered destination wallet for this settlement. */
-  OnChainSettlementDetails settlement = 30 [(buf.validate.field).required = true];
+  tzero.v1.pay.OnChainSettlementDetails settlement = 30 [(buf.validate.field).required = true];
 
   /** Intents this settlement clears, treated as a set; per-intent amounts come from t-0's ledger. */
   repeated uint64 settled_payment_intent_ids = 40 [
@@ -199,7 +199,7 @@ message CreatePaymentInstructionsRequest {
   uint64 acquirer_id = 20 [(buf.validate.field).uint64.gt = 0];
 
   /** Amount the reserved addresses should accept. */
-  Decimal amount_usdt = 30 [
+  tzero.v1.pay.Decimal amount_usdt = 30 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
       message: "amount_usdt must be greater than zero"
@@ -223,7 +223,7 @@ message CreatePaymentInstructionsResponse {
 
   message Success {
     /** One option per chain the Issuer supports for this intent. */
-    repeated QrOption qr_options = 10 [(buf.validate.field).repeated = {min_items: 1}];
+    repeated tzero.v1.pay.QrOption qr_options = 10 [(buf.validate.field).repeated = {min_items: 1}];
 
     /** Absolute expiry of the reservation; at or after the commanded expires_at. */
     google.protobuf.Timestamp expires_at = 20 [(buf.validate.field).required = true];

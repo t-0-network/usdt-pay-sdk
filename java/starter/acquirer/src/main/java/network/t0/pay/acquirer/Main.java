@@ -6,7 +6,7 @@ import network.t0.pay.acquirer.handler.AcquirerCallbackHandler;
 import network.t0.pay.acquirer.internal.CreatePaymentIntent;
 import network.t0.pay.acquirer.internal.Decimals;
 import network.t0.pay.acquirer.internal.GetPaymentQuote;
-import network.t0.pay.proto.tzero.v1.pay.AcquirerServiceGrpc;
+import network.t0.pay.proto.tzero.v1.pay.acquirer.AcquirerServiceGrpc;
 import network.t0.sdk.crypto.Signer;
 import network.t0.sdk.network.BlockingNetworkClient;
 import network.t0.pay.server.UsdtPayServer;

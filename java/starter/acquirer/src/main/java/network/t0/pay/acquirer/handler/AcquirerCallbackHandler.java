@@ -1,15 +1,15 @@
 package network.t0.pay.acquirer.handler;
 
 import io.grpc.stub.StreamObserver;
-import network.t0.pay.proto.tzero.v1.pay.AcquirerPaymentExpiredRequest;
-import network.t0.pay.proto.tzero.v1.pay.AcquirerPaymentExpiredResponse;
-import network.t0.pay.proto.tzero.v1.pay.AcquirerCallbackServiceGrpc;
-import network.t0.pay.proto.tzero.v1.pay.PaymentAuthorizedRequest;
-import network.t0.pay.proto.tzero.v1.pay.PaymentAuthorizedResponse;
-import network.t0.pay.proto.tzero.v1.pay.SettlementCompletedRequest;
-import network.t0.pay.proto.tzero.v1.pay.SettlementCompletedResponse;
-import network.t0.pay.proto.tzero.v1.pay.SettlementInitiatedRequest;
-import network.t0.pay.proto.tzero.v1.pay.SettlementInitiatedResponse;
+import network.t0.pay.proto.tzero.v1.pay.acquirer.PaymentExpiredRequest;
+import network.t0.pay.proto.tzero.v1.pay.acquirer.PaymentExpiredResponse;
+import network.t0.pay.proto.tzero.v1.pay.acquirer.AcquirerCallbackServiceGrpc;
+import network.t0.pay.proto.tzero.v1.pay.acquirer.PaymentAuthorizedRequest;
+import network.t0.pay.proto.tzero.v1.pay.acquirer.PaymentAuthorizedResponse;
+import network.t0.pay.proto.tzero.v1.pay.acquirer.SettlementCompletedRequest;
+import network.t0.pay.proto.tzero.v1.pay.acquirer.SettlementCompletedResponse;
+import network.t0.pay.proto.tzero.v1.pay.acquirer.SettlementInitiatedRequest;
+import network.t0.pay.proto.tzero.v1.pay.acquirer.SettlementInitiatedResponse;
 import network.t0.pay.acquirer.internal.Decimals;
 import network.t0.pay.acquirer.internal.Times;
 import org.slf4j.Logger;
@@ -121,8 +121,8 @@ public class AcquirerCallbackHandler extends AcquirerCallbackServiceGrpc.Acquire
      */
     @Override
     public void paymentExpired(
-            AcquirerPaymentExpiredRequest request,
-            StreamObserver<AcquirerPaymentExpiredResponse> responseObserver) {
+            PaymentExpiredRequest request,
+            StreamObserver<PaymentExpiredResponse> responseObserver) {
 
         log.info("PaymentExpired: intent={} sale={} at {}",
                 request.getPaymentIntentId(),
@@ -132,7 +132,7 @@ public class AcquirerCallbackHandler extends AcquirerCallbackServiceGrpc.Acquire
         // TODO: Step 3.4 — dedup on paymentIntentId, cancel the pending sale, take the
         //       QR off the POS.
 
-        responseObserver.onNext(AcquirerPaymentExpiredResponse.getDefaultInstance());
+        responseObserver.onNext(PaymentExpiredResponse.getDefaultInstance());
         responseObserver.onCompleted();
     }
 }

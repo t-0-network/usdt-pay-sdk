@@ -5,7 +5,7 @@ import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.Deadline;
 import io.grpc.MethodDescriptor;
-import network.t0.pay.proto.tzero.v1.pay.AcquirerServiceGrpc;
+import network.t0.pay.proto.tzero.v1.pay.acquirer.AcquirerServiceGrpc;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;

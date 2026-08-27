@@ -40,9 +40,12 @@ jobs:
       # No npm install: buf.gen.yaml uses a remote plugin and buf.yaml a remote dep,
       # both resolved over the network. Java needs nothing — its protos are a symlink
       # to the same tree and ./gradlew build regenerates every time.
+      # --clean wipes the plugin output directory first. buf otherwise appends, so a
+      # proto renamed or deleted upstream would leave its stale generated module in
+      # src/gen — exactly how the flat *_pb.ts survived the move to per-role packages.
       - name: Generate clients
         working-directory: node/sdk
-        run: buf generate
+        run: buf generate --clean
 
       - name: Commit generated files
         uses: stefanzweifel/git-auto-commit-action@v7

@@ -5,6 +5,7 @@ syntax = "proto3";
 package tzero.v1.pay;
 
 import "buf/validate/validate.proto";
+import "tzero/v1/pay/validate.proto";
 
 /**
  * Fixed-point monetary amount: unscaled * 10^exponent, so 123.45 is
@@ -48,10 +49,10 @@ message UsdtOnChainPayment {
   }];
 
   /** Hash of the customer's USDt transfer. */
-  string on_chain_tx_hash = 20 [(buf.validate.field).string = {min_len: 1}];
+  string on_chain_tx_hash = 20 [(buf.validate.field).string.(valid_tx_hash) = true];
 
   /** Customer's source wallet address, for receipt and audit. */
-  string sender_address = 30 [(buf.validate.field).string = {min_len: 1}];
+  string sender_address = 30 [(buf.validate.field).string.(valid_address) = true];
 }
 
 /**
@@ -66,7 +67,7 @@ message QrOption {
   }];
 
   /** One-time deposit address reserved for this intent on `chain`. */
-  string deposit_address = 20 [(buf.validate.field).string = {min_len: 1}];
+  string deposit_address = 20 [(buf.validate.field).string.(valid_address) = true];
 
   /** Chain-native URI (e.g. ERC-681 on EVM) the POS encodes as a QR image as-is. */
   string renderable_payload = 30 [(buf.validate.field).string = {min_len: 1}];
@@ -91,7 +92,7 @@ enum FundsDisposition {
  */
 message OnChainSettlementDetails {
   /** Hash of the settlement transaction. */
-  string on_chain_tx_hash = 10 [(buf.validate.field).string = {min_len: 1}];
+  string on_chain_tx_hash = 10 [(buf.validate.field).string.(valid_tx_hash) = true];
 
   /** Chain the settlement moved over. */
   Blockchain chain = 20 [(buf.validate.field).enum = {
@@ -100,5 +101,5 @@ message OnChainSettlementDetails {
   }];
 
   /** Registered settlement wallet on `chain` — the Acquirer's (USDt mode) or the LP's (fiat mode). */
-  string destination_address = 30 [(buf.validate.field).string = {min_len: 1}];
+  string destination_address = 30 [(buf.validate.field).string.(valid_address) = true];
 }

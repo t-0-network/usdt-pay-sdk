@@ -1,10 +1,10 @@
 package network.t0.pay.acquirer.internal;
 
 import io.grpc.StatusRuntimeException;
-import network.t0.pay.proto.tzero.v1.pay.AcquirerServiceGrpc;
+import network.t0.pay.proto.tzero.v1.pay.acquirer.AcquirerServiceGrpc;
 import network.t0.pay.proto.tzero.v1.pay.Decimal;
-import network.t0.pay.proto.tzero.v1.pay.SettlementReceivedRequest;
-import network.t0.pay.proto.tzero.v1.pay.SettlementReceivedResponse;
+import network.t0.pay.proto.tzero.v1.pay.acquirer.SettlementReceivedRequest;
+import network.t0.pay.proto.tzero.v1.pay.acquirer.SettlementReceivedResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
