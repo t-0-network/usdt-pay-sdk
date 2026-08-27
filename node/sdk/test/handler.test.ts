@@ -105,7 +105,6 @@ test("health response carries the SDK version", async () => {
     method: "POST",
     headers: {
       "content-type": "application/proto",
-      "connect-protocol-version": "1",
       "x-public-key": pubKey,
       "x-signature": Buffer.from(sig).toString("hex"),
       "x-signature-timestamp": String(ts),
