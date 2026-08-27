@@ -80,7 +80,7 @@ jobs:
           done
           [ "$ERRORS" -eq 0 ] || exit 1
 
-  # --- Build gate: ci.yaml's two jobs, minus `npm audit`. Deliberate — post-tag, an
+  # --- Build gate: ci.yaml's three jobs, minus `npm audit`. Deliberate — post-tag, an
   # advisory published in the minutes between tag and publish would strand a tagged
   # release that cannot be re-cut without a dependency bump. Pre-tag it still blocks. ---
   build-java:
@@ -139,9 +139,35 @@ jobs:
         working-directory: node
         run: npm test
 
+  build-go:
+    name: Build Go
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          show-progress: false
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: cli/go.mod
+
+      - name: Generate templates
+        working-directory: cli
+        run: go generate ./...
+
+      - name: Build
+        working-directory: cli
+        run: go build ./...
+
+      - name: Test
+        working-directory: cli
+        run: go test ./...
+
   publish-node-sdk:
     name: Publish Node SDK
-    needs: [preflight, build-java, build-node]
+    needs: [preflight, build-java, build-node, build-go]
     # npm rejects --provenance from self-hosted runners.
     runs-on: ubuntu-latest
     permissions:
@@ -217,7 +243,7 @@ jobs:
 
   publish-java:
     name: Publish Java
-    needs: [preflight, build-java, build-node]
+    needs: [preflight, build-java, build-node, build-go]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -268,7 +294,7 @@ jobs:
 
   publish-cli:
     name: Publish CLI
-    needs: [preflight, build-java, build-node]
+    needs: [preflight, build-java, build-node, build-go]
     runs-on: ubuntu-latest
     steps:
       - name: Generate GitHub App token

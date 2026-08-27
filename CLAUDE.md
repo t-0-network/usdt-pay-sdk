@@ -52,6 +52,22 @@ A bot PR from the backend adds/updates `proto/` and regenerates `node/sdk/src/ge
   `node/sdk/test/exports.test.ts` fails on such a collision — resolve it with an
   explicit re-export, not by deleting the test.
 
+## The CLI sync
+
+`cli/` is synced from `t-0-network/provider-sdk` — most files are upstream-owned
+and local patches will be overwritten by the next sync PR. Repo-owned files:
+
+- `cli/config.go` — product-specific config (`ProductName`, `Languages`, `RoleRequired`)
+- `cli/overlay/` — standalone Dockerfiles, `.dockerignore`, and READMEs for
+  scaffolded projects (applied over the repo-context originals after template
+  extraction)
+- `cli/install.sh` and `cli/install.ps1` — installer scripts
+
+Everything else (`main.go`, `scaffold.go`, `env.go`, `keygen.go`,
+`internal/sync/main.go`, `generate.go`, `keygen_test.go`) comes from the sync.
+Fix bugs there by upstreaming to provider-sdk first, then letting the sync carry
+the fix here.
+
 ## Signatures
 
 Same scheme as provider-sdk: Keccak256 over the raw request bytes plus a 64-bit
