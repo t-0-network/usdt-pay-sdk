@@ -57,7 +57,7 @@ dependencies {
     // Lets a test stand up a fake t-0 in memory and hand the helper a real stub.
     // The generated stubs are final with private constructors, so they cannot be
     // subclassed or mocked — an in-process server is how you fake this side.
-    testImplementation("io.grpc:grpc-inprocess:1.81.0")
+    testImplementation("io.grpc:grpc-inprocess:1.83.1")
 }
 
 tasks.withType<Test> {
