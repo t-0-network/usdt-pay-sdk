@@ -1,0 +1,56 @@
+name: CI / Node
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "node/**"
+      - "proto/**"
+      - ".github/workflows/ci-node.yaml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "node/**"
+      - "proto/**"
+      - ".github/workflows/ci-node.yaml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  node:
+    name: Node
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          show-progress: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: node/package-lock.json
+
+      - name: Install
+        working-directory: node
+        run: npm ci
+
+      - name: Build
+        working-directory: node
+        run: npm run build
+
+      - name: Typecheck
+        working-directory: node
+        run: npm run typecheck
+
+      - name: Test
+        working-directory: node
+        run: npm test
+
+      - name: Audit runtime dependencies
+        working-directory: node
+        run: npm audit --omit=dev --audit-level=high

@@ -23,7 +23,7 @@ permissions:
   contents: read
 
 jobs:
-  # --- Build gate: identical to ci.yaml. A release must not be cut from a red tree. ---
+  # --- Build gate: identical to ci-java.yaml / ci-node.yaml / ci-go.yaml. A release must not be cut from a red tree. ---
   build-java:
     name: Build Java
     runs-on: ubuntu-latest

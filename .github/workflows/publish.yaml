@@ -80,7 +80,7 @@ jobs:
           done
           [ "$ERRORS" -eq 0 ] || exit 1
 
-  # --- Build gate: ci.yaml's three jobs, minus `npm audit`. Deliberate — post-tag, an
+  # --- Build gate: ci-java.yaml / ci-node.yaml / ci-go.yaml's three jobs, minus `npm audit`. Deliberate — post-tag, an
   # advisory published in the minutes between tag and publish would strand a tagged
   # release that cannot be re-cut without a dependency bump. Pre-tag it still blocks. ---
   build-java:
