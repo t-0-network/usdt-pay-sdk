@@ -2,7 +2,8 @@ export * from "./client.js";
 export * from "./server.js";
 export * from "./keys.js";
 // Also importable as `@t-0/usdt-pay-sdk/crypto` — same module, and the subpath
-// is the one to use where only verification is wanted and tree-shaking matters.
+// is the one to use where the decoder is wanted without pulling in the server's
+// node:http dependency.
 export * from "./crypto.js";
 
 // The pay contract is split across four proto packages (common, issuer, acquirer,

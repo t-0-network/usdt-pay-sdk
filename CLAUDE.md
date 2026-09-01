@@ -42,7 +42,7 @@ A bot PR from the backend adds/updates `proto/` and regenerates `node/sdk/src/ge
   (`network.t0.pay.proto.tzero.v1.pay[.<role>]`), so a message moving packages or
   losing a name prefix breaks starter/test imports. Fix the imports; the contract
   is upstream's to change.
-- `payRegistry` in `node/sdk/src/server.ts` must list **every** pay proto file
+- `payRegistry` in `node/sdk/src/registry.ts` must list **every** pay proto file
   explicitly — `createRegistry` does not walk imports, and a file missing there
   makes protovalidate's custom predefined rules (`valid_tx_hash`, `valid_address`)
   unresolvable at runtime, failing responses with `Code.Internal`. A new proto
