@@ -77,20 +77,25 @@ Two constraints, both about bytes:
 The health service t-0 probes (`grpc.health.v1.Health/Check`) is inside the
 handler, behind the same signature check — mounting the handler mounts it.
 
-### Standalone Request Decoding
+## Standalone request decoding
 
 For frameworks that don't use Node's `http.createServer` (Hono, Effect, Koa, Fastify, etc.), use `createRequestDecoder` for one-call signature verification + Content-Type-aware decoding + protovalidation. It returns an either-type result: success with the decoded message and a response encoder, or failure with a ready-to-send HTTP error.
 
 ```ts
+import { create } from "@bufbuild/protobuf";
 import { createRequestDecoder } from "@t-0/usdt-pay-sdk/crypto";
-import { CreatePaymentInstructionsRequestSchema, CreatePaymentInstructionsResponseSchema } from "@t-0/usdt-pay-sdk";
+import {
+  CreatePaymentInstructionsRequestSchema,
+  CreatePaymentInstructionsResponse_Failure_Reason,
+  CreatePaymentInstructionsResponseSchema,
+} from "@t-0/usdt-pay-sdk";
 
 const decode = createRequestDecoder({
-  networkPublicKey: process.env.NETWORK_PUBLIC_KEY!,
+  networkPublicKey: process.env.NETWORK_PUBLIC_KEY!, // "0x04..." uncompressed secp256k1
 });
 
 // Hono / fetch-shaped framework — route by Connect procedure path:
-app.post("/tzero.v1.pay.issuer.IssuerCallback/:method", async (c) => {
+app.post("/tzero.v1.pay.issuer.IssuerCallbackService/CreatePaymentInstructions", async (c) => {
   const body = new Uint8Array(await c.req.arrayBuffer());
   const result = decode(CreatePaymentInstructionsRequestSchema, { body, headers: c.req.raw.headers });
 
@@ -101,7 +106,12 @@ app.post("/tzero.v1.pay.issuer.IssuerCallback/:method", async (c) => {
     });
   }
 
-  const response = await handleRequest(result.request);
+  const response = create(CreatePaymentInstructionsResponseSchema, {
+    result: {
+      case: "failure",
+      value: { reason: CreatePaymentInstructionsResponse_Failure_Reason.ISSUER_UNAVAILABLE },
+    },
+  });
 
   // encodeResponse validates + encodes in the matching wire format (JSON or proto)
   const wire = result.encodeResponse(CreatePaymentInstructionsResponseSchema, response);
@@ -112,35 +122,52 @@ app.post("/tzero.v1.pay.issuer.IssuerCallback/:method", async (c) => {
 ```ts
 // Raw Node http example:
 import http from "node:http";
+import { create } from "@bufbuild/protobuf";
 import { createRequestDecoder } from "@t-0/usdt-pay-sdk/crypto";
-import { CreatePaymentInstructionsRequestSchema, CreatePaymentInstructionsResponseSchema } from "@t-0/usdt-pay-sdk";
+import {
+  CreatePaymentInstructionsRequestSchema,
+  CreatePaymentInstructionsResponse_Failure_Reason,
+  CreatePaymentInstructionsResponseSchema,
+} from "@t-0/usdt-pay-sdk";
 
 const decode = createRequestDecoder({
-  networkPublicKey: process.env.NETWORK_PUBLIC_KEY!,
+  networkPublicKey: process.env.NETWORK_PUBLIC_KEY!, // "0x04..." uncompressed secp256k1
 });
 
 http.createServer((req, res) => {
   const chunks: Buffer[] = [];
   req.on("data", (c) => chunks.push(c));
   req.on("end", async () => {
-    const body = Buffer.concat(chunks);
-    const result = decode(CreatePaymentInstructionsRequestSchema, { body, headers: req.headers });
+    try {
+      const body = Buffer.concat(chunks);
+      const result = decode(CreatePaymentInstructionsRequestSchema, { body, headers: req.headers });
 
-    if (!result.ok) {
-      res.writeHead(result.error.status, result.error.headers);
-      res.end(result.error.body);
-      return;
+      if (!result.ok) {
+        res.writeHead(result.error.status, result.error.headers);
+        res.end(result.error.body);
+        return;
+      }
+
+      const response = create(CreatePaymentInstructionsResponseSchema, {
+        result: {
+          case: "failure",
+          value: { reason: CreatePaymentInstructionsResponse_Failure_Reason.ISSUER_UNAVAILABLE },
+        },
+      });
+      const wire = result.encodeResponse(CreatePaymentInstructionsResponseSchema, response);
+      res.writeHead(wire.status, wire.headers);
+      res.end(wire.body);
+    } catch (e) {
+      res.writeHead(500, { "content-type": "application/json" });
+      res.end(JSON.stringify({ code: "internal", message: String(e) }));
     }
-
-    const response = await handleRequest(result.request);
-    const wire = result.encodeResponse(CreatePaymentInstructionsResponseSchema, response);
-    res.writeHead(wire.status, wire.headers);
-    res.end(wire.body);
   });
 }).listen(3000);
 ```
 
-The decoder accepts both fetch `Headers` and Node's `Record<string, string | string[] | undefined>`. It normalizes header case internally, detects Content-Type (`application/json` or `application/proto`), and the returned `encodeResponse` closure responds in the matching format.
+The decoder accepts both fetch `Headers` and Node's `Record<string, string | string[] | undefined>`. It normalizes header case internally, detects Content-Type (`application/json` or `application/proto` / `application/protobuf` / `application/x-protobuf`), and the returned `encodeResponse` closure responds in the matching format. The pay contract's proto registry is baked in; you don't pass one.
+
+On success (`result.ok === true`), `result.request` is the typed message, `result.format` is `'json' | 'proto'`, and `result.encodeResponse(schema, message)` returns a `WireResponse` in the matching format. On failure (`result.ok === false`), `result.error` carries `{ status, headers, body }` ready to send — signature failures return 401, malformed bodies 400, unsupported Content-Type 415, and validation errors 400 with a `violations` array.
 
 **Important constraints for standalone integrations:**
 
@@ -151,7 +178,7 @@ The decoder accepts both fetch `Headers` and Node's `Record<string, string | str
 <details>
 <summary>Lower-level primitives</summary>
 
-The individual building blocks are also exported: `createRequestVerifier`, `rejectRequest`, `verifySignature`, `computeDigest`, `keccak256`, `parsePublicKey`, `publicKeysEqual`. You can import them from the `./crypto` subpath: `import { createRequestVerifier } from "@t-0/usdt-pay-sdk/crypto"`.
+The individual building blocks are also exported: `createRequestVerifier`, `rejectRequest`, `NetworkHeaders`, `DEFAULT_TOLERANCE_MS`, `verifySignature`, `computeDigest`, `keccak256`, `parsePublicKey`, `publicKeysEqual`. You can import them from the `./crypto` subpath: `import { createRequestVerifier } from "@t-0/usdt-pay-sdk/crypto"`.
 </details>
 
 ## Calling t-0

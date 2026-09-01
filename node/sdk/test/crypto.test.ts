@@ -20,21 +20,23 @@ import {
   CreatePaymentInstructionsRequestSchema,
   CreatePaymentInstructionsResponse_Failure_Reason,
   CreatePaymentInstructionsResponseSchema,
+  CreatePaymentInstructionsResponse_SuccessSchema,
   DecimalSchema,
   IssuerCallbackService,
   payRegistry,
   publicKeyFromPrivateKey,
+  QrOptionSchema,
   UsdtOnChainPaymentSchema,
 } from "../src/index.js";
 import { TimestampSchema } from "@bufbuild/protobuf/wkt";
 
 const NETWORK_PRIVATE_KEY = "0x" + "11".repeat(32);
 
-// The framework-agnostic integration the README documents, verbatim minus the
-// framework: a raw http server that verifies the exact wire bytes itself, answers
-// failures with rejectRequest, and speaks binary protobuf — what an Effect or
-// Hono integrator builds. The signed SDK client is the caller, so this proves the
-// verifier and the client agree on the digest (body bytes + timestamp).
+// Lower-level createRequestVerifier path: a raw http server that verifies the
+// exact wire bytes itself, answers failures with rejectRequest, and handles
+// content-type dispatch manually. The signed SDK client is the caller, so this
+// proves the verifier and the client agree on the digest (body bytes + timestamp).
+// For the one-call createRequestDecoder path, see the describe block below.
 const verifyRequest = createRequestVerifier({
   networkPublicKey: publicKeyFromPrivateKey(NETWORK_PRIVATE_KEY),
 });
@@ -292,7 +294,10 @@ describe("createRequestDecoder", () => {
     if (result.ok) return;
     assert.equal(result.error.status, 400);
     const parsed = JSON.parse(result.error.body as string);
-    assert.ok(parsed.violations.length > 0);
+    assert.ok(parsed.violations.length >= 2);
+    const fields = parsed.violations.map((v: { field: string }) => v.field);
+    assert.ok(fields.some((f: string) => f.includes("on_chain_tx_hash")), "expected valid_tx_hash violation");
+    assert.ok(fields.some((f: string) => f.includes("sender_address")), "expected valid_address violation");
   });
 
   test("bad signature → 401", () => {
@@ -324,5 +329,100 @@ describe("createRequestDecoder", () => {
     assert.equal(result.ok, false);
     if (result.ok) return;
     assert.equal(result.error.status, 415);
+  });
+
+  test("encodeResponse with valid Success + QrOption through payRegistry → 200", () => {
+    const { priv, publicKeyHex } = newKeypair();
+    const decode = createRequestDecoder({ networkPublicKey: publicKeyHex });
+
+    const msg = create(CreatePaymentInstructionsRequestSchema, validRequest);
+    const jsonBody = new TextEncoder().encode(
+      toJsonString(CreatePaymentInstructionsRequestSchema, msg, { registry: payRegistry }),
+    );
+    const headers = { ...sign(jsonBody, priv), "content-type": "application/json" };
+
+    const result = decode(CreatePaymentInstructionsRequestSchema, { body: jsonBody, headers });
+    assert.equal(result.ok, true);
+    if (!result.ok) return;
+
+    const resp = create(CreatePaymentInstructionsResponseSchema, {
+      result: {
+        case: "success",
+        value: create(CreatePaymentInstructionsResponse_SuccessSchema, {
+          qrOptions: [
+            create(QrOptionSchema, {
+              chain: Blockchain.TRON,
+              depositAddress: "TN2x2mHMRe8ufaM75sMnZGBfPGv7gM4jnk",
+              renderablePayload: "usdt-tron:TN2x2mHMRe8ufaM75sMnZGBfPGv7gM4jnk?amount=10.00",
+            }),
+          ],
+          expiresAt: futureTimestamp,
+        }),
+      },
+    });
+    const wire = result.encodeResponse(CreatePaymentInstructionsResponseSchema, resp);
+    assert.equal(wire.status, 200, "valid Success with QrOption should encode as 200");
+  });
+
+  test("encodeResponse with invalid response (empty oneof) → 500", () => {
+    const { priv, publicKeyHex } = newKeypair();
+    const decode = createRequestDecoder({ networkPublicKey: publicKeyHex });
+
+    const msg = create(CreatePaymentInstructionsRequestSchema, validRequest);
+    const jsonBody = new TextEncoder().encode(
+      toJsonString(CreatePaymentInstructionsRequestSchema, msg, { registry: payRegistry }),
+    );
+    const headers = { ...sign(jsonBody, priv), "content-type": "application/json" };
+
+    const result = decode(CreatePaymentInstructionsRequestSchema, { body: jsonBody, headers });
+    assert.equal(result.ok, true);
+    if (!result.ok) return;
+
+    const badResp = create(CreatePaymentInstructionsResponseSchema, {});
+    const wire = result.encodeResponse(CreatePaymentInstructionsResponseSchema, badResp);
+    assert.equal(wire.status, 500, "invalid response should produce 500");
+    const parsed = JSON.parse(wire.body as string);
+    assert.equal(parsed.code, "internal");
+  });
+
+  test("toleranceMs passthrough", async () => {
+    const { priv, publicKeyHex } = newKeypair();
+
+    const msg = create(CreatePaymentInstructionsRequestSchema, validRequest);
+    const jsonBody = new TextEncoder().encode(
+      toJsonString(CreatePaymentInstructionsRequestSchema, msg, { registry: payRegistry }),
+    );
+    const headers = { ...sign(jsonBody, priv), "content-type": "application/json" };
+
+    // Wait for the signature to become stale relative to a 1ms tolerance
+    await new Promise((r) => setTimeout(r, 50));
+
+    const strictDecode = createRequestDecoder({ networkPublicKey: publicKeyHex, toleranceMs: 1 });
+    const strictResult = strictDecode(CreatePaymentInstructionsRequestSchema, { body: jsonBody, headers });
+    assert.equal(strictResult.ok, false, "1ms tolerance should reject a 50ms-old signature");
+
+    const relaxedDecode = createRequestDecoder({ networkPublicKey: publicKeyHex, toleranceMs: 600_000 });
+    const relaxedResult = relaxedDecode(CreatePaymentInstructionsRequestSchema, { body: jsonBody, headers });
+    assert.equal(relaxedResult.ok, true, "600s tolerance should accept the same signature");
+  });
+
+  test("accepts fetch Headers object", () => {
+    const { priv, publicKeyHex } = newKeypair();
+    const decode = createRequestDecoder({ networkPublicKey: publicKeyHex });
+
+    const msg = create(CreatePaymentInstructionsRequestSchema, validRequest);
+    const jsonBody = new TextEncoder().encode(
+      toJsonString(CreatePaymentInstructionsRequestSchema, msg, { registry: payRegistry }),
+    );
+    const rawHeaders = sign(jsonBody, priv);
+    const fetchHeaders = new Headers({
+      ...rawHeaders,
+      "content-type": "application/json",
+    });
+
+    const result = decode(CreatePaymentInstructionsRequestSchema, { body: jsonBody, headers: fetchHeaders });
+    assert.equal(result.ok, true, "fetch Headers should be accepted");
+    if (!result.ok) return;
+    assert.equal(result.request.paymentIntentId, 42n);
   });
 });

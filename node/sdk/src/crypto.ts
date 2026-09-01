@@ -28,6 +28,11 @@ import {
 } from "@t-0/provider-sdk";
 import { payRegistry } from "./registry.js";
 
+/**
+ * One-call request decoder with the pay contract's registry baked in.
+ * Create once at startup, call per request. The raw bytes rule applies:
+ * pass the exact wire bytes, no body parsers or decompression.
+ */
 export function createRequestDecoder(opts: CreateVerifierOptions): RequestDecoder {
   return createBaseRequestDecoder({ ...opts, registry: payRegistry });
 }
