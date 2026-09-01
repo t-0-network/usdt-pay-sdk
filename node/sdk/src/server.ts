@@ -1,29 +1,10 @@
 import http from "node:http";
-import { createRegistry } from "@bufbuild/protobuf";
 import { createHandler as createProviderHandler, type Router } from "@t-0/provider-sdk";
 import { SDK_VERSION } from "./version.js";
-import { file_tzero_v1_pay_issuer_issuer } from "./gen/tzero/v1/pay/issuer/issuer_pb.js";
-import { file_tzero_v1_pay_acquirer_acquirer } from "./gen/tzero/v1/pay/acquirer/acquirer_pb.js";
-import { file_tzero_v1_pay_lp_lp } from "./gen/tzero/v1/pay/lp/lp_pb.js";
-import { file_tzero_v1_pay_common } from "./gen/tzero/v1/pay/common_pb.js";
-import { file_tzero_v1_pay_validate } from "./gen/tzero/v1/pay/validate_pb.js";
+import { payRegistry } from "./registry.js";
 
+export { payRegistry } from "./registry.js";
 export type { Router } from "@t-0/provider-sdk";
-
-/**
- * Registry covering the pay contract protos. Every file is listed explicitly:
- * `createRegistry` does NOT walk a file's imports, so relying on the service
- * files to pull in common.proto and validate.proto leaves the custom
- * predefined-rule extensions (`valid_tx_hash`, `valid_address`) unresolvable
- * at validation time. A new proto file added by a sync must be added here.
- */
-export const payRegistry = createRegistry(
-  file_tzero_v1_pay_issuer_issuer,
-  file_tzero_v1_pay_acquirer_acquirer,
-  file_tzero_v1_pay_lp_lp,
-  file_tzero_v1_pay_common,
-  file_tzero_v1_pay_validate,
-);
 
 /**
  * The pay endpoints as a plain `(req, res)` handler, for mounting into an HTTP
@@ -53,7 +34,7 @@ export const payRegistry = createRegistry(
  *
  * For a stack that cannot hand this handler Node's `(req, res)` pair at all
  * (Effect, Hono, …), drop a level: `@t-0/usdt-pay-sdk/crypto` has the request
- * verifier this handler uses, for wiring up yourself.
+ * decoder this handler uses, for wiring up yourself.
  *
  * @param networkPublicKey t-0's public key — inbound calls that do not verify
  *                         against it are refused

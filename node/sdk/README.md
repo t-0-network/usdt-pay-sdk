@@ -77,79 +77,82 @@ Two constraints, both about bytes:
 The health service t-0 probes (`grpc.health.v1.Health/Check`) is inside the
 handler, behind the same signature check — mounting the handler mounts it.
 
-## Verifying requests without the SDK's server
+### Standalone Request Decoding
 
-For a stack that cannot hand Node's `(req, res)` pair to a handler at all —
-Effect, Hono, Koa, anything that owns its own HTTP layer —
-`@t-0/usdt-pay-sdk/crypto` exports the verification the handler uses, for
-wiring up yourself: `createRequestVerifier` (setup-time config → per-request
-verifier), `rejectRequest` (failure → the HTTP error to send), the
-`NetworkHeaders` enum, and the primitives under them (`verifySignature`,
-`computeDigest`, `keccak256`, `parsePublicKey`, `publicKeysEqual`).
-
-Two imports: verification from `./crypto`, proto message schemas from the
-package root:
+For frameworks that don't use Node's `http.createServer` (Hono, Effect, Koa, Fastify, etc.), use `createRequestDecoder` for one-call signature verification + Content-Type-aware decoding + protovalidation. It returns an either-type result: success with the decoded message and a response encoder, or failure with a ready-to-send HTTP error.
 
 ```ts
-import { fromBinary, fromJson } from "@bufbuild/protobuf";
-import {
-  createRequestVerifier,
-  NetworkHeaders,
-  rejectRequest,
-} from "@t-0/usdt-pay-sdk/crypto";
-import {
-  CreatePaymentInstructionsRequestSchema,
-  CreatePaymentInstructionsResponseSchema,
-} from "@t-0/usdt-pay-sdk";
+import { createRequestDecoder } from "@t-0/usdt-pay-sdk/crypto";
+import { CreatePaymentInstructionsRequestSchema, CreatePaymentInstructionsResponseSchema } from "@t-0/usdt-pay-sdk";
 
-const verifyRequest = createRequestVerifier({
-  networkPublicKey: T0_NETWORK_PUBLIC_KEY, // "0x04..." uncompressed secp256k1
+const decode = createRequestDecoder({
+  networkPublicKey: process.env.NETWORK_PUBLIC_KEY!,
 });
 
-// In your framework's handler:
-const rawBody = new Uint8Array(await request.arrayBuffer()); // the exact wire bytes
+// Hono / fetch-shaped framework — route by Connect procedure path:
+app.post("/tzero.v1.pay.issuer.IssuerCallback/:method", async (c) => {
+  const body = new Uint8Array(await c.req.arrayBuffer());
+  const result = decode(CreatePaymentInstructionsRequestSchema, { body, headers: c.req.raw.headers });
 
-const result = verifyRequest({
-  body: rawBody, // Uint8Array — not the bare ArrayBuffer
-  signatureHeader: headers[NetworkHeaders.Signature.toLowerCase()],
-  publicKeyHeader: headers[NetworkHeaders.PublicKey.toLowerCase()],
-  timestampHeader: headers[NetworkHeaders.SignatureTimestamp.toLowerCase()],
+  if (!result.ok) {
+    return new Response(result.error.body, {
+      status: result.error.status,
+      headers: result.error.headers,
+    });
+  }
+
+  const response = await handleRequest(result.request);
+
+  // encodeResponse validates + encodes in the matching wire format (JSON or proto)
+  const wire = result.encodeResponse(CreatePaymentInstructionsResponseSchema, response);
+  return new Response(wire.body, { status: wire.status, headers: wire.headers });
 });
-
-if (!result.valid) {
-  const err = rejectRequest(result.reason);
-  return respond(err.body, err.status, err.headers);
-}
 ```
 
-**Verify the exact bytes that arrived.** No body parsers, no auto-decompression,
-never re-serialized protobuf — protobuf encoding is not canonical, so a
-re-encoded message is a different message to secp256k1. This is the rule the
-rest of the SDK exists to enforce for you; here it is yours to keep.
+```ts
+// Raw Node http example:
+import http from "node:http";
+import { createRequestDecoder } from "@t-0/usdt-pay-sdk/crypto";
+import { CreatePaymentInstructionsRequestSchema, CreatePaymentInstructionsResponseSchema } from "@t-0/usdt-pay-sdk";
 
-What the working parts around the verifier look like:
+const decode = createRequestDecoder({
+  networkPublicKey: process.env.NETWORK_PUBLIC_KEY!,
+});
 
-- **Headers**: `NetworkHeaders` values are title-case (`X-Signature`); Node and
-  most frameworks hand you incoming headers lowercased. Look them up by
-  `NetworkHeaders.Signature.toLowerCase()`, as above.
-- **Body format follows `Content-Type`.** A Connect unary body is JSON
-  (`application/json` → `fromJson`) or binary protobuf (`application/proto` →
-  `fromBinary`), and the response answers in the same format with the same
-  `Content-Type`. Handle both — this SDK's own client sends JSON, and other
-  callers may send proto.
-- **Errors go through `rejectRequest(result.reason)`.** It returns the status,
-  headers and serialized body of the Connect error the caller expects — the
-  same statuses the SDK's transport answers for the same failures. Send it
-  verbatim. `VerifyRequestFailure` is an open union: reasons this SDK version
-  has never heard of map to 401, so an unknown failure still denies.
-- **Route the health check too.** t-0 probes `/grpc.health.v1.Health/Check` as
-  part of the signed contract; a standalone integration must answer it. The
-  wire contract is in
-  [HEALTH_SERVICE.md](https://github.com/t-0-network/provider-sdk/blob/master/docs/HEALTH_SERVICE.md).
+http.createServer((req, res) => {
+  const chunks: Buffer[] = [];
+  req.on("data", (c) => chunks.push(c));
+  req.on("end", async () => {
+    const body = Buffer.concat(chunks);
+    const result = decode(CreatePaymentInstructionsRequestSchema, { body, headers: req.headers });
 
-`node/sdk/test/crypto.test.ts` is this section as a running program — a raw
-`http` server verifying, parsing and answering a signed SDK client, with
-nothing from `createServer` in it.
+    if (!result.ok) {
+      res.writeHead(result.error.status, result.error.headers);
+      res.end(result.error.body);
+      return;
+    }
+
+    const response = await handleRequest(result.request);
+    const wire = result.encodeResponse(CreatePaymentInstructionsResponseSchema, response);
+    res.writeHead(wire.status, wire.headers);
+    res.end(wire.body);
+  });
+}).listen(3000);
+```
+
+The decoder accepts both fetch `Headers` and Node's `Record<string, string | string[] | undefined>`. It normalizes header case internally, detects Content-Type (`application/json` or `application/proto`), and the returned `encodeResponse` closure responds in the matching format.
+
+**Important constraints for standalone integrations:**
+
+- **Raw body bytes only.** Pass the exact wire bytes — no body parsers, no auto-decompression, never re-serialized protobuf. Protobuf encoding is not canonical; re-encoding produces different bytes and breaks verification.
+- **Health endpoint.** t-0 probes `/grpc.health.v1.Health/Check` on every endpoint. The probe is signed. Standalone integrations must route this path and return a valid health response. See [HEALTH_SERVICE.md](https://github.com/t-0-network/provider-sdk/blob/master/docs/HEALTH_SERVICE.md) for the wire contract.
+- **`DecodeRequestFailure` is an open union.** New error shapes may be added without a major version bump. Handle unknown failures as generic errors.
+
+<details>
+<summary>Lower-level primitives</summary>
+
+The individual building blocks are also exported: `createRequestVerifier`, `rejectRequest`, `verifySignature`, `computeDigest`, `keccak256`, `parsePublicKey`, `publicKeysEqual`. You can import them from the `./crypto` subpath: `import { createRequestVerifier } from "@t-0/usdt-pay-sdk/crypto"`.
+</details>
 
 ## Calling t-0
 

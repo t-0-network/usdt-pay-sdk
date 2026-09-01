@@ -1,23 +1,32 @@
 import assert from "node:assert/strict";
+import { randomBytes } from "node:crypto";
 import http from "node:http";
 import type { AddressInfo } from "node:net";
-import { after, test } from "node:test";
-import { create, fromBinary, fromJson, toBinary, toJson } from "@bufbuild/protobuf";
+import { after, describe, test } from "node:test";
+import { create, fromBinary, fromJson, toBinary, toJson, toJsonString } from "@bufbuild/protobuf";
+import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { Code, ConnectError } from "@connectrpc/connect";
 import {
+  computeDigest,
+  createRequestDecoder,
   createRequestVerifier,
   NetworkHeaders,
   rejectRequest,
   type VerifyRequestFailure,
 } from "../src/crypto.js";
 import {
+  Blockchain,
   createClient,
   CreatePaymentInstructionsRequestSchema,
   CreatePaymentInstructionsResponse_Failure_Reason,
   CreatePaymentInstructionsResponseSchema,
+  DecimalSchema,
   IssuerCallbackService,
+  payRegistry,
   publicKeyFromPrivateKey,
+  UsdtOnChainPaymentSchema,
 } from "../src/index.js";
+import { TimestampSchema } from "@bufbuild/protobuf/wkt";
 
 const NETWORK_PRIVATE_KEY = "0x" + "11".repeat(32);
 
@@ -133,4 +142,187 @@ test("rejectRequest denies rather than crashes on a reason it has never heard of
   const err = rejectRequest("some_future_reason" as VerifyRequestFailure);
   assert.equal(err.status, 401);
   assert.equal((JSON.parse(err.body) as { code: string }).code, "unauthenticated");
+});
+
+// ---------------------------------------------------------------------------
+// createRequestDecoder — one-call decode with payRegistry baked in
+// ---------------------------------------------------------------------------
+
+function newKeypair() {
+  const priv = Uint8Array.from(randomBytes(32));
+  const pub = secp256k1.getPublicKey(priv, false);
+  return { priv, publicKeyHex: "0x" + Buffer.from(pub).toString("hex") };
+}
+
+function sign(body: Uint8Array, priv: Uint8Array) {
+  const ts = Date.now();
+  const digest = computeDigest(body, ts);
+  const sig = secp256k1.sign(digest, priv, { prehash: false });
+  return {
+    "x-signature": "0x" + Buffer.from(sig).toString("hex"),
+    "x-public-key": "0x" + Buffer.from(secp256k1.getPublicKey(priv, false)).toString("hex"),
+    "x-signature-timestamp": String(ts),
+  };
+}
+
+describe("createRequestDecoder", () => {
+  const futureTimestamp = create(TimestampSchema, {
+    seconds: BigInt(Math.floor(Date.now() / 1000) + 3600),
+  });
+
+  const validRequest = {
+    paymentIntentId: 42n,
+    acquirerId: 1n,
+    amountUsdt: create(DecimalSchema, { unscaled: 1000n, exponent: -2 }),
+    expiresAt: futureTimestamp,
+  };
+
+  test("JSON decode + encode round-trip", () => {
+    const { priv, publicKeyHex } = newKeypair();
+    const decode = createRequestDecoder({ networkPublicKey: publicKeyHex });
+
+    const msg = create(CreatePaymentInstructionsRequestSchema, validRequest);
+    const jsonBody = new TextEncoder().encode(
+      toJsonString(CreatePaymentInstructionsRequestSchema, msg, { registry: payRegistry }),
+    );
+    const headers = { ...sign(jsonBody, priv), "content-type": "application/json" };
+
+    const result = decode(CreatePaymentInstructionsRequestSchema, { body: jsonBody, headers });
+    assert.equal(result.ok, true);
+    if (!result.ok) return;
+    assert.equal(result.format, "json");
+    assert.equal(result.request.paymentIntentId, 42n);
+
+    const resp = create(CreatePaymentInstructionsResponseSchema, {
+      result: {
+        case: "failure",
+        value: { reason: CreatePaymentInstructionsResponse_Failure_Reason.ISSUER_UNAVAILABLE },
+      },
+    });
+    const wire = result.encodeResponse(CreatePaymentInstructionsResponseSchema, resp);
+    assert.equal(wire.status, 200);
+    assert.equal(wire.headers["Content-Type"], "application/json");
+    assert.equal(typeof wire.body, "string");
+  });
+
+  test("binary proto decode + encode round-trip", () => {
+    const { priv, publicKeyHex } = newKeypair();
+    const decode = createRequestDecoder({ networkPublicKey: publicKeyHex });
+
+    const msg = create(CreatePaymentInstructionsRequestSchema, { ...validRequest, paymentIntentId: 99n });
+    const protoBody = toBinary(CreatePaymentInstructionsRequestSchema, msg);
+    const headers = { ...sign(protoBody, priv), "content-type": "application/proto" };
+
+    const result = decode(CreatePaymentInstructionsRequestSchema, { body: protoBody, headers });
+    assert.equal(result.ok, true);
+    if (!result.ok) return;
+    assert.equal(result.format, "proto");
+    assert.equal(result.request.paymentIntentId, 99n);
+
+    const resp = create(CreatePaymentInstructionsResponseSchema, {
+      result: {
+        case: "failure",
+        value: { reason: CreatePaymentInstructionsResponse_Failure_Reason.AMOUNT_OUT_OF_RANGE },
+      },
+    });
+    const wire = result.encodeResponse(CreatePaymentInstructionsResponseSchema, resp);
+    assert.equal(wire.status, 200);
+    assert.equal(wire.headers["Content-Type"], "application/proto");
+    assert.ok(wire.body instanceof Uint8Array);
+  });
+
+  test("cross-schema encodeResponse", () => {
+    const { priv, publicKeyHex } = newKeypair();
+    const decode = createRequestDecoder({ networkPublicKey: publicKeyHex });
+
+    const msg = create(CreatePaymentInstructionsRequestSchema, validRequest);
+    const jsonBody = new TextEncoder().encode(
+      toJsonString(CreatePaymentInstructionsRequestSchema, msg, { registry: payRegistry }),
+    );
+    const headers = { ...sign(jsonBody, priv), "content-type": "application/json" };
+
+    const result = decode(CreatePaymentInstructionsRequestSchema, { body: jsonBody, headers });
+    assert.equal(result.ok, true);
+    if (!result.ok) return;
+
+    const decimal = create(DecimalSchema, { unscaled: 12345n, exponent: -2 });
+    const wire = result.encodeResponse(DecimalSchema, decimal);
+    assert.equal(wire.status, 200);
+    assert.equal(wire.headers["Content-Type"], "application/json");
+    const parsed = JSON.parse(wire.body as string);
+    assert.equal(parsed.unscaled, "12345");
+  });
+
+  test("validation violations for invalid Decimal", () => {
+    const { priv, publicKeyHex } = newKeypair();
+    const decode = createRequestDecoder({ networkPublicKey: publicKeyHex });
+
+    const msg = create(DecimalSchema, { unscaled: 100n, exponent: 99 });
+    const jsonBody = new TextEncoder().encode(
+      toJsonString(DecimalSchema, msg, { registry: payRegistry }),
+    );
+    const headers = { ...sign(jsonBody, priv), "content-type": "application/json" };
+
+    const result = decode(DecimalSchema, { body: jsonBody, headers });
+    assert.equal(result.ok, false);
+    if (result.ok) return;
+    assert.equal(result.error.status, 400);
+    const parsed = JSON.parse(result.error.body as string);
+    assert.equal(parsed.code, "invalid_argument");
+    assert.ok(Array.isArray(parsed.violations));
+    assert.ok(parsed.violations.length > 0);
+  });
+
+  test("custom predefined rules resolve through payRegistry (valid_tx_hash / valid_address)", () => {
+    const { priv, publicKeyHex } = newKeypair();
+    const decode = createRequestDecoder({ networkPublicKey: publicKeyHex });
+
+    const msg = create(UsdtOnChainPaymentSchema, {
+      chain: Blockchain.TRON,
+      onChainTxHash: "bad",
+      senderAddress: "bad",
+    });
+    const jsonBody = new TextEncoder().encode(
+      toJsonString(UsdtOnChainPaymentSchema, msg, { registry: payRegistry }),
+    );
+    const headers = { ...sign(jsonBody, priv), "content-type": "application/json" };
+
+    const result = decode(UsdtOnChainPaymentSchema, { body: jsonBody, headers });
+    assert.equal(result.ok, false);
+    if (result.ok) return;
+    assert.equal(result.error.status, 400);
+    const parsed = JSON.parse(result.error.body as string);
+    assert.ok(parsed.violations.length > 0);
+  });
+
+  test("bad signature → 401", () => {
+    const { publicKeyHex } = newKeypair();
+    const decode = createRequestDecoder({ networkPublicKey: publicKeyHex });
+
+    const body = new Uint8Array([1, 2, 3]);
+    const headers = {
+      "x-signature": "0x" + "00".repeat(64),
+      "x-public-key": publicKeyHex,
+      "x-signature-timestamp": String(Date.now()),
+      "content-type": "application/json",
+    };
+
+    const result = decode(CreatePaymentInstructionsRequestSchema, { body, headers });
+    assert.equal(result.ok, false);
+    if (result.ok) return;
+    assert.equal(result.error.status, 401);
+  });
+
+  test("unsupported Content-Type → 415", () => {
+    const { priv, publicKeyHex } = newKeypair();
+    const decode = createRequestDecoder({ networkPublicKey: publicKeyHex });
+
+    const body = new TextEncoder().encode("hello");
+    const headers = { ...sign(body, priv), "content-type": "text/plain" };
+
+    const result = decode(CreatePaymentInstructionsRequestSchema, { body, headers });
+    assert.equal(result.ok, false);
+    if (result.ok) return;
+    assert.equal(result.error.status, 415);
+  });
 });
