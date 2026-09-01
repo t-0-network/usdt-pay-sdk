@@ -19,7 +19,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file tzero/v1/pay/lp/lp.proto.
  */
 export const file_tzero_v1_pay_lp_lp: GenFile = /*@__PURE__*/
-  fileDesc("Chh0emVyby92MS9wYXkvbHAvbHAucHJvdG8SD3R6ZXJvLnYxLnBheS5scCLUAgoTUHVibGlzaFF1b3RlUmVxdWVzdBJGCgZxdW90ZXMYCiADKAsyKi50emVyby52MS5wYXkubHAuUHVibGlzaFF1b3RlUmVxdWVzdC5RdW90ZUIKukgHkgEECAEQZBr0AQoFUXVvdGUSHAoJcXVvdGVfcmVmGAogASgJQgm6SAZyBBABGEASLAoObG9jYWxfY3VycmVuY3kYFCABKAlCFLpIEXIPMgpeW0EtWl17M30kmAEDEmcKB2Z4X3JhdGUYHiABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEI/ukg8ugE2EiFmeF9yYXRlIG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBEjYKCmV4cGlyZXNfYXQYKCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEi8wMKFFB1Ymxpc2hRdW90ZVJlc3BvbnNlEkAKB3N1Y2Nlc3MYCiABKAsyLS50emVyby52MS5wYXkubHAuUHVibGlzaFF1b3RlUmVzcG9uc2UuU3VjY2Vzc0gAEkAKB2ZhaWx1cmUYFCABKAsyLS50emVyby52MS5wYXkubHAuUHVibGlzaFF1b3RlUmVzcG9uc2UuRmFpbHVyZUgAGqoBCgdTdWNjZXNzElYKBnF1b3RlcxgKIAMoCzI8LnR6ZXJvLnYxLnBheS5scC5QdWJsaXNoUXVvdGVSZXNwb25zZS5TdWNjZXNzLlB1Ymxpc2hlZFF1b3RlQgi6SAWSAQIIARpHCg5QdWJsaXNoZWRRdW90ZRIaCglxdW90ZV9yZWYYCiABKAlCB7pIBHICEAESGQoIcXVvdGVfaWQYFCABKARCB7pIBDICIAAamAEKB0ZhaWx1cmUSTgoGcmVhc29uGAogASgOMjQudHplcm8udjEucGF5LmxwLlB1Ymxpc2hRdW90ZVJlc3BvbnNlLkZhaWx1cmUuUmVhc29uQgi6SAWCAQIgACI9CgZSZWFzb24SFgoSUkVBU09OX1VOU1BFQ0lGSUVEEAASGwoXUkVBU09OX1ZBTElESVRZX0lOVkFMSUQQHkIPCgZyZXN1bHQSBbpIAggBIjEKFFdpdGhkcmF3UXVvdGVSZXF1ZXN0EhkKCHF1b3RlX2lkGAogASgEQge6SAQyAiAAItICChVXaXRoZHJhd1F1b3RlUmVzcG9uc2USQQoHc3VjY2VzcxgKIAEoCzIuLnR6ZXJvLnYxLnBheS5scC5XaXRoZHJhd1F1b3RlUmVzcG9uc2UuU3VjY2Vzc0gAEkEKB2ZhaWx1cmUYFCABKAsyLi50emVyby52MS5wYXkubHAuV2l0aGRyYXdRdW90ZVJlc3BvbnNlLkZhaWx1cmVIABoJCgdTdWNjZXNzGpYBCgdGYWlsdXJlEk8KBnJlYXNvbhgKIAEoDjI1LnR6ZXJvLnYxLnBheS5scC5XaXRoZHJhd1F1b3RlUmVzcG9uc2UuRmFpbHVyZS5SZWFzb25CCLpIBYIBAiAAIjoKBlJlYXNvbhIWChJSRUFTT05fVU5TUEVDSUZJRUQQABIYChRSRUFTT05fUVVPVEVfVU5LTk9XThAKQg8KBnJlc3VsdBIFukgCCAEi3gIKGUZpYXRTZXR0bGVtZW50U2VudFJlcXVlc3QSJQoRYmFua190cmFuc2Zlcl9yZWYYCiABKAlCCrpIB3IFEAEYgAISNwoVc2V0dGxlZF9leGVjdXRpb25faWRzGBQgAygEQhi6SBWSARIIASIOMgwY//////////9/IAASLAoObG9jYWxfY3VycmVuY3kYHiABKAlCFLpIEXIPMgpeW0EtWl17M30kmAEDEnsKEXNldHRsZW1lbnRfYW1vdW50GCggASgLMhUudHplcm8udjEucGF5LkRlY2ltYWxCSbpIRroBQBIrc2V0dGxlbWVudF9hbW91bnQgbXVzdCBiZSBncmVhdGVyIHRoYW4gemVybxoRdGhpcy51bnNjYWxlZCA+IDDIAQESNgoKc2V0dGxlZF9hdBg8IAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASKUBAoaRmlhdFNldHRsZW1lbnRTZW50UmVzcG9uc2USSAoIYWNjZXB0ZWQYCiABKAsyNC50emVyby52MS5wYXkubHAuRmlhdFNldHRsZW1lbnRTZW50UmVzcG9uc2UuQWNjZXB0ZWRIABJICghyZWplY3RlZBgUIAEoCzI0LnR6ZXJvLnYxLnBheS5scC5GaWF0U2V0dGxlbWVudFNlbnRSZXNwb25zZS5SZWplY3RlZEgAGgoKCEFjY2VwdGVkGsQCCghSZWplY3RlZBJVCgZyZWFzb24YCiABKA4yOy50emVyby52MS5wYXkubHAuRmlhdFNldHRsZW1lbnRTZW50UmVzcG9uc2UuUmVqZWN0ZWQuUmVhc29uQgi6SAWCAQIgACLgAQoGUmVhc29uEhYKElJFQVNPTl9VTlNQRUNJRklFRBAAEhwKGFJFQVNPTl9FWEVDVVRJT05fVU5LTk9XThAKEiQKIFJFQVNPTl9FWEVDVVRJT05fQUxSRUFEWV9DT1ZFUkVEEBQSHAoYUkVBU09OX0NVUlJFTkNZX01JU01BVENIEB4SGgoWUkVBU09OX0FNT1VOVF9NSVNNQVRDSBAoEhkKFVJFQVNPTl9BQ1FVSVJFUl9NSVhFRBA8EiUKIVJFQVNPTl9CQU5LX1RSQU5TRkVSX1JFRl9DT05GTElDVBBGQg8KBnJlc3VsdBIFukgCCAEipgMKE0V4ZWN1dGVRdW90ZVJlcXVlc3QSHQoMZXhlY3V0aW9uX2lkGAogASgEQge6SAQyAiAAEhkKCHF1b3RlX2lkGBQgASgEQge6SAQyAiAAEhoKCXF1b3RlX3JlZhgeIAEoCUIHukgEcgIQARIcCgthY3F1aXJlcl9pZBgoIAEoBEIHukgEMgIgABJxCgxsb2NhbF9hbW91bnQYMiABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEJEukhBugE7EiZsb2NhbF9hbW91bnQgbXVzdCBiZSBncmVhdGVyIHRoYW4gemVybxoRdGhpcy51bnNjYWxlZCA+IDDIAQESbwoLYW1vdW50X3VzZHQYPCABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEJDukhAugE6EiVhbW91bnRfdXNkdCBtdXN0IGJlIGdyZWF0ZXIgdGhhbiB6ZXJvGhF0aGlzLnVuc2NhbGVkID4gMMgBARI3CgtleGVjdXRlZF9hdBhGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASLyAgoURXhlY3V0ZVF1b3RlUmVzcG9uc2USQgoIYWNjZXB0ZWQYCiABKAsyLi50emVyby52MS5wYXkubHAuRXhlY3V0ZVF1b3RlUmVzcG9uc2UuQWNjZXB0ZWRIABJCCghyZWplY3RlZBgUIAEoCzIuLnR6ZXJvLnYxLnBheS5scC5FeGVjdXRlUXVvdGVSZXNwb25zZS5SZWplY3RlZEgAGgoKCEFjY2VwdGVkGrQBCghSZWplY3RlZBJPCgZyZWFzb24YCiABKA4yNS50emVyby52MS5wYXkubHAuRXhlY3V0ZVF1b3RlUmVzcG9uc2UuUmVqZWN0ZWQuUmVhc29uQgi6SAWCAQIgABIjCgdkZXRhaWxzGBQgASgJQhK6SA9yDRABGIAIMgYuKlxTLioiMgoGUmVhc29uEhYKElJFQVNPTl9VTlNQRUNJRklFRBAAEhAKDFJFQVNPTl9PVEhFUhAKQg8KBnJlc3VsdBIFukgCCAEyxgIKCUxwU2VydmljZRJgCgxQdWJsaXNoUXVvdGUSJC50emVyby52MS5wYXkubHAuUHVibGlzaFF1b3RlUmVxdWVzdBolLnR6ZXJvLnYxLnBheS5scC5QdWJsaXNoUXVvdGVSZXNwb25zZSIDkAICEmMKDVdpdGhkcmF3UXVvdGUSJS50emVyby52MS5wYXkubHAuV2l0aGRyYXdRdW90ZVJlcXVlc3QaJi50emVyby52MS5wYXkubHAuV2l0aGRyYXdRdW90ZVJlc3BvbnNlIgOQAgIScgoSRmlhdFNldHRsZW1lbnRTZW50EioudHplcm8udjEucGF5LmxwLkZpYXRTZXR0bGVtZW50U2VudFJlcXVlc3QaKy50emVyby52MS5wYXkubHAuRmlhdFNldHRsZW1lbnRTZW50UmVzcG9uc2UiA5ACAjJ1ChFMcENhbGxiYWNrU2VydmljZRJgCgxFeGVjdXRlUXVvdGUSJC50emVyby52MS5wYXkubHAuRXhlY3V0ZVF1b3RlUmVxdWVzdBolLnR6ZXJvLnYxLnBheS5scC5FeGVjdXRlUXVvdGVSZXNwb25zZSIDkAICYgZwcm90bzM", [file_buf_validate_validate, file_google_protobuf_timestamp, file_tzero_v1_pay_common]);
+  fileDesc("Chh0emVyby92MS9wYXkvbHAvbHAucHJvdG8SD3R6ZXJvLnYxLnBheS5scCLUAgoTUHVibGlzaFF1b3RlUmVxdWVzdBJGCgZxdW90ZXMYCiADKAsyKi50emVyby52MS5wYXkubHAuUHVibGlzaFF1b3RlUmVxdWVzdC5RdW90ZUIKukgHkgEECAEQZBr0AQoFUXVvdGUSHAoJcXVvdGVfcmVmGAogASgJQgm6SAZyBBABGEASLAoObG9jYWxfY3VycmVuY3kYFCABKAlCFLpIEXIPMgpeW0EtWl17M30kmAEDEmcKB2Z4X3JhdGUYHiABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEI/ukg8ugE2EiFmeF9yYXRlIG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBEjYKCmV4cGlyZXNfYXQYKCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEi8wMKFFB1Ymxpc2hRdW90ZVJlc3BvbnNlEkAKB3N1Y2Nlc3MYCiABKAsyLS50emVyby52MS5wYXkubHAuUHVibGlzaFF1b3RlUmVzcG9uc2UuU3VjY2Vzc0gAEkAKB2ZhaWx1cmUYFCABKAsyLS50emVyby52MS5wYXkubHAuUHVibGlzaFF1b3RlUmVzcG9uc2UuRmFpbHVyZUgAGqoBCgdTdWNjZXNzElYKBnF1b3RlcxgKIAMoCzI8LnR6ZXJvLnYxLnBheS5scC5QdWJsaXNoUXVvdGVSZXNwb25zZS5TdWNjZXNzLlB1Ymxpc2hlZFF1b3RlQgi6SAWSAQIIARpHCg5QdWJsaXNoZWRRdW90ZRIaCglxdW90ZV9yZWYYCiABKAlCB7pIBHICEAESGQoIcXVvdGVfaWQYFCABKARCB7pIBDICIAAamAEKB0ZhaWx1cmUSTgoGcmVhc29uGAogASgOMjQudHplcm8udjEucGF5LmxwLlB1Ymxpc2hRdW90ZVJlc3BvbnNlLkZhaWx1cmUuUmVhc29uQgi6SAWCAQIgACI9CgZSZWFzb24SFgoSUkVBU09OX1VOU1BFQ0lGSUVEEAASGwoXUkVBU09OX1ZBTElESVRZX0lOVkFMSUQQHkIPCgZyZXN1bHQSBbpIAggBIt4CChlGaWF0U2V0dGxlbWVudFNlbnRSZXF1ZXN0EiUKEWJhbmtfdHJhbnNmZXJfcmVmGAogASgJQgq6SAdyBRABGIACEjcKFXNldHRsZWRfZXhlY3V0aW9uX2lkcxgUIAMoBEIYukgVkgESCAEiDjIMGP//////////fyAAEiwKDmxvY2FsX2N1cnJlbmN5GB4gASgJQhS6SBFyDzIKXltBLVpdezN9JJgBAxJ7ChFzZXR0bGVtZW50X2Ftb3VudBgoIAEoCzIVLnR6ZXJvLnYxLnBheS5EZWNpbWFsQkm6SEa6AUASK3NldHRsZW1lbnRfYW1vdW50IG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBEjYKCnNldHRsZWRfYXQYPCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEilAQKGkZpYXRTZXR0bGVtZW50U2VudFJlc3BvbnNlEkgKCGFjY2VwdGVkGAogASgLMjQudHplcm8udjEucGF5LmxwLkZpYXRTZXR0bGVtZW50U2VudFJlc3BvbnNlLkFjY2VwdGVkSAASSAoIcmVqZWN0ZWQYFCABKAsyNC50emVyby52MS5wYXkubHAuRmlhdFNldHRsZW1lbnRTZW50UmVzcG9uc2UuUmVqZWN0ZWRIABoKCghBY2NlcHRlZBrEAgoIUmVqZWN0ZWQSVQoGcmVhc29uGAogASgOMjsudHplcm8udjEucGF5LmxwLkZpYXRTZXR0bGVtZW50U2VudFJlc3BvbnNlLlJlamVjdGVkLlJlYXNvbkIIukgFggECIAAi4AEKBlJlYXNvbhIWChJSRUFTT05fVU5TUEVDSUZJRUQQABIcChhSRUFTT05fRVhFQ1VUSU9OX1VOS05PV04QChIkCiBSRUFTT05fRVhFQ1VUSU9OX0FMUkVBRFlfQ09WRVJFRBAUEhwKGFJFQVNPTl9DVVJSRU5DWV9NSVNNQVRDSBAeEhoKFlJFQVNPTl9BTU9VTlRfTUlTTUFUQ0gQKBIZChVSRUFTT05fQUNRVUlSRVJfTUlYRUQQPBIlCiFSRUFTT05fQkFOS19UUkFOU0ZFUl9SRUZfQ09ORkxJQ1QQRkIPCgZyZXN1bHQSBbpIAggBIqYDChNFeGVjdXRlUXVvdGVSZXF1ZXN0Eh0KDGV4ZWN1dGlvbl9pZBgKIAEoBEIHukgEMgIgABIZCghxdW90ZV9pZBgUIAEoBEIHukgEMgIgABIaCglxdW90ZV9yZWYYHiABKAlCB7pIBHICEAESHAoLYWNxdWlyZXJfaWQYKCABKARCB7pIBDICIAAScQoMbG9jYWxfYW1vdW50GDIgASgLMhUudHplcm8udjEucGF5LkRlY2ltYWxCRLpIQboBOxImbG9jYWxfYW1vdW50IG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBEm8KC2Ftb3VudF91c2R0GDwgASgLMhUudHplcm8udjEucGF5LkRlY2ltYWxCQ7pIQLoBOhIlYW1vdW50X3VzZHQgbXVzdCBiZSBncmVhdGVyIHRoYW4gemVybxoRdGhpcy51bnNjYWxlZCA+IDDIAQESNwoLZXhlY3V0ZWRfYXQYRiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEi8gIKFEV4ZWN1dGVRdW90ZVJlc3BvbnNlEkIKCGFjY2VwdGVkGAogASgLMi4udHplcm8udjEucGF5LmxwLkV4ZWN1dGVRdW90ZVJlc3BvbnNlLkFjY2VwdGVkSAASQgoIcmVqZWN0ZWQYFCABKAsyLi50emVyby52MS5wYXkubHAuRXhlY3V0ZVF1b3RlUmVzcG9uc2UuUmVqZWN0ZWRIABoKCghBY2NlcHRlZBq0AQoIUmVqZWN0ZWQSTwoGcmVhc29uGAogASgOMjUudHplcm8udjEucGF5LmxwLkV4ZWN1dGVRdW90ZVJlc3BvbnNlLlJlamVjdGVkLlJlYXNvbkIIukgFggECIAASIwoHZGV0YWlscxgUIAEoCUISukgPcg0QARiACDIGLipcUy4qIjIKBlJlYXNvbhIWChJSRUFTT05fVU5TUEVDSUZJRUQQABIQCgxSRUFTT05fT1RIRVIQCkIPCgZyZXN1bHQSBbpIAggBMuEBCglMcFNlcnZpY2USYAoMUHVibGlzaFF1b3RlEiQudHplcm8udjEucGF5LmxwLlB1Ymxpc2hRdW90ZVJlcXVlc3QaJS50emVyby52MS5wYXkubHAuUHVibGlzaFF1b3RlUmVzcG9uc2UiA5ACAhJyChJGaWF0U2V0dGxlbWVudFNlbnQSKi50emVyby52MS5wYXkubHAuRmlhdFNldHRsZW1lbnRTZW50UmVxdWVzdBorLnR6ZXJvLnYxLnBheS5scC5GaWF0U2V0dGxlbWVudFNlbnRSZXNwb25zZSIDkAICMnUKEUxwQ2FsbGJhY2tTZXJ2aWNlEmAKDEV4ZWN1dGVRdW90ZRIkLnR6ZXJvLnYxLnBheS5scC5FeGVjdXRlUXVvdGVSZXF1ZXN0GiUudHplcm8udjEucGF5LmxwLkV4ZWN1dGVRdW90ZVJlc3BvbnNlIgOQAgJiBnByb3RvMw", [file_buf_validate_validate, file_google_protobuf_timestamp, file_tzero_v1_pay_common]);
 
 /**
  * @generated from message tzero.v1.pay.lp.PublishQuoteRequest
@@ -201,107 +201,6 @@ export const PublishQuoteResponse_Failure_ReasonSchema: GenEnum<PublishQuoteResp
   enumDesc(file_tzero_v1_pay_lp_lp, 1, 1, 0);
 
 /**
- * @generated from message tzero.v1.pay.lp.WithdrawQuoteRequest
- */
-export type WithdrawQuoteRequest = Message<"tzero.v1.pay.lp.WithdrawQuoteRequest"> & {
-  /**
-   * * The standing quote to withdraw; must have been minted for this LP. 
-   *
-   * @generated from field: uint64 quote_id = 10;
-   */
-  quoteId: bigint;
-};
-
-/**
- * Describes the message tzero.v1.pay.lp.WithdrawQuoteRequest.
- * Use `create(WithdrawQuoteRequestSchema)` to create a new message.
- */
-export const WithdrawQuoteRequestSchema: GenMessage<WithdrawQuoteRequest> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_lp_lp, 2);
-
-/**
- * @generated from message tzero.v1.pay.lp.WithdrawQuoteResponse
- */
-export type WithdrawQuoteResponse = Message<"tzero.v1.pay.lp.WithdrawQuoteResponse"> & {
-  /**
-   * @generated from oneof tzero.v1.pay.lp.WithdrawQuoteResponse.result
-   */
-  result: {
-    /**
-     * @generated from field: tzero.v1.pay.lp.WithdrawQuoteResponse.Success success = 10;
-     */
-    value: WithdrawQuoteResponse_Success;
-    case: "success";
-  } | {
-    /**
-     * @generated from field: tzero.v1.pay.lp.WithdrawQuoteResponse.Failure failure = 20;
-     */
-    value: WithdrawQuoteResponse_Failure;
-    case: "failure";
-  } | { case: undefined; value?: undefined };
-};
-
-/**
- * Describes the message tzero.v1.pay.lp.WithdrawQuoteResponse.
- * Use `create(WithdrawQuoteResponseSchema)` to create a new message.
- */
-export const WithdrawQuoteResponseSchema: GenMessage<WithdrawQuoteResponse> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_lp_lp, 3);
-
-/**
- * @generated from message tzero.v1.pay.lp.WithdrawQuoteResponse.Success
- */
-export type WithdrawQuoteResponse_Success = Message<"tzero.v1.pay.lp.WithdrawQuoteResponse.Success"> & {
-};
-
-/**
- * Describes the message tzero.v1.pay.lp.WithdrawQuoteResponse.Success.
- * Use `create(WithdrawQuoteResponse_SuccessSchema)` to create a new message.
- */
-export const WithdrawQuoteResponse_SuccessSchema: GenMessage<WithdrawQuoteResponse_Success> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_lp_lp, 3, 0);
-
-/**
- * @generated from message tzero.v1.pay.lp.WithdrawQuoteResponse.Failure
- */
-export type WithdrawQuoteResponse_Failure = Message<"tzero.v1.pay.lp.WithdrawQuoteResponse.Failure"> & {
-  /**
-   * @generated from field: tzero.v1.pay.lp.WithdrawQuoteResponse.Failure.Reason reason = 10;
-   */
-  reason: WithdrawQuoteResponse_Failure_Reason;
-};
-
-/**
- * Describes the message tzero.v1.pay.lp.WithdrawQuoteResponse.Failure.
- * Use `create(WithdrawQuoteResponse_FailureSchema)` to create a new message.
- */
-export const WithdrawQuoteResponse_FailureSchema: GenMessage<WithdrawQuoteResponse_Failure> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_lp_lp, 3, 1);
-
-/**
- * @generated from enum tzero.v1.pay.lp.WithdrawQuoteResponse.Failure.Reason
- */
-export enum WithdrawQuoteResponse_Failure_Reason {
-  /**
-   * @generated from enum value: REASON_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * quote_id is unknown or belongs to another LP.
-   *
-   * @generated from enum value: REASON_QUOTE_UNKNOWN = 10;
-   */
-  QUOTE_UNKNOWN = 10,
-}
-
-/**
- * Describes the enum tzero.v1.pay.lp.WithdrawQuoteResponse.Failure.Reason.
- */
-export const WithdrawQuoteResponse_Failure_ReasonSchema: GenEnum<WithdrawQuoteResponse_Failure_Reason> = /*@__PURE__*/
-  enumDesc(file_tzero_v1_pay_lp_lp, 3, 1, 0);
-
-/**
  * @generated from message tzero.v1.pay.lp.FiatSettlementSentRequest
  */
 export type FiatSettlementSentRequest = Message<"tzero.v1.pay.lp.FiatSettlementSentRequest"> & {
@@ -346,7 +245,7 @@ export type FiatSettlementSentRequest = Message<"tzero.v1.pay.lp.FiatSettlementS
  * Use `create(FiatSettlementSentRequestSchema)` to create a new message.
  */
 export const FiatSettlementSentRequestSchema: GenMessage<FiatSettlementSentRequest> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_lp_lp, 4);
+  messageDesc(file_tzero_v1_pay_lp_lp, 2);
 
 /**
  * @generated from message tzero.v1.pay.lp.FiatSettlementSentResponse
@@ -375,7 +274,7 @@ export type FiatSettlementSentResponse = Message<"tzero.v1.pay.lp.FiatSettlement
  * Use `create(FiatSettlementSentResponseSchema)` to create a new message.
  */
 export const FiatSettlementSentResponseSchema: GenMessage<FiatSettlementSentResponse> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_lp_lp, 5);
+  messageDesc(file_tzero_v1_pay_lp_lp, 3);
 
 /**
  * @generated from message tzero.v1.pay.lp.FiatSettlementSentResponse.Accepted
@@ -388,7 +287,7 @@ export type FiatSettlementSentResponse_Accepted = Message<"tzero.v1.pay.lp.FiatS
  * Use `create(FiatSettlementSentResponse_AcceptedSchema)` to create a new message.
  */
 export const FiatSettlementSentResponse_AcceptedSchema: GenMessage<FiatSettlementSentResponse_Accepted> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_lp_lp, 5, 0);
+  messageDesc(file_tzero_v1_pay_lp_lp, 3, 0);
 
 /**
  * @generated from message tzero.v1.pay.lp.FiatSettlementSentResponse.Rejected
@@ -405,7 +304,7 @@ export type FiatSettlementSentResponse_Rejected = Message<"tzero.v1.pay.lp.FiatS
  * Use `create(FiatSettlementSentResponse_RejectedSchema)` to create a new message.
  */
 export const FiatSettlementSentResponse_RejectedSchema: GenMessage<FiatSettlementSentResponse_Rejected> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_lp_lp, 5, 1);
+  messageDesc(file_tzero_v1_pay_lp_lp, 3, 1);
 
 /**
  * @generated from enum tzero.v1.pay.lp.FiatSettlementSentResponse.Rejected.Reason
@@ -464,7 +363,7 @@ export enum FiatSettlementSentResponse_Rejected_Reason {
  * Describes the enum tzero.v1.pay.lp.FiatSettlementSentResponse.Rejected.Reason.
  */
 export const FiatSettlementSentResponse_Rejected_ReasonSchema: GenEnum<FiatSettlementSentResponse_Rejected_Reason> = /*@__PURE__*/
-  enumDesc(file_tzero_v1_pay_lp_lp, 5, 1, 0);
+  enumDesc(file_tzero_v1_pay_lp_lp, 3, 1, 0);
 
 /**
  * @generated from message tzero.v1.pay.lp.ExecuteQuoteRequest
@@ -528,7 +427,7 @@ export type ExecuteQuoteRequest = Message<"tzero.v1.pay.lp.ExecuteQuoteRequest">
  * Use `create(ExecuteQuoteRequestSchema)` to create a new message.
  */
 export const ExecuteQuoteRequestSchema: GenMessage<ExecuteQuoteRequest> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_lp_lp, 6);
+  messageDesc(file_tzero_v1_pay_lp_lp, 4);
 
 /**
  * * The LP's durable decision on one ExecuteQuote command. 
@@ -565,7 +464,7 @@ export type ExecuteQuoteResponse = Message<"tzero.v1.pay.lp.ExecuteQuoteResponse
  * Use `create(ExecuteQuoteResponseSchema)` to create a new message.
  */
 export const ExecuteQuoteResponseSchema: GenMessage<ExecuteQuoteResponse> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_lp_lp, 7);
+  messageDesc(file_tzero_v1_pay_lp_lp, 5);
 
 /**
  * * Acceptance creates the LP's firm per-sale obligation. 
@@ -580,7 +479,7 @@ export type ExecuteQuoteResponse_Accepted = Message<"tzero.v1.pay.lp.ExecuteQuot
  * Use `create(ExecuteQuoteResponse_AcceptedSchema)` to create a new message.
  */
 export const ExecuteQuoteResponse_AcceptedSchema: GenMessage<ExecuteQuoteResponse_Accepted> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_lp_lp, 7, 0);
+  messageDesc(file_tzero_v1_pay_lp_lp, 5, 0);
 
 /**
  * * Rejection leaves the payment intent authorized for manual handling. 
@@ -608,7 +507,7 @@ export type ExecuteQuoteResponse_Rejected = Message<"tzero.v1.pay.lp.ExecuteQuot
  * Use `create(ExecuteQuoteResponse_RejectedSchema)` to create a new message.
  */
 export const ExecuteQuoteResponse_RejectedSchema: GenMessage<ExecuteQuoteResponse_Rejected> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_lp_lp, 7, 1);
+  messageDesc(file_tzero_v1_pay_lp_lp, 5, 1);
 
 /**
  * @generated from enum tzero.v1.pay.lp.ExecuteQuoteResponse.Rejected.Reason
@@ -632,12 +531,12 @@ export enum ExecuteQuoteResponse_Rejected_Reason {
  * Describes the enum tzero.v1.pay.lp.ExecuteQuoteResponse.Rejected.Reason.
  */
 export const ExecuteQuoteResponse_Rejected_ReasonSchema: GenEnum<ExecuteQuoteResponse_Rejected_Reason> = /*@__PURE__*/
-  enumDesc(file_tzero_v1_pay_lp_lp, 7, 1, 0);
+  enumDesc(file_tzero_v1_pay_lp_lp, 5, 1, 0);
 
 /**
  * *
- * t-0 endpoints the LP calls to push and withdraw standing quotes and to report
- * its self-initiated fiat settlements. Fiat mode only.
+ * t-0 endpoints the LP calls to push standing quotes and to report its
+ * self-initiated fiat settlements. Fiat mode only.
  *
  * @generated from service tzero.v1.pay.lp.LpService
  */
@@ -651,16 +550,6 @@ export const LpService: GenService<{
     methodKind: "unary";
     input: typeof PublishQuoteRequestSchema;
     output: typeof PublishQuoteResponseSchema;
-  },
-  /**
-   * * Removes one standing quote before expiry; intents already accepted against it are unaffected. 
-   *
-   * @generated from rpc tzero.v1.pay.lp.LpService.WithdrawQuote
-   */
-  withdrawQuote: {
-    methodKind: "unary";
-    input: typeof WithdrawQuoteRequestSchema;
-    output: typeof WithdrawQuoteResponseSchema;
   },
   /**
    * *

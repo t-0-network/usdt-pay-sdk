@@ -11,17 +11,12 @@ import "google/protobuf/timestamp.proto";
 import "tzero/v1/pay/common.proto";
 
 /**
- * t-0 endpoints the LP calls to push and withdraw standing quotes and to report
- * its self-initiated fiat settlements. Fiat mode only.
+ * t-0 endpoints the LP calls to push standing quotes and to report its
+ * self-initiated fiat settlements. Fiat mode only.
  */
 service LpService {
   /** Pushes immutable standing quotes into t-0's Order Book, at most one per currency per call; each is multi-consumable while it stands. */
   rpc PublishQuote(PublishQuoteRequest) returns (PublishQuoteResponse) {
-    option idempotency_level = IDEMPOTENT;
-  }
-
-  /** Removes one standing quote before expiry; intents already accepted against it are unaffected. */
-  rpc WithdrawQuote(WithdrawQuoteRequest) returns (WithdrawQuoteResponse) {
     option idempotency_level = IDEMPOTENT;
   }
 
@@ -116,31 +111,6 @@ message PublishQuoteResponse {
       // A quote's expires_at is in the past, too short to be usable, or beyond
       // the max window; the whole batch is declined.
       REASON_VALIDITY_INVALID = 30;
-    }
-  }
-}
-
-message WithdrawQuoteRequest {
-  /** The standing quote to withdraw; must have been minted for this LP. */
-  uint64 quote_id = 10 [(buf.validate.field).uint64.gt = 0];
-}
-
-message WithdrawQuoteResponse {
-  oneof result {
-    option (buf.validate.oneof).required = true;
-    Success success = 10;
-    Failure failure = 20;
-  }
-
-  message Success {}
-
-  message Failure {
-    Reason reason = 10 [(buf.validate.field).enum.not_in = 0];
-
-    enum Reason {
-      REASON_UNSPECIFIED = 0;
-      // quote_id is unknown or belongs to another LP.
-      REASON_QUOTE_UNKNOWN = 10;
     }
   }
 }
