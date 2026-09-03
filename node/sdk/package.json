@@ -47,7 +47,7 @@
     "@t-0/provider-sdk": "1.1.38"
   },
   "devDependencies": {
-    "@types/node": "^26.2.0",
+    "@types/node": "^26.4.0",
     "tsx": "^4.22.3",
     "typescript": "^5.9.3"
   },
