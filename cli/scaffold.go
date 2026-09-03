@@ -14,9 +14,6 @@ import (
 //go:embed all:internal/embed
 var embeddedTemplates embed.FS
 
-//go:embed all:overlay
-var overlayFiles embed.FS
-
 type CLIConfig struct {
 	ProductName  string
 	Command      string
@@ -33,7 +30,9 @@ type ScaffoldOpts struct {
 	ProjectDir  string
 	// Go-specific: module path for import rewriting
 	ModulePath string
-	// CLI version (injected at build time via ldflags)
+	// Java-specific: SDK repository (jitpack or maven-central)
+	JavaRepo string
+	// CLI version (injected into Java template's SDK version)
 	Version string
 }
 
@@ -54,7 +53,7 @@ func scaffold(opts ScaffoldOpts) error {
 
 	pascalName := toPascalCase(opts.ProjectName)
 
-	if err := fs.WalkDir(embeddedTemplates, templateRoot, func(src string, d fs.DirEntry, err error) error {
+	return fs.WalkDir(embeddedTemplates, templateRoot, func(src string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -96,45 +95,6 @@ func scaffold(opts ScaffoldOpts) error {
 		content = processPlaceholders(content, opts, pascalName)
 
 		return writeFileWithMode(destPath, []byte(content), src)
-	}); err != nil {
-		return err
-	}
-
-	// Apply overlay files (standalone Dockerfiles, .dockerignore, etc.) that
-	// replace the in-repo versions with ones suited for a scaffolded project.
-	return applyOverlay(opts)
-}
-
-func applyOverlay(opts ScaffoldOpts) error {
-	overlayRoot := path.Join("overlay", opts.Lang)
-	if opts.Role != "" {
-		overlayRoot = path.Join(overlayRoot, opts.Role)
-	}
-
-	if _, err := overlayFiles.ReadDir(overlayRoot); err != nil {
-		return nil
-	}
-
-	return fs.WalkDir(overlayFiles, overlayRoot, func(src string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			return nil
-		}
-
-		rel := strings.TrimPrefix(src, overlayRoot+"/")
-
-		data, err := overlayFiles.ReadFile(src)
-		if err != nil {
-			return fmt.Errorf("reading overlay file %s: %w", src, err)
-		}
-
-		destPath := filepath.Join(opts.ProjectDir, rel)
-		if err := os.MkdirAll(filepath.Dir(destPath), 0777); err != nil {
-			return err
-		}
-		return os.WriteFile(destPath, data, 0666)
 	})
 }
 
@@ -164,6 +124,18 @@ func processPlaceholders(content string, opts ScaffoldOpts, pascalName string) s
 	// Go: module path replacement (injected by sync tool as {{MODULE_PATH}})
 	if opts.ModulePath != "" {
 		content = strings.ReplaceAll(content, "{{MODULE_PATH}}", opts.ModulePath)
+	}
+
+	// Java: SDK version pinning
+	if opts.Lang == "java" {
+		if opts.Version != "" && opts.Version != "dev" {
+			content = strings.ReplaceAll(content, `:+"`, `:`+opts.Version+`"`)
+		}
+		if opts.JavaRepo == "maven-central" {
+			content = strings.ReplaceAll(content,
+				`val sdkRepository = "jitpack"`,
+				`val sdkRepository = "maven-central"`)
+		}
 	}
 
 	return content

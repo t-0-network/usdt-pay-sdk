@@ -20,19 +20,19 @@ func writeEnvFile(projectDir string, kp KeyPair) error {
 	content := string(data)
 
 	// Replace private key placeholder — templates use various patterns:
-	//   PRIVATE_KEY=your_private_key_here            (usdt-pay-sdk starters)
-	//   PRIVATE_KEY=                                 (usdt-pay-sdk starters)
-	//   PROVIDER_PRIVATE_KEY=your_private_key_here  (provider-sdk starters)
-	//   PROVIDER_PRIVATE_KEY=                        (provider-sdk starters)
+	//   PRIVATE_KEY=your_private_key_here
+	//   PRIVATE_KEY=
+	//   PROVIDER_PRIVATE_KEY=your_private_key_here  (provider-sdk default)
+	//   PROVIDER_PRIVATE_KEY=                        (provider-sdk default)
 	for _, pattern := range []string{
 		"PRIVATE_KEY=your_private_key_here",
-		"PROVIDER_PRIVATE_KEY=your_private_key_here",
 		"PRIVATE_KEY=",
+		"PROVIDER_PRIVATE_KEY=your_private_key_here",
 		"PROVIDER_PRIVATE_KEY=",
 	} {
 		if strings.Contains(content, pattern) {
-			keyName := pattern[:strings.Index(pattern, "=")+1]
-			content = strings.Replace(content, pattern, keyName+kp.PrivateKey, 1)
+			varName := pattern[:strings.Index(pattern, "=")]
+			content = strings.Replace(content, pattern, varName+"="+kp.PrivateKey, 1)
 			break
 		}
 	}
