@@ -51,9 +51,7 @@ build time via `go generate`.
 Adding a role is adding a directory under the appropriate `starter/` and wiring it into
 `cli/generate.go`. `cli/overlay/<lang>/<role>/` holds files that cannot ship verbatim — currently
 the Dockerfiles, whose in-repo form takes the workspace as its build context while a scaffolded
-project resolves the SDK from a registry. They are applied by the synced scaffolder through
-`Config.OverlayFS` (`cli/config.go` + `cli/overlay.go`); `cli/starters_test.go` and `ci-go.yaml`
-fail if a role has no overlay or the overlay does not land in the scaffolded output.
+project resolves the SDK from a registry. How they are applied and tested: [`CLI.md`](CLI.md).
 
 **Not a version site:** `java/starter/acquirer/build.gradle.kts`'s `version = "0.1.0-SNAPSHOT"`.
 That is the *scaffolded project's own* version — the file ships as a template and is never
