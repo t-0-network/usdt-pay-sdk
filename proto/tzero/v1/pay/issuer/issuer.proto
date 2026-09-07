@@ -28,10 +28,10 @@ service IssuerService {
 
 /**
  * Issuer-implemented endpoint t-0 calls to reserve deposit addresses and obtain
- * the renderable QR payloads for an intent.
+ * the deposit options (chain-native payment URIs) for an intent.
  */
 service IssuerCallbackService {
-  /** Reserves one deposit address per supported chain and returns the renderable QR payloads. */
+  /** Reserves one deposit address per supported chain and returns the deposit options with their payment URIs. */
   rpc CreatePaymentInstructions(CreatePaymentInstructionsRequest) returns (CreatePaymentInstructionsResponse) {
     option idempotency_level = IDEMPOTENT;
   }
@@ -43,7 +43,7 @@ message PaymentReceivedRequest {
   /** Intent the deposit was made against. */
   uint64 payment_intent_id = 10 [(buf.validate.field).uint64.gt = 0];
 
-  /** Amount the deposit actually credited, on either outcome. */
+  /** USDt the deposit actually credited, on either outcome; the Issuer reports what arrived and t-0 runs the equality check itself. */
   tzero.v1.pay.Decimal amount_usdt = 20 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
@@ -82,6 +82,7 @@ message PaymentReceivedRequest {
    * disposition says where the funds go and is final when reported.
    */
   message Unprocessable {
+    /** Where the funds go; final when reported. */
     tzero.v1.pay.FundsDisposition disposition = 10 [(buf.validate.field).enum = {
       defined_only: true
       not_in: [0]
@@ -114,9 +115,9 @@ message PaymentReceivedResponse {
       REASON_UNSPECIFIED = 0;
       // Processing started after expires_at on t-0's clock.
       REASON_INTENT_EXPIRED = 10;
-      // No such intent exists.
+      // No such intent exists, or another Issuer serves it.
       REASON_UNKNOWN_INTENT = 20;
-      // amount_usdt is not exactly the intent's stored amount.
+      // amount_usdt is not exactly the intent's stored amount; authorized outcome only.
       REASON_AMOUNT_MISMATCH = 30;
       // The transfer is already another intent's recorded deposit; no refund or
       // disposition action follows — reconciled out of band.
@@ -177,7 +178,8 @@ message SettlementSentResponse {
 
     enum Reason {
       REASON_UNSPECIFIED = 0;
-      // The on-chain transaction is not yet confirmed. Not returned while t-0 accepts unverified.
+      // The on-chain transaction is not yet confirmed. Not returned in the MVP, where t-0
+      // records the settlement on the Issuer's report without on-chain verification.
       REASON_ON_CHAIN_UNCONFIRMED = 10;
       // The confirmed amount does not equal amount_usdt or the covered intents' sum.
       REASON_AMOUNT_MISMATCH = 20;
@@ -201,7 +203,7 @@ message CreatePaymentInstructionsRequest {
   /** t-0's stable id for the Acquirer; the Issuer resolves its settlement wallet from it. */
   uint64 acquirer_id = 20 [(buf.validate.field).uint64.gt = 0];
 
-  /** Amount the reserved addresses should accept. */
+  /** USDt amount the reserved addresses should accept. */
   tzero.v1.pay.Decimal amount_usdt = 30 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
@@ -225,10 +227,10 @@ message CreatePaymentInstructionsResponse {
   }
 
   message Success {
-    /** One option per chain the Issuer supports for this intent. */
-    repeated tzero.v1.pay.QrOption qr_options = 10 [(buf.validate.field).repeated = {min_items: 1}];
+    /** One deposit option per chain the Issuer supports for this intent. */
+    repeated tzero.v1.pay.DepositOption deposit_options = 30 [(buf.validate.field).repeated = {min_items: 1}];
 
-    /** Absolute expiry of the reservation; at or after the commanded expires_at. */
+    /** Absolute expiry of the reservation; must be at or after the requested expires_at, else t-0 discards the instructions and declines the payment. */
     google.protobuf.Timestamp expires_at = 20 [(buf.validate.field).required = true];
   }
 

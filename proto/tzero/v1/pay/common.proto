@@ -9,12 +9,10 @@ import "tzero/v1/pay/validate.proto";
 
 /**
  * Fixed-point monetary amount: unscaled * 10^exponent, so 123.45 is
- * unscaled=12345, exponent=-2. Local to the pay contract — `pay` is an
- * independent service and deliberately shares no types with `tzero.v1.common`,
- * so a participant's generated code carries exactly one Decimal and one
- * Blockchain.
+ * unscaled=12345, exponent=-2.
  */
 message Decimal {
+  // no validation: sign and magnitude are constrained per field by the predicate on the enclosing amount.
   int64 unscaled = 10;
 
   int32 exponent = 20 [(buf.validate.field).int32 = {
@@ -24,11 +22,9 @@ message Decimal {
 }
 
 /**
- * On-chain network a USDt leg moves over. Local to the pay contract, which is
- * an independent service and shares no types with `tzero.v1.common`.
- * Launch-live: ETH, BSC. TRON is committed for a later phase and already carries
- * a value here; Arbitrum, Polygon, and Avalanche are announced as upcoming and
- * added here as they go live.
+ * On-chain network a USDt transfer moves over. Live at launch: ETH and BSC.
+ * TRON already carries a value but is not accepted until it goes live in a
+ * later phase; Arbitrum, Polygon and Avalanche are added as they go live.
  */
 enum Blockchain {
   BLOCKCHAIN_UNSPECIFIED = 0;
@@ -56,10 +52,11 @@ message UsdtOnChainPayment {
 }
 
 /**
- * One selectable QR payment option for an intent — the renderable payload is
- * chain-native and encoded by the POS without modification.
+ * One selectable deposit option for an intent: the chain, the one-time address
+ * reserved on it, and the chain-native payment URI the POS carries to the customer
+ * (as a QR image, a wallet deep link, or any other carrier) without modification.
  */
-message QrOption {
+message DepositOption {
   /** Chain this deposit option pays on. */
   Blockchain chain = 10 [(buf.validate.field).enum = {
     defined_only: true
@@ -69,12 +66,15 @@ message QrOption {
   /** One-time deposit address reserved for this intent on `chain`. */
   string deposit_address = 20 [(buf.validate.field).string.(valid_address) = true];
 
-  /** Chain-native URI (e.g. ERC-681 on EVM) the POS encodes as a QR image as-is. */
-  string renderable_payload = 30 [(buf.validate.field).string = {min_len: 1}];
+  /** Chain-native payment URI (EIP-681 on EVM chains); produced only by the Issuer and carried to the customer unchanged. */
+  string payment_uri = 30 [(buf.validate.field).string = {min_len: 1}];
+
+  /** USDt token contract on `chain` the deposit must be made in. */
+  string token_contract = 40 [(buf.validate.field).string.(valid_address) = true];
 }
 
 /**
- * Where a deposit's funds end up when the sale will not settle. Final when
+ * Where a deposit's funds end up when the payment will not settle. Final when
  * reported: whether a retained deposit is later released is decided out of band
  * and is not part of this contract.
  */
@@ -87,8 +87,8 @@ enum FundsDisposition {
 }
 
 /**
- * USDt-on-chain settlement payload, shared by the issuer's SettlementSent and
- * the acquirer's SettlementCompleted usdt variant.
+ * One on-chain USDt settlement transfer, as reported by the Issuer on
+ * SettlementSent and relayed to the Acquirer on SettlementCompleted.
  */
 message OnChainSettlementDetails {
   /** Hash of the settlement transaction. */
