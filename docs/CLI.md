@@ -61,23 +61,27 @@ exactly what a user gets. Every starter must have an overlay with at least `Dock
 A sync PR that is green on `go build` proves only that `cli/` still compiles. The scaffolder is
 proven by:
 
-- **`cli/starters_test.go`** — enumerates every embedded `<lang>/<role>` (a new starter is
-  covered without editing the test) and runs the CLI end to end for each:
+- **`cli/starters_test.go`** — requires the embedded starters to be exactly the
+  `<lang>/starter/<role>/` directories in the tree and `Config.Languages` to list exactly the
+  languages that have one (a new starter is covered without editing the test, and an unwired one
+  fails it), then runs the CLI end to end for each:
+  - `.gitignore` and the language's entry files are there, `dot-gitignore` is not;
   - the overlay exists and every one of its files lands byte for byte;
   - `.env` holds a fresh key: `0x` + 64 hex, a valid secp256k1 scalar, unique across
     instantiations, and the public key printed to the user and the one recorded in `.env` both
     derive from it; `.env.example` keeps its placeholders; `.env` is `0600`.
-- **`cli/scaffold_test.go`** — template extraction details (`dot-gitignore` → `.gitignore`,
-  embed path handling) and the name helpers.
-- **`.github/workflows/ci-go.yaml`** — after the tests, builds the binary, scaffolds every
-  embedded `<lang>/<role>` with it, `cmp`s the overlay, and builds and runs the tests of each
-  scaffolded project **against the SDK in this tree**: Java through `publishToMavenLocal` into an
-  isolated `maven.repo.local` under version `0.0.0-local` (not published anywhere) plus an init
-  script adding `mavenLocal()`, Node through `npm pack` and installing the tarball. Not against the
+- **`cli/scaffold_test.go`** — embed path handling and the name helpers.
+- **`.github/workflows/ci-go.yaml`** — `go generate`, `go build`, `go test` in `cli/`; the
+  tests above, run in CI. Triggered by `cli/**`.
+- **`.github/workflows/ci-scaffold.yaml`** — builds the binary, scaffolds every embedded
+  `<lang>/<role>` with it, `cmp`s the overlay, and builds and runs the tests of each scaffolded
+  project **against the SDK in this tree**: Java through `publishToMavenLocal` into an isolated
+  `maven.repo.local` under version `0.0.0-local` (not published anywhere) plus an init script
+  adding `mavenLocal()`, Node through `npm pack` and installing the tarball. Not against the
   published SDK: between a proto sync and the next release the starters use SDK changes that are
   not published yet, while the released CLI always embeds a starter that matches the SDK released
-  with it. SDK and proto changes trigger the workflow too. A language without a case fails the
-  loop loudly.
+  with it. Triggered by `cli/**`, `java/**`, `node/**` and `proto/**`, because the starters and
+  SDKs it builds are all inputs. A language without a case fails the loop loudly.
 
 ## Handling a sync PR
 
@@ -93,6 +97,6 @@ proven by:
    `cli/generate.go`. Its `.env.example` needs `PROVIDER_PRIVATE_KEY=` and the
    `# your_public_key_here` line.
 2. `cli/overlay/<lang>/<role>/` with `Dockerfile`, `.dockerignore` and `README.md`.
-3. A new language: add it to `Languages` in `config.go` and a compile case to the loop in
-   `ci-go.yaml`. Nothing in the tests needs editing.
+3. A new language: add it to `Languages` in `config.go` and a build-and-test case to the loop in
+   `ci-scaffold.yaml`. Nothing in the tests needs editing.
 4. The version sites and publish jobs in `docs/RELEASE_AND_PUBLISH.md`, "Starters".

@@ -21,11 +21,30 @@ import (
 // starterTargets lists every lang/role pair with an embedded starter template
 // and requires that set to equal the starters in the source tree
 // (<lang>/starter/<role>/), so a starter that drops out of generate.go fails
-// here instead of silently losing coverage.
+// here instead of silently losing coverage. Languages are discovered from the
+// tree, not taken from Config.Languages: a new <lang>/starter/ that is wired
+// into neither generate.go nor config.go must fail too.
 func starterTargets(t *testing.T) [][2]string {
 	t.Helper()
+	var langs []string
+	entries, err := os.ReadDir("..")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range entries {
+		if info, err := os.Stat(filepath.Join("..", e.Name(), "starter")); err == nil && info.IsDir() {
+			langs = append(langs, e.Name())
+		}
+	}
+	sort.Strings(langs)
+	configured := slices.Clone(Config.Languages)
+	sort.Strings(configured)
+	if !slices.Equal(langs, configured) {
+		t.Fatalf("languages with a starter in the tree %v, Config.Languages %v — wire the missing one into cli/config.go", langs, configured)
+	}
+
 	var targets [][2]string
-	for _, lang := range Config.Languages {
+	for _, lang := range langs {
 		roles, err := listRoles(lang)
 		if err != nil {
 			t.Fatalf("listRoles(%s): %v — run 'go generate ./...' first", lang, err)
@@ -194,6 +213,11 @@ func TestRun_InstantiatesEveryStarter(t *testing.T) {
 				if _, err := os.Stat(filepath.Join(projectDir, name)); err != nil {
 					t.Errorf("%s missing after run(): %v", name, err)
 				}
+			}
+			// The template ships .gitignore as dot-gitignore (a real .gitignore
+			// would be dropped by go:embed); the scaffolder renames it.
+			if _, err := os.Stat(filepath.Join(projectDir, "dot-gitignore")); err == nil {
+				t.Error("dot-gitignore still present — the template rename did not happen")
 			}
 			requireEntryFiles(t, lang, projectDir)
 

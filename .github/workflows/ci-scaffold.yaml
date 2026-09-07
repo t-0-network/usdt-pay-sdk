@@ -1,0 +1,125 @@
+name: CI / Scaffold
+
+# Proves that `usdt-pay init` produces a working standalone project for every
+# starter: scaffolds each embedded lang/role with the built binary, checks the
+# overlay landed, then builds and runs each scaffold's own tests against the SDKs
+# built from this tree. SDK and proto changes are inputs of this workflow too,
+# not only the starters and the CLI.
+on:
+  push:
+    branches: [master]
+    paths:
+      - "cli/**"
+      - "java/**"
+      - "node/**"
+      - "proto/**"
+      - ".github/workflows/ci-scaffold.yaml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "cli/**"
+      - "java/**"
+      - "node/**"
+      - "proto/**"
+      - ".github/workflows/ci-scaffold.yaml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scaffold:
+    name: Scaffold
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          show-progress: false
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: cli/go.mod
+
+      - name: Generate templates
+        working-directory: cli
+        run: go generate ./...
+
+      - name: Build CLI binary
+        working-directory: cli
+        run: go build -ldflags "-X main.Version=dev" -o ../usdt-pay .
+
+      # Every embedded lang/role (cli/internal/embed/<lang>/<role>, produced by
+      # go generate): scaffold it with the built binary and require every file of
+      # cli/overlay/<lang>/<role> to land byte for byte. Needs no registry, so it
+      # runs on every event — a bot sync that drops the overlay seam fails here.
+      - name: Scaffold every starter and verify the overlay landed
+        run: |
+          set -euo pipefail
+          for dir in cli/internal/embed/*/*/; do
+            lang=$(basename "$(dirname "$dir")")
+            role=$(basename "$dir")
+            out="scaffold-${lang}-${role}"
+            ./usdt-pay init "test-${lang}-${role}" --lang="$lang" --role="$role" --no-color --dir="$out"
+            test -f "$out/.gitignore"
+            grep -q 'PROVIDER_PRIVATE_KEY=0x' "$out/.env"
+            test -d "cli/overlay/${lang}/${role}" || { echo "::error::no cli/overlay/${lang}/${role} — the in-repo Dockerfile cannot ship standalone"; exit 1; }
+            (cd "cli/overlay/${lang}/${role}" && find . -type f) | sed 's|^\./||' | while read -r f; do
+              cmp "cli/overlay/${lang}/${role}/${f}" "${out}/${f}"
+            done
+            echo "ok: ${lang}/${role}"
+          done
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: node/package-lock.json
+
+      # A scaffolded project pins the *published* SDK, which lags this tree between a
+      # proto sync and the next release — so the starter is built against the SDK in
+      # this tree instead: Java from an isolated mavenLocal under a version that is
+      # not published anywhere, Node from a packed tarball. No registry dependency for
+      # the SDK, so this runs on every event, release commits included.
+      - name: Publish this tree's SDKs locally
+        run: |
+          set -euo pipefail
+          (cd java && ./gradlew :sdk:publishToMavenLocal --no-daemon -q -Pversion=0.0.0-local -Dmaven.repo.local="${RUNNER_TEMP}/m2")
+          test -d "${RUNNER_TEMP}/m2/network/t-0/usdt-pay-sdk-java/0.0.0-local"
+          (cd node && npm ci --silent && npm run build -w sdk --silent && npm pack -w sdk --silent --pack-destination "${RUNNER_TEMP}")
+          ls "${RUNNER_TEMP}"/t-0-usdt-pay-sdk-*.tgz
+          printf 'allprojects { repositories { mavenLocal() } }\n' > "${RUNNER_TEMP}/mavenlocal.init.gradle"
+
+      # Build and run each scaffolded project's own tests: a scaffold is a complete
+      # project, not just something that compiles. A new language needs a case here;
+      # the loop fails loudly without one.
+      - name: Build and test every scaffolded starter against this tree's SDK
+        run: |
+          set -euo pipefail
+          for dir in cli/internal/embed/*/*/; do
+            lang=$(basename "$(dirname "$dir")")
+            role=$(basename "$dir")
+            out="scaffold-${lang}-${role}"
+            case "$lang" in
+              java) (cd "$out" && ./gradlew test --no-daemon -q \
+                       --init-script "${RUNNER_TEMP}/mavenlocal.init.gradle" \
+                       -Dmaven.repo.local="${RUNNER_TEMP}/m2" \
+                       -PusdtPaySdkVersion=0.0.0-local) ;;
+              node) (cd "$out" && npm install --silent --no-save --package-lock=false --no-audit --no-fund "${RUNNER_TEMP}"/t-0-usdt-pay-sdk-*.tgz && npm run build && npm test) ;;
+              *) echo "::error::no build-and-test case for lang=${lang} — add one to this step"; exit 1 ;;
+            esac
+            echo "ok: ${lang}/${role} builds and tests against this tree's SDK"
+          done

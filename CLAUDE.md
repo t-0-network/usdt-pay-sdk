@@ -33,7 +33,8 @@ cd cli && go generate ./... && go build ./... && go test ./...
 ```
 
 CI (`ci-java.yaml`, `ci-node.yaml`, `ci-go.yaml`) runs exactly these builds; if they pass locally the tree is
-releasable.
+releasable. `ci-scaffold.yaml` additionally scaffolds every starter with the built CLI and runs
+each scaffold's tests against the SDKs built from the tree (`docs/CLI.md`).
 
 ## The proto sync
 
@@ -64,7 +65,7 @@ synced from upstream and overwritten by every sync PR — `main.go`, `scaffold.g
 Everything else under `cli/` is repo-owned. A green sync PR proves only that
 `cli/` compiles; `go test ./...` in `cli/` is what proves the scaffolder still
 works. How the pieces fit — embedded starters, `cli/overlay/`, the tests, what
-`ci-go.yaml` verifies, adding a starter: `docs/CLI.md`.
+`ci-scaffold.yaml` verifies, adding a starter: `docs/CLI.md`.
 
 ## Signatures
 
