@@ -12,9 +12,10 @@ repo, generates a secp256k1 keypair for it and writes its `.env`.
    build time — so the CLI always ships the starters of the commit it was built from.
 2. Writes the overlay for that `<lang>/<role>` over the extracted files (below).
 3. Generates a keypair and writes `.env` from the starter's `.env.example`: the private key goes
-   into `PROVIDER_PRIVATE_KEY`, the matching public key replaces the `# your_public_key_here`
-   comment right under it and is printed at the end, `NETWORK_PUBLIC_KEY` is left for the user to
-   fill in from their onboarding contact. `.env` is written `0600`.
+   into `PROVIDER_PRIVATE_KEY`, the matching public key is recorded on a comment line right under
+   it and printed at the end, `NETWORK_PUBLIC_KEY` is left for the user to fill in from their
+   onboarding contact — the "Next Steps" the CLI prints say so (`NextSteps` in `config.go`).
+   `.env` is written `0600`.
 
 ## What is synced and what is owned here
 
@@ -31,7 +32,7 @@ Everything else under `cli/` is repo-owned:
 
 | File | Purpose |
 |---|---|
-| `config.go` | the product's `CLIConfig`: `ProductName`, `Command`, `RoleRequired`, `Languages`, `OverlayFS` |
+| `config.go` | the product's `CLIConfig`: `ProductName`, `Command`, `Description`, `RoleRequired`, `Languages`, `NextSteps`, `OverlayFS` |
 | `overlay.go` | one `//go:embed all:overlay` — the overlay files as an `embed.FS` |
 | `overlay/<lang>/<role>/` | the files that cannot ship verbatim (below) |
 | `generate.go` | the `go generate` step that embeds the starters |
@@ -69,7 +70,7 @@ proven by:
   - the overlay exists and every one of its files lands byte for byte;
   - `.env` holds a fresh key: `0x` + 64 hex, a valid secp256k1 scalar, unique across
     instantiations, and the public key printed to the user and the one recorded in `.env` both
-    derive from it; `.env.example` keeps its placeholders; `.env` is `0600`.
+    derive from it; `.env.example` keeps its empty `PROVIDER_PRIVATE_KEY=`; `.env` is `0600`.
 - **`cli/scaffold_test.go`** — embed path handling and the name helpers.
 - **`.github/workflows/ci-go.yaml`** — `go generate`, `go build`, `go test` in `cli/`; the
   tests above, run in CI. Triggered by `cli/**`.
@@ -94,8 +95,8 @@ proven by:
 ## Adding a starter
 
 1. The starter itself under `java/starter/<role>/` or `node/starter/<role>/`, wired into
-   `cli/generate.go`. Its `.env.example` needs `PROVIDER_PRIVATE_KEY=` and the
-   `# your_public_key_here` line.
+   `cli/generate.go`. Its `.env.example` needs an active `PROVIDER_PRIVATE_KEY=` line; the
+   scaffolder records the public key under it by itself.
 2. `cli/overlay/<lang>/<role>/` with `Dockerfile`, `.dockerignore` and `README.md`.
 3. A new language: add it to `Languages` in `config.go` and a build-and-test case to the loop in
    `ci-scaffold.yaml`. Nothing in the tests needs editing.

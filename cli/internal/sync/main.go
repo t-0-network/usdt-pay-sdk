@@ -10,7 +10,7 @@
 //   - Filters out build artifacts (node_modules, dist, __pycache__, build, .venv, etc.)
 //   - Renames .go/.mod/.sum → .tmpl for Go templates (prevents go:embed compilation)
 //   - For Go templates: replaces the literal module path with {{MODULE_PATH}}
-//   - Skips .git directories and OS metadata files
+//   - Skips .git directories, OS metadata files, and .env / .env.* except .env.example
 package main
 
 import (
@@ -122,6 +122,11 @@ func copyTree(srcDir, destDir, lang string) error {
 		}
 
 		if skipFiles[base] {
+			return nil
+		}
+		// A developer's local .env (with a real private key) must never become
+		// part of the template; only the example ships.
+		if base == ".env" || (strings.HasPrefix(base, ".env.") && base != ".env.example") {
 			return nil
 		}
 
