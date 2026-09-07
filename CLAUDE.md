@@ -54,19 +54,31 @@ A bot PR from the backend adds/updates `proto/` and regenerates `node/sdk/src/ge
 
 ## The CLI sync
 
-`cli/` is synced from `t-0-network/provider-sdk` — most files are upstream-owned
-and local patches will be overwritten by the next sync PR. Repo-owned files:
+`cli/` is synced from `t-0-network/provider-sdk`. Exactly eight files are
+upstream-owned and overwritten by every sync PR (the list is
+`.github/workflows/cli-sync-config/usdt-pay-sdk.yaml` upstream): `main.go`,
+`scaffold.go`, `keygen.go`, `keygen_test.go`, `env.go`, `go.mod`, `go.sum`,
+`internal/sync/main.go`. Fix bugs there by upstreaming to provider-sdk first,
+then letting the sync carry the fix here. Everything else is repo-owned:
 
-- `cli/config.go` — product-specific config (`ProductName`, `Languages`, `RoleRequired`)
-- `cli/overlay/` — standalone Dockerfiles, `.dockerignore`, and READMEs for
-  scaffolded projects (applied over the repo-context originals after template
-  extraction)
-- `cli/install.sh` and `cli/install.ps1` — installer scripts
+- `cli/config.go` — product config (`ProductName`, `Languages`, `RoleRequired`,
+  `OverlayFS`)
+- `cli/overlay.go` — one `//go:embed all:overlay`; `cli/overlay/<lang>/<role>/`
+  holds the standalone Dockerfile, `.dockerignore` and README that replace the
+  monorepo-context originals. The synced scaffolder applies them itself through
+  `Config.OverlayFS` (`applyOverlay` in `scaffold.go`, called from `run()`) —
+  nothing product-specific lives in synced files
+- `cli/overlay_test.go` — enumerates every embedded lang/role, requires an
+  overlay for each, and runs `run()` end-to-end comparing the output with the
+  overlay byte for byte. A sync that drops the `OverlayFS` seam turns these red;
+  a new starter without an overlay does too
+- `cli/scaffold_test.go`, `cli/generate.go`, `cli/install.sh`, `cli/install.ps1`
 
-Everything else (`main.go`, `scaffold.go`, `env.go`, `keygen.go`,
-`internal/sync/main.go`, `generate.go`, `keygen_test.go`) comes from the sync.
-Fix bugs there by upstreaming to provider-sdk first, then letting the sync carry
-the fix here.
+A green bot sync PR only means `cli/` still compiles: `ci-go.yaml` additionally
+scaffolds every embedded lang/role with the built binary, diffs the result
+against `cli/overlay/`, and (on PRs) compiles the scaffolded project against the
+published SDK. Adding a starter means adding its overlay and, if it is a new
+language, a compile case in that workflow's loop.
 
 ## Signatures
 
