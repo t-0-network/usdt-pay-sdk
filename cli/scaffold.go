@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -14,15 +15,17 @@ import (
 //go:embed all:internal/embed
 var embeddedTemplates embed.FS
 
-//go:embed all:overlay
-var overlayFiles embed.FS
-
 type CLIConfig struct {
 	ProductName  string
 	Command      string
 	RoleRequired bool
 	DefaultRole  string
 	Languages    []string
+	// OverlayFS, when set, holds product files written over the scaffolded
+	// output after template extraction. Layout: overlay/<lang>[/<role>]/...
+	// Files are copied verbatim (no placeholder or filename transforms).
+	// Products typically set this to an embed.FS of their overlay/ directory.
+	OverlayFS    fs.FS
 	PostScaffold func(ScaffoldOpts) error
 }
 
@@ -33,7 +36,9 @@ type ScaffoldOpts struct {
 	ProjectDir  string
 	// Go-specific: module path for import rewriting
 	ModulePath string
-	// CLI version (injected at build time via ldflags)
+	// Java-specific: SDK repository (jitpack or maven-central)
+	JavaRepo string
+	// CLI version (injected into Java template's SDK version)
 	Version string
 }
 
@@ -54,7 +59,7 @@ func scaffold(opts ScaffoldOpts) error {
 
 	pascalName := toPascalCase(opts.ProjectName)
 
-	if err := fs.WalkDir(embeddedTemplates, templateRoot, func(src string, d fs.DirEntry, err error) error {
+	return fs.WalkDir(embeddedTemplates, templateRoot, func(src string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -96,26 +101,26 @@ func scaffold(opts ScaffoldOpts) error {
 		content = processPlaceholders(content, opts, pascalName)
 
 		return writeFileWithMode(destPath, []byte(content), src)
-	}); err != nil {
-		return err
-	}
-
-	// Apply overlay files (standalone Dockerfiles, .dockerignore, etc.) that
-	// replace the in-repo versions with ones suited for a scaffolded project.
-	return applyOverlay(opts)
+	})
 }
 
-func applyOverlay(opts ScaffoldOpts) error {
+// applyOverlay writes every file under overlay/<lang>[/<role>] in overlayFS
+// over the scaffolded project, verbatim. A missing overlay root is not an
+// error: most lang/role combinations have no overlay.
+func applyOverlay(overlayFS fs.FS, opts ScaffoldOpts) error {
 	overlayRoot := path.Join("overlay", opts.Lang)
 	if opts.Role != "" {
 		overlayRoot = path.Join(overlayRoot, opts.Role)
 	}
 
-	if _, err := overlayFiles.ReadDir(overlayRoot); err != nil {
-		return nil
+	if _, err := fs.ReadDir(overlayFS, overlayRoot); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil
+		}
+		return fmt.Errorf("reading overlay %s: %w", overlayRoot, err)
 	}
 
-	return fs.WalkDir(overlayFiles, overlayRoot, func(src string, d fs.DirEntry, err error) error {
+	return fs.WalkDir(overlayFS, overlayRoot, func(src string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -125,16 +130,16 @@ func applyOverlay(opts ScaffoldOpts) error {
 
 		rel := strings.TrimPrefix(src, overlayRoot+"/")
 
-		data, err := overlayFiles.ReadFile(src)
+		data, err := fs.ReadFile(overlayFS, src)
 		if err != nil {
 			return fmt.Errorf("reading overlay file %s: %w", src, err)
 		}
 
-		destPath := filepath.Join(opts.ProjectDir, rel)
+		destPath := filepath.Join(opts.ProjectDir, filepath.FromSlash(rel))
 		if err := os.MkdirAll(filepath.Dir(destPath), 0777); err != nil {
 			return err
 		}
-		return os.WriteFile(destPath, data, 0666)
+		return writeFileWithMode(destPath, data, src)
 	})
 }
 
@@ -164,6 +169,18 @@ func processPlaceholders(content string, opts ScaffoldOpts, pascalName string) s
 	// Go: module path replacement (injected by sync tool as {{MODULE_PATH}})
 	if opts.ModulePath != "" {
 		content = strings.ReplaceAll(content, "{{MODULE_PATH}}", opts.ModulePath)
+	}
+
+	// Java: SDK version pinning
+	if opts.Lang == "java" {
+		if opts.Version != "" && opts.Version != "dev" {
+			content = strings.ReplaceAll(content, `:+"`, `:`+opts.Version+`"`)
+		}
+		if opts.JavaRepo == "maven-central" {
+			content = strings.ReplaceAll(content,
+				`val sdkRepository = "jitpack"`,
+				`val sdkRepository = "maven-central"`)
+		}
 	}
 
 	return content

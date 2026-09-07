@@ -49,7 +49,8 @@ an echo of its own input.
 
 ### Phase 1 — server
 
-1. **1.1** With `PROVIDER_PRIVATE_KEY` set in `.env`, start the app and see it print your public key.
+1. **1.1** With `PROVIDER_PRIVATE_KEY` set in `.env`, start the app and see it print your public key
+   (it is also recorded as a comment in `.env`, right under the private key).
 2. **1.2** Send that public key to your t-0 onboarding contact, together with the
    base URL where this service listens. Onboarding runs through the contact you
    already have at t-0 — there is no self-service channel, and the same exchange is

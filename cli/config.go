@@ -6,4 +6,5 @@ var Config = CLIConfig{
 	RoleRequired: true,
 	DefaultRole:  "",
 	Languages:    []string{"java", "node"},
+	OverlayFS:    overlayFiles,
 }

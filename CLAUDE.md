@@ -11,7 +11,7 @@ proto/tzero/v1/pay/      the contract: common.proto + validate.proto in package
                          tzero.v1.pay; acquirer/, issuer/, lp/ as per-role packages
 java/                    Gradle build: sdk, starter/acquirer
 node/                    npm workspace: sdk, starter/issuer
-cli/                     unified scaffolder (Go) — `usdt-pay init`
+cli/                     unified scaffolder (Go) — `usdt-pay init`; docs/CLI.md
 docs/RELEASE_AND_PUBLISH.md   the release process — read before touching versions,
                               tags, or the publish workflows
 ```
@@ -54,19 +54,14 @@ A bot PR from the backend adds/updates `proto/` and regenerates `node/sdk/src/ge
 
 ## The CLI sync
 
-`cli/` is synced from `t-0-network/provider-sdk` — most files are upstream-owned
-and local patches will be overwritten by the next sync PR. Repo-owned files:
-
-- `cli/config.go` — product-specific config (`ProductName`, `Languages`, `RoleRequired`)
-- `cli/overlay/` — standalone Dockerfiles, `.dockerignore`, and READMEs for
-  scaffolded projects (applied over the repo-context originals after template
-  extraction)
-- `cli/install.sh` and `cli/install.ps1` — installer scripts
-
-Everything else (`main.go`, `scaffold.go`, `env.go`, `keygen.go`,
-`internal/sync/main.go`, `generate.go`, `keygen_test.go`) comes from the sync.
-Fix bugs there by upstreaming to provider-sdk first, then letting the sync carry
-the fix here.
+`cli/` is a product instance of provider-sdk's unified CLI. Eight files are
+synced from upstream and overwritten by every sync PR — `main.go`, `scaffold.go`,
+`keygen.go`, `keygen_test.go`, `env.go`, `go.mod`, `go.sum`,
+`internal/sync/main.go` — so a bug in them is fixed in provider-sdk first.
+Everything else under `cli/` is repo-owned. A green sync PR proves only that
+`cli/` compiles; `go test ./...` in `cli/` is what proves the scaffolder still
+works. How the pieces fit — embedded starters, `cli/overlay/`, the tests, what
+`ci-go.yaml` verifies, adding a starter: `docs/CLI.md`.
 
 ## Signatures
 
