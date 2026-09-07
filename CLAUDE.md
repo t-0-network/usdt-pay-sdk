@@ -27,6 +27,9 @@ cd node && npm install && npm run build && npm run typecheck && npm test
 
 # Java — wrapper only, never a local gradle
 cd java && ./gradlew build --no-daemon
+
+# CLI — generate embeds the starters; the tests instantiate every one of them
+cd cli && go generate ./... && go build ./... && go test ./...
 ```
 
 CI (`ci-java.yaml`, `ci-node.yaml`, `ci-go.yaml`) runs exactly these builds; if they pass locally the tree is
