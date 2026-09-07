@@ -297,22 +297,17 @@ func TestRun_WritesFreshPrivateKey(t *testing.T) {
 
 				// The same public key is recorded as a comment in .env, so a user
 				// who missed the startup output can still find what to send t-0.
+				// The scaffolder writes it under the private key on its own; the
+				// starters' .env.example carry no marker for it.
 				envRaw, err := os.ReadFile(envPath)
 				if err != nil {
 					t.Fatal(err)
 				}
 				switch recorded := printedPublicKeyRe.FindString(string(envRaw)); {
 				case recorded == "":
-					t.Errorf(".env does not record the public key — the .env.example placeholder '# your_public_key_here' is missing")
+					t.Errorf(".env does not record the public key under PROVIDER_PRIVATE_KEY:\n%s", envRaw)
 				case recorded != derivedPub:
 					t.Errorf("public key recorded in .env %s does not derive from the private key on the line above (derives %s)", recorded, derivedPub)
-				}
-				exampleRaw, err := os.ReadFile(filepath.Join(projectDir, ".env.example"))
-				if err != nil {
-					t.Fatal(err)
-				}
-				if !strings.Contains(string(exampleRaw), "# your_public_key_here") {
-					t.Errorf(".env.example lost its public-key placeholder")
 				}
 
 				if _, dup := seenPriv[priv]; dup {
