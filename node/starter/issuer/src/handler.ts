@@ -7,8 +7,8 @@ import {
   CreatePaymentInstructionsResponseSchema,
   type Decimal,
   type IssuerCallbackService,
-  type QrOption,
-  QrOptionSchema,
+  type DepositOption,
+  DepositOptionSchema,
 } from "@t-0/usdt-pay-sdk";
 import { decimalToString, decimalToUnits } from "./internal/decimals.js";
 
@@ -56,17 +56,19 @@ export const issuerCallbackHandler: ServiceImpl<typeof IssuerCallbackService> = 
 
     // TODO: Step 2.3 — delete the decline above and return this instead, once the
     //       addresses come from your own pool. One option per chain you support for
-    //       this intent; the customer picks one. The two hex constants are the real
-    //       USDt contracts on each chain and stay as they are — it is the deposit
-    //       addresses that must become yours.
+    //       this intent; the customer picks one. The three USDt contract constants
+    //       are real and stay as they are — it is the deposit addresses that must
+    //       become yours. TRON is not accepted until it goes live (ETH and BSC are
+    //       live at launch).
     //
     // const amountUsdt = request.amountUsdt!;
     // return create(CreatePaymentInstructionsResponseSchema, {
     //   result: {
     //     case: "success",
     //     value: {
-    //       qrOptions: [
-    //         tron(yourTronDepositAddress, amountUsdt),
+    //       depositOptions: [
+    //         tron("TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+    //              yourTronDepositAddress, amountUsdt),
     //         evm(Blockchain.ETH, 1, "0xdAC17F958D2ee523a2206206994597C13D831ec7",
     //             yourEthDepositAddress, amountUsdt),
     //         evm(Blockchain.BSC, 56, "0x55d398326f99059fF775485246999027B3197955",
@@ -80,15 +82,17 @@ export const issuerCallbackHandler: ServiceImpl<typeof IssuerCallbackService> = 
 };
 
 /**
- * renderablePayload is chain-native and the POS encodes it as a QR image without
- * touching it — so it has to be complete and correct here.
+ * `paymentUri` is chain-native and the POS encodes it as a QR image without
+ * touching it — so it has to be complete and correct here. `tokenContract` is
+ * the USDT contract on that chain.
  */
-function tron(depositAddress: string, amountUsdt: Decimal): QrOption {
+function tron(usdtContract: string, depositAddress: string, amountUsdt: Decimal): DepositOption {
   // TRON wallets read a TIP-681-style URI; amount is in USDt units.
-  return create(QrOptionSchema, {
+  return create(DepositOptionSchema, {
     chain: Blockchain.TRON,
     depositAddress,
-    renderablePayload: `tron:${depositAddress}?amount=${decimalToString(amountUsdt)}`,
+    paymentUri: `tron:${depositAddress}?amount=${decimalToString(amountUsdt)}`,
+    tokenContract: usdtContract,
   });
 }
 
@@ -98,13 +102,14 @@ function evm(
   usdtContract: string,
   depositAddress: string,
   amountUsdt: Decimal,
-): QrOption {
+): DepositOption {
   // ERC-681: pay <amount> of the USDt contract to <depositAddress> on <chainId>.
   // USDt is 6 decimals on both Ethereum and BSC-pegged deployments here.
   const units = decimalToUnits(amountUsdt, 6);
-  return create(QrOptionSchema, {
+  return create(DepositOptionSchema, {
     chain,
     depositAddress,
-    renderablePayload: `ethereum:${usdtContract}@${chainId}/transfer?address=${depositAddress}&uint256=${units}`,
+    paymentUri: `ethereum:${usdtContract}@${chainId}/transfer?address=${depositAddress}&uint256=${units}`,
+    tokenContract: usdtContract,
   });
 }

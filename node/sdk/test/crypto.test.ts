@@ -25,7 +25,7 @@ import {
   IssuerCallbackService,
   payRegistry,
   publicKeyFromPrivateKey,
-  QrOptionSchema,
+  DepositOptionSchema,
   UsdtOnChainPaymentSchema,
 } from "../src/index.js";
 import { TimestampSchema } from "@bufbuild/protobuf/wkt";
@@ -331,7 +331,7 @@ describe("createRequestDecoder", () => {
     assert.equal(result.error.status, 415);
   });
 
-  test("encodeResponse with valid Success + QrOption through payRegistry → 200", () => {
+  test("encodeResponse with valid Success + DepositOption through payRegistry → 200", () => {
     const { priv, publicKeyHex } = newKeypair();
     const decode = createRequestDecoder({ networkPublicKey: publicKeyHex });
 
@@ -349,11 +349,12 @@ describe("createRequestDecoder", () => {
       result: {
         case: "success",
         value: create(CreatePaymentInstructionsResponse_SuccessSchema, {
-          qrOptions: [
-            create(QrOptionSchema, {
+          depositOptions: [
+            create(DepositOptionSchema, {
               chain: Blockchain.TRON,
               depositAddress: "TN2x2mHMRe8ufaM75sMnZGBfPGv7gM4jnk",
-              renderablePayload: "usdt-tron:TN2x2mHMRe8ufaM75sMnZGBfPGv7gM4jnk?amount=10.00",
+              paymentUri: "usdt-tron:TN2x2mHMRe8ufaM75sMnZGBfPGv7gM4jnk?amount=10.00",
+              tokenContract: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
             }),
           ],
           expiresAt: futureTimestamp,
@@ -361,7 +362,7 @@ describe("createRequestDecoder", () => {
       },
     });
     const wire = result.encodeResponse(CreatePaymentInstructionsResponseSchema, resp);
-    assert.equal(wire.status, 200, "valid Success with QrOption should encode as 200");
+    assert.equal(wire.status, 200, "valid Success with DepositOption should encode as 200");
   });
 
   test("encodeResponse with invalid response (empty oneof) → 500", () => {

@@ -67,8 +67,8 @@ Implement `createPaymentInstructions` in `src/handler.ts`.
    burn a second set out of the pool.
 2. **2.2** Resolve the settlement wallet for `acquirerId` from your onboarding
    mapping and keep it with the reservation; `SettlementSent` needs it.
-3. **2.3** Reserve one address per chain you support, build each
-   `renderablePayload` as a chain-native URI (the POS encodes it untouched), and
+3. **2.3** Reserve one address per chain you support, build each option's `paymentUri` as a chain-native URI and set
+   `tokenContract` to the USDT contract on that chain (the POS encodes it untouched), and
    hold the reservation until `expiresAt`. t-0 currently asks for a 60–120 second
    window.
 4. **2.4** Out of addresses, or the amount is outside your range? Answer with the
@@ -84,7 +84,7 @@ fails the moment the success branch goes live with someone else's addresses.
 
 The response you should return sits directly below the decline, commented out, with
 the TRON/Ethereum/BSC options already shaped. Put your own deposit addresses in,
-delete the decline, and the QR flow works. The two USDt contract constants in there
+delete the decline, and the QR flow works. The three USDt contract constants in there
 are real and stay as they are — it is the deposit addresses that must become yours.
 
 ### Phase 3 — report what you see on-chain
@@ -149,7 +149,8 @@ resending those same bytes only spins.
 routed through a JS float loses cents at amounts a POS actually rings up.
 
 The cheapest correct thing to do with an amount t-0 sent you is not to convert it at
-all — `PaymentReceived` has to report exactly the amount `CreatePaymentInstructions` carried.
+all — report the amount the deposit actually credited; t-0 compares it to the
+intent and answers AMOUNT_MISMATCH on the authorized outcome.
 
 ## Testing your integration
 

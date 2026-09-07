@@ -20,9 +20,9 @@ const TIMEOUT_MS = 10_000;
  * Idempotency key: `paymentIntentId`. Retry with the same id and identical content
  * until t-0 answers; it is delivered at least once by design.
  *
- * `amountUsdt` must equal the intent's stored amount *exactly* — t-0 rejects anything
- * else with AMOUNT_MISMATCH. Pass through the `Decimal` §5 handed you rather than
- * rebuilding it from your own records.
+ * `amountUsdt` — report the amount the deposit actually credited; t-0 compares it to
+ * the intent and answers AMOUNT_MISMATCH on the authorized outcome. Pass through the
+ * `Decimal` §5 handed you rather than rebuilding it from your own records.
  */
 export async function reportPaymentReceived(
   t0: Client<typeof IssuerService>,

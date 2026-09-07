@@ -35,8 +35,8 @@ cp .env.example .env      # then fill in PROVIDER_PRIVATE_KEY and NETWORK_PUBLIC
 
 It prints your public key, starts the callback server, and runs one demo sale
 through `GetPaymentQuote` → `CreatePaymentIntent`. That demo is a **fiat-mode**
-sale: if you settle in USDt you skip `GetPaymentQuote` entirely and set your own
-rate on `CreatePaymentIntent`, so do not read your own first call off it —
+sale: if you settle in USDt you skip `GetPaymentQuote` entirely and send the
+amount in USDt on `CreatePaymentIntent`, so do not read your own first call off it —
 [What you implement](#what-you-implement) says which half is yours.
 
 To run the starter's own tests:
@@ -54,7 +54,7 @@ To run the starter's own tests:
 | Direction | Endpoint | What it does | Where |
 |---|---|---|---|
 | you → t-0 | `GetPaymentQuote` | Prices a fiat sale (fiat only) | `internal/GetPaymentQuote.java` |
-| you → t-0 | `CreatePaymentIntent` | Opens an intent, returns QR options | `internal/CreatePaymentIntent.java` |
+| you → t-0 | `CreatePaymentIntent` | Opens an intent, returns the payment instructions (deposit options) | `internal/CreatePaymentIntent.java` |
 | you → t-0 | `SettlementReceived` | You confirm the fiat landed (fiat only) | `internal/SettlementReceived.java` |
 | t-0 → you | `PaymentAuthorized` | Sale approved, release goods | `handler/AcquirerCallbackHandler.java` |
 | t-0 → you | `SettlementInitiated` | LP sent a bank transfer, pre-notice (fiat only) | `handler/AcquirerCallbackHandler.java` |
@@ -80,8 +80,8 @@ endpoint's mode. Fiat mode: `SettlementCompleted` never fires. USDt mode: skip
 
 1. **2.1** Replace the demo sale in `Main.java` — currency, amount and `paymentRef`
    are declared there once and handed to both calls, because a quote and an intent
-   that disagree price one thing and charge another. In USDt mode drop
-   `GetPaymentQuote` and go straight to `CreatePaymentIntent` with your own rate.
+   that disagree price one thing and charge another. On-chain settlement: skip `GetPaymentQuote` and send the amount in USDt on
+   `CreatePaymentIntent`.
 2. **2.2** Mint `paymentRef` and `idempotencyKey` when the sale is created rather
    than at call time, and persist the returned `paymentIntentId` against the sale.
    `paymentRef` is your sale's correlation ref — t-0 echoes it on `PaymentAuthorized`
@@ -91,7 +91,8 @@ endpoint's mode. Fiat mode: `SettlementCompleted` never fires. USDt mode: skip
    intent is ever created under one key, repeating a key returns that intent unchanged,
    and retrying a *declined* sale takes a fresh key under the same `paymentRef`.
    Keying `CreatePaymentIntent` on `paymentRef` opens a second intent on every retry.
-   Render each `qrOptions[].renderablePayload` as a QR image **as-is** — it is
+   Render each deposit option's `paymentUri` (from `getUsdtOnChain().getDepositOptionsList()`,
+   once `getInstructionsCase()` says `USDT_ON_CHAIN`) as a QR image **as-is** — it is
    chain-native, and rebuilding it from the address and the amount is how you end up
    with a QR that pays the wrong thing.
 3. **2.3** Deploy and give your t-0 onboarding contact the base URL Phase 3's
@@ -105,9 +106,11 @@ Implement the callbacks in `handler/AcquirerCallbackHandler.java`.
 1. **3.1** `PaymentAuthorized` — mark the sale authorized and release the goods.
    From here the Issuer is obligated to settle; settlement lands later.
 2. **3.2** `SettlementInitiated` — record `(lpId, bankTransferRef)` as a transfer to
-   watch for. Fiat mode only, and *not* proof of receipt.
+   watch for. Fiat mode only, and *not* proof of receipt. Check `acquirerId` is yours;
+   refuse the callback otherwise.
 3. **3.3** `SettlementCompleted` — close out every intent in
-   `settledPaymentIntentIds`. USDt mode only; leave as a no-op in fiat mode.
+   `settledPaymentIntentIds`. USDt mode only; leave as a no-op in fiat mode. Check
+   `acquirerId` is yours; refuse the callback otherwise.
 4. **3.4** `PaymentExpired` — cancel the pending sale and take the QR off the POS.
 
 ### Phase 4 — confirm the fiat leg
@@ -206,7 +209,7 @@ var t0 = AcquirerServiceGrpc.newBlockingStub(
         InProcessChannelBuilder.forName(name).directExecutor().build());
 
 assertTrue(CreatePaymentIntent.create(
-        t0, "sale-1", idempotencyKey, Decimals.of("100000.00"), quoteId).shouldRetry());
+        t0, "sale-1", idempotencyKey, "COP", Decimals.of("100000"), quoteId).shouldRetry());
 ```
 
 `src/test/java/network/t0/pay/acquirer/internal/CreatePaymentIntentTest.java`
@@ -226,7 +229,7 @@ src/main/java/network/t0/pay/acquirer/
 │                                        # SettlementCompleted, PaymentExpired
 └── internal/
     ├── GetPaymentQuote.java             # prices a fiat sale
-    ├── CreatePaymentIntent.java         # opens an intent, returns QR options
+    ├── CreatePaymentIntent.java         # opens an intent, returns payment instructions
     ├── SettlementReceived.java          # you confirm the fiat landed
     ├── Outcome.java                     # accepted / rejected / unknown
     ├── Decimals.java                    # unscaled × 10^exponent ↔ BigDecimal
