@@ -22,7 +22,7 @@ const TIMEOUT_MS = 10_000;
  *
  * `amountUsdt` — report the amount the deposit actually credited; t-0 compares it to
  * the intent and answers AMOUNT_MISMATCH on the authorized outcome. Pass through the
- * `Decimal` §5 handed you rather than rebuilding it from your own records.
+ * `Decimal` observed on-chain rather than rebuilding it from your own records.
  */
 export async function reportPaymentReceived(
   t0: Client<typeof IssuerService>,

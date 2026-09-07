@@ -10,8 +10,8 @@ import { type Decimal, DecimalSchema } from "@t-0/usdt-pay-sdk";
  * is integer arithmetic on purpose — there is no `toNumber`.
  *
  * The cheapest correct thing you can do with an amount t-0 sent you is *not convert
- * it*: §6 has to report exactly the amount §5 carried, so pass that `Decimal` through
- * untouched rather than rebuilding it.
+ * it*: `PaymentReceived` reports the amount the deposit actually credited, so pass
+ * that `Decimal` through untouched rather than rebuilding it.
  */
 
 /** The contract constrains exponent to this range; anything else is rejected on the wire. */
