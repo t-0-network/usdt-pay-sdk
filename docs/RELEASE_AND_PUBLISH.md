@@ -52,7 +52,7 @@ Adding a role is adding a directory under the appropriate `starter/` and wiring 
 `cli/generate.go`. `cli/overlay/<lang>/<role>/` holds files that cannot ship verbatim — currently
 the Dockerfiles, whose in-repo form takes the workspace as its build context while a scaffolded
 project resolves the SDK from a registry. They are applied by the synced scaffolder through
-`Config.OverlayFS` (`cli/config.go` + `cli/overlay.go`); `cli/overlay_test.go` and `ci-go.yaml`
+`Config.OverlayFS` (`cli/config.go` + `cli/overlay.go`); `cli/starters_test.go` and `ci-go.yaml`
 fail if a role has no overlay or the overlay does not land in the scaffolded output.
 
 **Not a version site:** `java/starter/acquirer/build.gradle.kts`'s `version = "0.1.0-SNAPSHOT"`.
@@ -316,28 +316,25 @@ version-matches-tag assertion. The [version sites table](#version-sites) above g
 ### Go
 
 Copy provider-sdk's [`publish-go` job](https://github.com/t-0-network/provider-sdk/blob/master/.github/workflows/publish.yaml)
-wholesale — Go publishing has the most moving parts and all of them were learned the hard way
-(provider-sdk [#251](https://github.com/t-0-network/provider-sdk/pull/251),
-[#255](https://github.com/t-0-network/provider-sdk/pull/255),
-[#319](https://github.com/t-0-network/provider-sdk/pull/319)):
+wholesale — Go publishing has the most moving parts:
 
 - Multi-module tags `go/vX.Y.Z` per module, created in **`publish.yaml`**, not `release.yaml` —
   they must not exist before the modules' `go.sum`s are proven.
 - **sumtool** precomputes `go.sum` against a local `file://` GOPROXY before the tag exists, and the
   publish step verifies with `-mod=readonly` — a missing or wrong hash fails there.
-- The `GOPROXY` chain is `file://${PROXY_DIR},https://proxy.golang.org,direct`, **behind a
-  file-proxy-only `go mod download` gate** — copy the block from provider-sdk's `release.yaml`
-  verbatim and read "Things not to do here" in its
+- The `GOPROXY` chain is `file://${PROXY_DIR},https://proxy.golang.org,direct`, behind a
+  file-proxy-only `go mod download` gate — copy the block from provider-sdk's `release.yaml`
+  verbatim; its
   [`RELEASE_AND_PUBLISH.md`](https://github.com/t-0-network/provider-sdk/blob/master/docs/RELEASE_AND_PUBLISH.md)
-  before changing it in either direction. The `file://` layout answers every request about the
+  explains the mechanism. In short: the `file://` layout answers every request about the
   unreleased module and Go moves to the next proxy only on a 404, so `proxy.golang.org` is never
-  asked about it; the gate turns a broken layout into a local failure instead of a pre-tag query.
-  `direct` alone is not durable: on 2026-09-07 `github.com/google/cel-go` moved and every
-  `file://…,direct` template build in provider-sdk failed until #319 restored the proxy. The
-  v1.1.29 poisoning came from a template build on the release commit with the *default*
-  `GOPROXY` plus a warm-up query seconds after the tag push — both gone since #251, not from
-  this chain. `GONOSUMDB` covers our own modules so `sum.golang.org` is not consulted for tags it
-  has not seen; never `GOPRIVATE`/`GONOPROXY`, which bypass the `file://` layout too.
+  asked about a version that has no tag yet (a 404 there is cached for about 30 minutes and blocks
+  the version for everyone); the gate turns a broken layout into a local failure instead of that
+  query. `proxy.golang.org` must stay in the chain: with `direct` alone every third-party module is
+  fetched from its upstream git host, and the build works only while every one of those
+  repositories still exists under its module path — the proxy serves pinned versions from an
+  immutable cache. `GONOSUMDB` covers our own modules so `sum.golang.org` is not consulted for
+  tags it has not seen; never `GOPRIVATE`/`GONOPROXY`, which bypass the `file://` layout too.
 - A `LICENSE` file must sit **in each module directory**. `cmd/go` synthesizes the repo-root
   LICENSE into the module zip; `x/mod/zip.CreateFromDir` does not — and the two producing
   different zips is a checksum divergence users see as a security error.

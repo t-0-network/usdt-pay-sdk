@@ -68,10 +68,11 @@ then letting the sync carry the fix here. Everything else is repo-owned:
   monorepo-context originals. The synced scaffolder applies them itself through
   `Config.OverlayFS` (`applyOverlay` in `scaffold.go`, called from `run()`) —
   nothing product-specific lives in synced files
-- `cli/overlay_test.go` — enumerates every embedded lang/role, requires an
-  overlay for each, and runs `run()` end-to-end comparing the output with the
-  overlay byte for byte. A sync that drops the `OverlayFS` seam turns these red;
-  a new starter without an overlay does too
+- `cli/starters_test.go` — enumerates every embedded lang/role and runs `run()`
+  end-to-end for each: overlay present and applied byte for byte, and `.env`
+  carries a fresh secp256k1 private key (valid scalar, unique across runs, the
+  public key printed to the user derives from it, `0600`). A sync that drops the
+  `OverlayFS` seam turns these red; a new starter without an overlay does too
 - `cli/scaffold_test.go`, `cli/generate.go`, `cli/install.sh`, `cli/install.ps1`
 
 A green bot sync PR only means `cli/` still compiles: `ci-go.yaml` additionally

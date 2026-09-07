@@ -62,7 +62,8 @@ endpoint's mode. Fiat mode: `SettlementCompleted` never fires. USDt mode: skip
 
 ### Phase 1 — keys and server
 
-1. **1.1** With `PROVIDER_PRIVATE_KEY` set in `.env`, start the app and see it print your public key.
+1. **1.1** With `PROVIDER_PRIVATE_KEY` set in `.env`, start the app and see it print your public key
+   (it is also recorded as a comment in `.env`, right under the private key).
 2. **1.2** Send that public key to your t-0 onboarding contact. Until they have it,
    every call you make is rejected. Onboarding runs through the contact you already
    have at t-0 — there is no self-service channel, and the same exchange is where
