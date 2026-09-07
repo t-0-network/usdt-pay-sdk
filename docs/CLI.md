@@ -70,13 +70,14 @@ proven by:
 - **`cli/scaffold_test.go`** — template extraction details (`dot-gitignore` → `.gitignore`,
   embed path handling) and the name helpers.
 - **`.github/workflows/ci-go.yaml`** — after the tests, builds the binary, scaffolds every
-  embedded `<lang>/<role>` with it, `cmp`s the overlay, and compiles each scaffolded project
-  **against the SDK in this tree**: Java through `publishToMavenLocal` into an isolated
-  `maven.repo.local` at version `0.0.0-local` (a version no registry can have) plus an init script
-  adding `mavenLocal()`, Node through `npm pack` and installing the tarball. Not against the
+  embedded `<lang>/<role>` with it, `cmp`s the overlay, and builds and runs the tests of each
+  scaffolded project **against the SDK in this tree**: Java through `publishToMavenLocal` into an
+  isolated `maven.repo.local` under version `0.0.0-local` (not published anywhere) plus an init
+  script adding `mavenLocal()`, Node through `npm pack` and installing the tarball. Not against the
   published SDK: between a proto sync and the next release the starters use SDK changes that are
   not published yet, while the released CLI always embeds a starter that matches the SDK released
-  with it. A language without a compile case fails the loop loudly.
+  with it. SDK and proto changes trigger the workflow too. A language without a case fails the
+  loop loudly.
 
 ## Handling a sync PR
 

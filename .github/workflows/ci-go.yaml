@@ -1,19 +1,23 @@
 name: CI / Go
 
+# The scaffolds are compiled against the SDKs built from this tree, so SDK and
+# proto changes are inputs of this workflow too, not only the starters.
 on:
   push:
     branches: [master]
     paths:
       - "cli/**"
-      - "java/starter/**"
-      - "node/starter/**"
+      - "java/**"
+      - "node/**"
+      - "proto/**"
       - ".github/workflows/ci-go.yaml"
   pull_request:
     branches: [master]
     paths:
       - "cli/**"
-      - "java/starter/**"
-      - "node/starter/**"
+      - "java/**"
+      - "node/**"
+      - "proto/**"
       - ".github/workflows/ci-go.yaml"
 
 concurrency:
@@ -91,10 +95,10 @@ jobs:
           cache-dependency-path: node/package-lock.json
 
       # A scaffolded project pins the *published* SDK, which lags this tree between a
-      # proto sync and the next release — so the starter is compiled against the SDK in
-      # this tree instead: Java from an isolated mavenLocal at a version Central cannot
-      # have, Node from a packed tarball. No registry dependency for the SDK, so this
-      # runs on every event, release commits included.
+      # proto sync and the next release — so the starter is built against the SDK in
+      # this tree instead: Java from an isolated mavenLocal under a version that is
+      # not published anywhere, Node from a packed tarball. No registry dependency for
+      # the SDK, so this runs on every event, release commits included.
       - name: Publish this tree's SDKs locally
         run: |
           set -euo pipefail
@@ -104,8 +108,10 @@ jobs:
           ls "${RUNNER_TEMP}"/t-0-usdt-pay-sdk-*.tgz
           printf 'allprojects { repositories { mavenLocal() } }\n' > "${RUNNER_TEMP}/mavenlocal.init.gradle"
 
-      # A new language needs a case here; the loop fails loudly without one.
-      - name: Compile every scaffolded starter against this tree's SDK
+      # Build and run each scaffolded project's own tests: a scaffold is a complete
+      # project, not just something that compiles. A new language needs a case here;
+      # the loop fails loudly without one.
+      - name: Build and test every scaffolded starter against this tree's SDK
         run: |
           set -euo pipefail
           for dir in cli/internal/embed/*/*/; do
@@ -113,12 +119,12 @@ jobs:
             role=$(basename "$dir")
             out="scaffold-${lang}-${role}"
             case "$lang" in
-              java) (cd "$out" && ./gradlew compileJava --no-daemon -q \
+              java) (cd "$out" && ./gradlew test --no-daemon -q \
                        --init-script "${RUNNER_TEMP}/mavenlocal.init.gradle" \
                        -Dmaven.repo.local="${RUNNER_TEMP}/m2" \
                        -PusdtPaySdkVersion=0.0.0-local) ;;
-              node) (cd "$out" && npm install --silent --no-save --package-lock=false --no-audit --no-fund "${RUNNER_TEMP}"/t-0-usdt-pay-sdk-*.tgz && npm run build) ;;
-              *) echo "::error::no compile-verify case for lang=${lang} — add one to this step"; exit 1 ;;
+              node) (cd "$out" && npm install --silent --no-save --package-lock=false --no-audit --no-fund "${RUNNER_TEMP}"/t-0-usdt-pay-sdk-*.tgz && npm run build && npm test) ;;
+              *) echo "::error::no build-and-test case for lang=${lang} — add one to this step"; exit 1 ;;
             esac
-            echo "ok: ${lang}/${role} compiles against this tree's SDK"
+            echo "ok: ${lang}/${role} builds and tests against this tree's SDK"
           done
