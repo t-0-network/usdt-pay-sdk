@@ -149,7 +149,7 @@ jobs:
           show-progress: false
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
           go-version-file: cli/go.mod
 
@@ -313,7 +313,7 @@ jobs:
           show-progress: false
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
           go-version-file: cli/go.mod
 
