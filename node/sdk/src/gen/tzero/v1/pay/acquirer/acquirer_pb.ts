@@ -11,7 +11,7 @@ import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf
 import { file_buf_validate_validate } from "../../../../buf/validate/validate_pb.js";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
-import type { Decimal, FundsDisposition, OnChainSettlementDetails, QrOption, UsdtOnChainPayment } from "../common_pb.js";
+import type { Decimal, DepositOption, FundsDisposition, OnChainSettlementDetails, UsdtOnChainPayment } from "../common_pb.js";
 import { file_tzero_v1_pay_common } from "../common_pb.js";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -19,21 +19,94 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file tzero/v1/pay/acquirer/acquirer.proto.
  */
 export const file_tzero_v1_pay_acquirer_acquirer: GenFile = /*@__PURE__*/
-  fileDesc("CiR0emVyby92MS9wYXkvYWNxdWlyZXIvYWNxdWlyZXIucHJvdG8SFXR6ZXJvLnYxLnBheS5hY3F1aXJlciK5AQoWR2V0UGF5bWVudFF1b3RlUmVxdWVzdBIsCg5sb2NhbF9jdXJyZW5jeRgKIAEoCUIUukgRcg8yCl5bQS1aXXszfSSYAQMScQoMbG9jYWxfYW1vdW50GBQgASgLMhUudHplcm8udjEucGF5LkRlY2ltYWxCRLpIQboBOxImbG9jYWxfYW1vdW50IG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBIp4FChdHZXRQYXltZW50UXVvdGVSZXNwb25zZRJJCgdzdWNjZXNzGAogASgLMjYudHplcm8udjEucGF5LmFjcXVpcmVyLkdldFBheW1lbnRRdW90ZVJlc3BvbnNlLlN1Y2Nlc3NIABJJCgdmYWlsdXJlGBQgASgLMjYudHplcm8udjEucGF5LmFjcXVpcmVyLkdldFBheW1lbnRRdW90ZVJlc3BvbnNlLkZhaWx1cmVIABq2AgoHU3VjY2VzcxIZCghxdW90ZV9pZBgKIAEoBEIHukgEMgIgABJvCgthbW91bnRfdXNkdBgUIAEoCzIVLnR6ZXJvLnYxLnBheS5EZWNpbWFsQkO6SEC6AToSJWFtb3VudF91c2R0IG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBEmcKB2Z4X3JhdGUYHiABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEI/ukg8ugE2EiFmeF9yYXRlIG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBEjYKCmV4cGlyZXNfYXQYKCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEaogEKB0ZhaWx1cmUSVwoGcmVhc29uGAogASgOMj0udHplcm8udjEucGF5LmFjcXVpcmVyLkdldFBheW1lbnRRdW90ZVJlc3BvbnNlLkZhaWx1cmUuUmVhc29uQgi6SAWCAQIgACI+CgZSZWFzb24SFgoSUkVBU09OX1VOU1BFQ0lGSUVEEAASHAoYUkVBU09OX1FVT1RFX1VOQVZBSUxBQkxFEApCDwoGcmVzdWx0EgW6SAIIASKKBQoaQ3JlYXRlUGF5bWVudEludGVudFJlcXVlc3QSHwoLcGF5bWVudF9yZWYYCiABKAlCCrpIB3IFEAEYgAISIwoPaWRlbXBvdGVuY3lfa2V5GBQgASgJQgq6SAdyBRABGIACEnEKDGxvY2FsX2Ftb3VudBgeIAEoCzIVLnR6ZXJvLnYxLnBheS5EZWNpbWFsQkS6SEG6ATsSJmxvY2FsX2Ftb3VudCBtdXN0IGJlIGdyZWF0ZXIgdGhhbiB6ZXJvGhF0aGlzLnVuc2NhbGVkID4gMMgBARJgCg91c2R0X3NldHRsZW1lbnQYKCABKAsyRS50emVyby52MS5wYXkuYWNxdWlyZXIuQ3JlYXRlUGF5bWVudEludGVudFJlcXVlc3QuVXNkdFNldHRsZW1lbnRUZXJtc0gAEmAKD2ZpYXRfc2V0dGxlbWVudBgyIAEoCzJFLnR6ZXJvLnYxLnBheS5hY3F1aXJlci5DcmVhdGVQYXltZW50SW50ZW50UmVxdWVzdC5GaWF0U2V0dGxlbWVudFRlcm1zSAAarAEKE1VzZHRTZXR0bGVtZW50VGVybXMSLAoObG9jYWxfY3VycmVuY3kYCiABKAlCFLpIEXIPMgpeW0EtWl17M30kmAEDEmcKB2Z4X3JhdGUYFCABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEI/ukg8ugE2EiFmeF9yYXRlIG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBGjAKE0ZpYXRTZXR0bGVtZW50VGVybXMSGQoIcXVvdGVfaWQYCiABKARCB7pIBDICIABCDgoFdGVybXMSBbpIAggBIpEIChtDcmVhdGVQYXltZW50SW50ZW50UmVzcG9uc2USTQoHc3VjY2VzcxgKIAEoCzI6LnR6ZXJvLnYxLnBheS5hY3F1aXJlci5DcmVhdGVQYXltZW50SW50ZW50UmVzcG9uc2UuU3VjY2Vzc0gAEk0KB2ZhaWx1cmUYFCABKAsyOi50emVyby52MS5wYXkuYWNxdWlyZXIuQ3JlYXRlUGF5bWVudEludGVudFJlc3BvbnNlLkZhaWx1cmVIABqWBAoHU3VjY2VzcxIiChFwYXltZW50X2ludGVudF9pZBgKIAEoBEIHukgEMgIgABIsCg5sb2NhbF9jdXJyZW5jeRgUIAEoCUIUukgRcg8yCl5bQS1aXXszfSSYAQMScQoMbG9jYWxfYW1vdW50GB4gASgLMhUudHplcm8udjEucGF5LkRlY2ltYWxCRLpIQboBOxImbG9jYWxfYW1vdW50IG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBEmcKB2Z4X3JhdGUYKCABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEI/ukg8ugE2EiFmeF9yYXRlIG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBEm8KC2Ftb3VudF91c2R0GDIgASgLMhUudHplcm8udjEucGF5LkRlY2ltYWxCQ7pIQLoBOhIlYW1vdW50X3VzZHQgbXVzdCBiZSBncmVhdGVyIHRoYW4gemVybxoRdGhpcy51bnNjYWxlZCA+IDDIAQESNgoKZXhwaXJlc19hdBg8IAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARI0Cgpxcl9vcHRpb25zGEYgAygLMhYudHplcm8udjEucGF5LlFyT3B0aW9uQgi6SAWSAQIIARqpAgoHRmFpbHVyZRJbCgZyZWFzb24YCiABKA4yQS50emVyby52MS5wYXkuYWNxdWlyZXIuQ3JlYXRlUGF5bWVudEludGVudFJlc3BvbnNlLkZhaWx1cmUuUmVhc29uQgi6SAWCAQIgACLAAQoGUmVhc29uEhYKElJFQVNPTl9VTlNQRUNJRklFRBAAEh0KGVJFQVNPTl9JU1NVRVJfVU5BVkFJTEFCTEUQChIdChlSRUFTT05fQUREUkVTU19QT09MX0VNUFRZEBQSHgoaUkVBU09OX0FNT1VOVF9PVVRfT0ZfUkFOR0UQKBIYChRSRUFTT05fUVVPVEVfRVhQSVJFRBAyEiYKIlJFQVNPTl9RVU9URV9JTlNVRkZJQ0lFTlRfSEVBRFJPT00QRkIPCgZyZXN1bHQSBbpIAggBIroCChlTZXR0bGVtZW50UmVjZWl2ZWRSZXF1ZXN0EhYKBWxwX2lkGAogASgEQge6SAQyAiAAEiUKEWJhbmtfdHJhbnNmZXJfcmVmGBQgASgJQgq6SAdyBRABGIACEiwKDmxvY2FsX2N1cnJlbmN5GB4gASgJQhS6SBFyDzIKXltBLVpdezN9JJgBAxJ3Cg9hbW91bnRfcmVjZWl2ZWQYKCABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEJHukhEugE+EilhbW91bnRfcmVjZWl2ZWQgbXVzdCBiZSBncmVhdGVyIHRoYW4gemVybxoRdGhpcy51bnNjYWxlZCA+IDDIAQESNwoLcmVjZWl2ZWRfYXQYMiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEivAMKGlNldHRsZW1lbnRSZWNlaXZlZFJlc3BvbnNlEk4KCGFjY2VwdGVkGAogASgLMjoudHplcm8udjEucGF5LmFjcXVpcmVyLlNldHRsZW1lbnRSZWNlaXZlZFJlc3BvbnNlLkFjY2VwdGVkSAASTgoIcmVqZWN0ZWQYFCABKAsyOi50emVyby52MS5wYXkuYWNxdWlyZXIuU2V0dGxlbWVudFJlY2VpdmVkUmVzcG9uc2UuUmVqZWN0ZWRIABoKCghBY2NlcHRlZBrgAQoIUmVqZWN0ZWQSWwoGcmVhc29uGAogASgOMkEudHplcm8udjEucGF5LmFjcXVpcmVyLlNldHRsZW1lbnRSZWNlaXZlZFJlc3BvbnNlLlJlamVjdGVkLlJlYXNvbkIIukgFggECIAAidwoGUmVhc29uEhYKElJFQVNPTl9VTlNQRUNJRklFRBAAEhoKFlJFQVNPTl9BTU9VTlRfTUlTTUFUQ0gQChIbChdSRUFTT05fVU5LTk9XTl9UUkFOU0ZFUhAUEhwKGFJFQVNPTl9DVVJSRU5DWV9NSVNNQVRDSBAeQg8KBnJlc3VsdBIFukgCCAEi6QEKGFBheW1lbnRBdXRob3JpemVkUmVxdWVzdBIiChFwYXltZW50X2ludGVudF9pZBgKIAEoBEIHukgEMgIgABIcCgtwYXltZW50X3JlZhgUIAEoCUIHukgEcgIQARI5Cg11c2R0X29uX2NoYWluGB4gASgLMiAudHplcm8udjEucGF5LlVzZHRPbkNoYWluUGF5bWVudEgAEjcKC2FwcHJvdmVkX2F0GCggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBQhcKDnBheW1lbnRfbWV0aG9kEgW6SAIIASIbChlQYXltZW50QXV0aG9yaXplZFJlc3BvbnNlIrcDChpTZXR0bGVtZW50SW5pdGlhdGVkUmVxdWVzdBIjChJmaWF0X3NldHRsZW1lbnRfaWQYCiABKARCB7pIBDICIAASFgoFbHBfaWQYFCABKARCB7pIBDICIAASJQoRYmFua190cmFuc2Zlcl9yZWYYHiABKAlCCrpIB3IFEAEYgAISMgoac2V0dGxlZF9wYXltZW50X2ludGVudF9pZHMYKCADKARCDrpIC5IBCAgBIgQyAiAAEiwKDmxvY2FsX2N1cnJlbmN5GDIgASgJQhS6SBFyDzIKXltBLVpdezN9JJgBAxJ7ChFzZXR0bGVtZW50X2Ftb3VudBg8IAEoCzIVLnR6ZXJvLnYxLnBheS5EZWNpbWFsQkm6SEa6AUASK3NldHRsZW1lbnRfYW1vdW50IG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBEhwKC2FjcXVpcmVyX2lkGEYgASgEQge6SAQyAiAAEjgKDGluaXRpYXRlZF9hdBhQIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASIdChtTZXR0bGVtZW50SW5pdGlhdGVkUmVzcG9uc2Ui4wIKGlNldHRsZW1lbnRDb21wbGV0ZWRSZXF1ZXN0Eh4KDXNldHRsZW1lbnRfaWQYCiABKARCB7pIBDICIAASewoRc2V0dGxlbWVudF9hbW91bnQYFCABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEJJukhGugFAEitzZXR0bGVtZW50X2Ftb3VudCBtdXN0IGJlIGdyZWF0ZXIgdGhhbiB6ZXJvGhF0aGlzLnVuc2NhbGVkID4gMMgBARIsChpzZXR0bGVkX3BheW1lbnRfaW50ZW50X2lkcxgeIAMoBEIIukgFkgECCAESNgoKc2V0dGxlZF9hdBgoIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARJCCgpzZXR0bGVtZW50GDIgASgLMiYudHplcm8udjEucGF5Lk9uQ2hhaW5TZXR0bGVtZW50RGV0YWlsc0IGukgDyAEBIh0KG1NldHRsZW1lbnRDb21wbGV0ZWRSZXNwb25zZSKRAQoVUGF5bWVudEV4cGlyZWRSZXF1ZXN0EiIKEXBheW1lbnRfaW50ZW50X2lkGAogASgEQge6SAQyAiAAEhwKC3BheW1lbnRfcmVmGBQgASgJQge6SARyAhABEjYKCmV4cGlyZWRfYXQYHiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEiGAoWUGF5bWVudEV4cGlyZWRSZXNwb25zZSKVAwoUUGF5bWVudEZhaWxlZFJlcXVlc3QSIgoRcGF5bWVudF9pbnRlbnRfaWQYCiABKARCB7pIBDICIAASHAoLcGF5bWVudF9yZWYYFCABKAlCB7pIBHICEAESbwoLYW1vdW50X3VzZHQYHiABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEJDukhAugE6EiVhbW91bnRfdXNkdCBtdXN0IGJlIGdyZWF0ZXIgdGhhbiB6ZXJvGhF0aGlzLnVuc2NhbGVkID4gMMgBARI5Cg11c2R0X29uX2NoYWluGCggASgLMiAudHplcm8udjEucGF5LlVzZHRPbkNoYWluUGF5bWVudEgAEj8KC2Rpc3Bvc2l0aW9uGDIgASgOMh4udHplcm8udjEucGF5LkZ1bmRzRGlzcG9zaXRpb25CCrpIB4IBBBABIAASNQoJZmFpbGVkX2F0GDwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBQhcKDnBheW1lbnRfbWV0aG9kEgW6SAIIASIXChVQYXltZW50RmFpbGVkUmVzcG9uc2UyjAMKD0FjcXVpcmVyU2VydmljZRJ1Cg9HZXRQYXltZW50UXVvdGUSLS50emVyby52MS5wYXkuYWNxdWlyZXIuR2V0UGF5bWVudFF1b3RlUmVxdWVzdBouLnR6ZXJvLnYxLnBheS5hY3F1aXJlci5HZXRQYXltZW50UXVvdGVSZXNwb25zZSIDkAIBEoEBChNDcmVhdGVQYXltZW50SW50ZW50EjEudHplcm8udjEucGF5LmFjcXVpcmVyLkNyZWF0ZVBheW1lbnRJbnRlbnRSZXF1ZXN0GjIudHplcm8udjEucGF5LmFjcXVpcmVyLkNyZWF0ZVBheW1lbnRJbnRlbnRSZXNwb25zZSIDkAICEn4KElNldHRsZW1lbnRSZWNlaXZlZBIwLnR6ZXJvLnYxLnBheS5hY3F1aXJlci5TZXR0bGVtZW50UmVjZWl2ZWRSZXF1ZXN0GjEudHplcm8udjEucGF5LmFjcXVpcmVyLlNldHRsZW1lbnRSZWNlaXZlZFJlc3BvbnNlIgOQAgIygwUKF0FjcXVpcmVyQ2FsbGJhY2tTZXJ2aWNlEnsKEVBheW1lbnRBdXRob3JpemVkEi8udHplcm8udjEucGF5LmFjcXVpcmVyLlBheW1lbnRBdXRob3JpemVkUmVxdWVzdBowLnR6ZXJvLnYxLnBheS5hY3F1aXJlci5QYXltZW50QXV0aG9yaXplZFJlc3BvbnNlIgOQAgISgQEKE1NldHRsZW1lbnRJbml0aWF0ZWQSMS50emVyby52MS5wYXkuYWNxdWlyZXIuU2V0dGxlbWVudEluaXRpYXRlZFJlcXVlc3QaMi50emVyby52MS5wYXkuYWNxdWlyZXIuU2V0dGxlbWVudEluaXRpYXRlZFJlc3BvbnNlIgOQAgISgQEKE1NldHRsZW1lbnRDb21wbGV0ZWQSMS50emVyby52MS5wYXkuYWNxdWlyZXIuU2V0dGxlbWVudENvbXBsZXRlZFJlcXVlc3QaMi50emVyby52MS5wYXkuYWNxdWlyZXIuU2V0dGxlbWVudENvbXBsZXRlZFJlc3BvbnNlIgOQAgIScgoOUGF5bWVudEV4cGlyZWQSLC50emVyby52MS5wYXkuYWNxdWlyZXIuUGF5bWVudEV4cGlyZWRSZXF1ZXN0Gi0udHplcm8udjEucGF5LmFjcXVpcmVyLlBheW1lbnRFeHBpcmVkUmVzcG9uc2UiA5ACAhJvCg1QYXltZW50RmFpbGVkEisudHplcm8udjEucGF5LmFjcXVpcmVyLlBheW1lbnRGYWlsZWRSZXF1ZXN0GiwudHplcm8udjEucGF5LmFjcXVpcmVyLlBheW1lbnRGYWlsZWRSZXNwb25zZSIDkAICYgZwcm90bzM", [file_buf_validate_validate, file_google_protobuf_timestamp, file_tzero_v1_pay_common]);
+  fileDesc("CiR0emVyby92MS9wYXkvYWNxdWlyZXIvYWNxdWlyZXIucHJvdG8SFXR6ZXJvLnYxLnBheS5hY3F1aXJlciKaAQoLTG9jYWxBbW91bnQSYwoFdmFsdWUYCiABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEI9ukg6ugE0Eh92YWx1ZSBtdXN0IGJlIGdyZWF0ZXIgdGhhbiB6ZXJvGhF0aGlzLnVuc2NhbGVkID4gMMgBARImCghjdXJyZW5jeRgUIAEoCUIUukgRcg8yCl5bQS1aXXszfSSYAQMizwEKDkZpYXRTZXR0bGVtZW50EhkKCHF1b3RlX2lkGAogASgEQge6SAQyAiAAEmcKB2Z4X3JhdGUYKCABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEI/ukg8ugE2EiFmeF9yYXRlIG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBEjkKBWxvY2FsGDwgASgLMiIudHplcm8udjEucGF5LmFjcXVpcmVyLkxvY2FsQW1vdW50Qga6SAPIAQEiuQEKFkdldFBheW1lbnRRdW90ZVJlcXVlc3QSLAoObG9jYWxfY3VycmVuY3kYCiABKAlCFLpIEXIPMgpeW0EtWl17M30kmAEDEnEKDGxvY2FsX2Ftb3VudBgUIAEoCzIVLnR6ZXJvLnYxLnBheS5EZWNpbWFsQkS6SEG6ATsSJmxvY2FsX2Ftb3VudCBtdXN0IGJlIGdyZWF0ZXIgdGhhbiB6ZXJvGhF0aGlzLnVuc2NhbGVkID4gMMgBASKqBQoXR2V0UGF5bWVudFF1b3RlUmVzcG9uc2USSQoHc3VjY2VzcxgKIAEoCzI2LnR6ZXJvLnYxLnBheS5hY3F1aXJlci5HZXRQYXltZW50UXVvdGVSZXNwb25zZS5TdWNjZXNzSAASSQoHZmFpbHVyZRgUIAEoCzI2LnR6ZXJvLnYxLnBheS5hY3F1aXJlci5HZXRQYXltZW50UXVvdGVSZXNwb25zZS5GYWlsdXJlSAAawgIKB1N1Y2Nlc3MSGQoIcXVvdGVfaWQYCiABKARCB7pIBDICIAASewoRc2V0dGxlbWVudF9hbW91bnQYMiABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEJJukhGugFAEitzZXR0bGVtZW50X2Ftb3VudCBtdXN0IGJlIGdyZWF0ZXIgdGhhbiB6ZXJvGhF0aGlzLnVuc2NhbGVkID4gMMgBARJnCgdmeF9yYXRlGB4gASgLMhUudHplcm8udjEucGF5LkRlY2ltYWxCP7pIPLoBNhIhZnhfcmF0ZSBtdXN0IGJlIGdyZWF0ZXIgdGhhbiB6ZXJvGhF0aGlzLnVuc2NhbGVkID4gMMgBARI2CgpleHBpcmVzX2F0GCggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIGukgDyAEBGqIBCgdGYWlsdXJlElcKBnJlYXNvbhgKIAEoDjI9LnR6ZXJvLnYxLnBheS5hY3F1aXJlci5HZXRQYXltZW50UXVvdGVSZXNwb25zZS5GYWlsdXJlLlJlYXNvbkIIukgFggECIAAiPgoGUmVhc29uEhYKElJFQVNPTl9VTlNQRUNJRklFRBAAEhwKGFJFQVNPTl9RVU9URV9VTkFWQUlMQUJMRRAKQg8KBnJlc3VsdBIFukgCCAEi4wMKGkNyZWF0ZVBheW1lbnRJbnRlbnRSZXF1ZXN0Eh8KC3BheW1lbnRfcmVmGAogASgJQgq6SAdyBRABGIACEiMKD2lkZW1wb3RlbmN5X2tleRgUIAEoCUIKukgHcgUQARiAAhJYCgpzZXR0bGVtZW50GGQgASgLMkIudHplcm8udjEucGF5LmFjcXVpcmVyLkNyZWF0ZVBheW1lbnRJbnRlbnRSZXF1ZXN0LlNldHRsZW1lbnRBbW91bnRIABIzCgVsb2NhbBhuIAEoCzIiLnR6ZXJvLnYxLnBheS5hY3F1aXJlci5Mb2NhbEFtb3VudEgAEhsKCHF1b3RlX2lkGHggASgEQge6SAQyAiAASAEarQEKEFNldHRsZW1lbnRBbW91bnQSmAEKBXZhbHVlGAogASgLMhUudHplcm8udjEucGF5LkRlY2ltYWxCcrpIb7oBaRI9dmFsdWUgbXVzdCBiZSBncmVhdGVyIHRoYW4gemVybyB3aXRoIGF0IG1vc3QgMiBkZWNpbWFsIHBsYWNlcxoodGhpcy51bnNjYWxlZCA+IDAgJiYgdGhpcy5leHBvbmVudCA+PSAtMsgBAUIPCgZhbW91bnQSBbpIAggBQhIKEHNldHRsZW1lbnRfcXVvdGUingkKG0NyZWF0ZVBheW1lbnRJbnRlbnRSZXNwb25zZRJNCgdzdWNjZXNzGAogASgLMjoudHplcm8udjEucGF5LmFjcXVpcmVyLkNyZWF0ZVBheW1lbnRJbnRlbnRSZXNwb25zZS5TdWNjZXNzSAASTQoHZmFpbHVyZRgUIAEoCzI6LnR6ZXJvLnYxLnBheS5hY3F1aXJlci5DcmVhdGVQYXltZW50SW50ZW50UmVzcG9uc2UuRmFpbHVyZUgAGoUFCgdTdWNjZXNzEiIKEXBheW1lbnRfaW50ZW50X2lkGAogASgEQge6SAQyAiAAEjYKCmV4cGlyZXNfYXQYPCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESfAoRc2V0dGxlbWVudF9hbW91bnQYjAEgASgLMhUudHplcm8udjEucGF5LkRlY2ltYWxCSbpIRroBQBIrc2V0dGxlbWVudF9hbW91bnQgbXVzdCBiZSBncmVhdGVyIHRoYW4gemVybxoRdGhpcy51bnNjYWxlZCA+IDDIAQESawoNdXNkdF9vbl9jaGFpbhhQIAEoCzJSLnR6ZXJvLnYxLnBheS5hY3F1aXJlci5DcmVhdGVQYXltZW50SW50ZW50UmVzcG9uc2UuU3VjY2Vzcy5Vc2R0T25DaGFpbkluc3RydWN0aW9uc0gAEjUKBGZpYXQYeCABKAsyJS50emVyby52MS5wYXkuYWNxdWlyZXIuRmlhdFNldHRsZW1lbnRIARJgCgdvbmNoYWluGIIBIAEoCzJMLnR6ZXJvLnYxLnBheS5hY3F1aXJlci5DcmVhdGVQYXltZW50SW50ZW50UmVzcG9uc2UuU3VjY2Vzcy5PbmNoYWluU2V0dGxlbWVudEgBGlkKF1VzZHRPbkNoYWluSW5zdHJ1Y3Rpb25zEj4KD2RlcG9zaXRfb3B0aW9ucxgeIAMoCzIbLnR6ZXJvLnYxLnBheS5EZXBvc2l0T3B0aW9uQgi6SAWSAQIIARoTChFPbmNoYWluU2V0dGxlbWVudEIVCgxpbnN0cnVjdGlvbnMSBbpIAggBQhMKCnNldHRsZW1lbnQSBbpIAggBGscCCgdGYWlsdXJlElsKBnJlYXNvbhgKIAEoDjJBLnR6ZXJvLnYxLnBheS5hY3F1aXJlci5DcmVhdGVQYXltZW50SW50ZW50UmVzcG9uc2UuRmFpbHVyZS5SZWFzb25CCLpIBYIBAiAAIt4BCgZSZWFzb24SFgoSUkVBU09OX1VOU1BFQ0lGSUVEEAASHQoZUkVBU09OX0lTU1VFUl9VTkFWQUlMQUJMRRAKEh0KGVJFQVNPTl9BRERSRVNTX1BPT0xfRU1QVFkQFBIeChpSRUFTT05fQU1PVU5UX09VVF9PRl9SQU5HRRAoEhgKFFJFQVNPTl9RVU9URV9FWFBJUkVEEDISJgoiUkVBU09OX1FVT1RFX0lOU1VGRklDSUVOVF9IRUFEUk9PTRBGEhwKGFJFQVNPTl9RVU9URV9VTkFWQUlMQUJMRRBQQg8KBnJlc3VsdBIFukgCCAEiugIKGVNldHRsZW1lbnRSZWNlaXZlZFJlcXVlc3QSFgoFbHBfaWQYCiABKARCB7pIBDICIAASJQoRYmFua190cmFuc2Zlcl9yZWYYFCABKAlCCrpIB3IFEAEYgAISLAoObG9jYWxfY3VycmVuY3kYHiABKAlCFLpIEXIPMgpeW0EtWl17M30kmAEDEncKD2Ftb3VudF9yZWNlaXZlZBgoIAEoCzIVLnR6ZXJvLnYxLnBheS5EZWNpbWFsQke6SES6AT4SKWFtb3VudF9yZWNlaXZlZCBtdXN0IGJlIGdyZWF0ZXIgdGhhbiB6ZXJvGhF0aGlzLnVuc2NhbGVkID4gMMgBARI3CgtyZWNlaXZlZF9hdBgyIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASK8AwoaU2V0dGxlbWVudFJlY2VpdmVkUmVzcG9uc2USTgoIYWNjZXB0ZWQYCiABKAsyOi50emVyby52MS5wYXkuYWNxdWlyZXIuU2V0dGxlbWVudFJlY2VpdmVkUmVzcG9uc2UuQWNjZXB0ZWRIABJOCghyZWplY3RlZBgUIAEoCzI6LnR6ZXJvLnYxLnBheS5hY3F1aXJlci5TZXR0bGVtZW50UmVjZWl2ZWRSZXNwb25zZS5SZWplY3RlZEgAGgoKCEFjY2VwdGVkGuABCghSZWplY3RlZBJbCgZyZWFzb24YCiABKA4yQS50emVyby52MS5wYXkuYWNxdWlyZXIuU2V0dGxlbWVudFJlY2VpdmVkUmVzcG9uc2UuUmVqZWN0ZWQuUmVhc29uQgi6SAWCAQIgACJ3CgZSZWFzb24SFgoSUkVBU09OX1VOU1BFQ0lGSUVEEAASGgoWUkVBU09OX0FNT1VOVF9NSVNNQVRDSBAKEhsKF1JFQVNPTl9VTktOT1dOX1RSQU5TRkVSEBQSHAoYUkVBU09OX0NVUlJFTkNZX01JU01BVENIEB5CDwoGcmVzdWx0EgW6SAIIASLfAwoYUGF5bWVudEF1dGhvcml6ZWRSZXF1ZXN0EiIKEXBheW1lbnRfaW50ZW50X2lkGAogASgEQge6SAQyAiAAEhwKC3BheW1lbnRfcmVmGBQgASgJQge6SARyAhABEjkKDXVzZHRfb25fY2hhaW4YHiABKAsyIC50emVyby52MS5wYXkuVXNkdE9uQ2hhaW5QYXltZW50SAASNwoLYXBwcm92ZWRfYXQYKCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESewoRc2V0dGxlbWVudF9hbW91bnQYMiABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEJJukhGugFAEitzZXR0bGVtZW50X2Ftb3VudCBtdXN0IGJlIGdyZWF0ZXIgdGhhbiB6ZXJvGhF0aGlzLnVuc2NhbGVkID4gMMgBARI3CgtyZWNlaXZlZF9hdBg8IAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARI+Cg9maWF0X3NldHRsZW1lbnQYUCABKAsyJS50emVyby52MS5wYXkuYWNxdWlyZXIuRmlhdFNldHRsZW1lbnRCFwoOcGF5bWVudF9tZXRob2QSBbpIAggBIhsKGVBheW1lbnRBdXRob3JpemVkUmVzcG9uc2Ui/wIKGlNldHRsZW1lbnRJbml0aWF0ZWRSZXF1ZXN0EiMKEmZpYXRfc2V0dGxlbWVudF9pZBgKIAEoBEIHukgEMgIgABIWCgVscF9pZBgUIAEoBEIHukgEMgIgABIlChFiYW5rX3RyYW5zZmVyX3JlZhgeIAEoCUIKukgHcgUQARiAAhIyChpzZXR0bGVkX3BheW1lbnRfaW50ZW50X2lkcxgoIAMoBEIOukgLkgEICAEiBDICIAASOQoFbG9jYWwYZCABKAsyIi50emVyby52MS5wYXkuYWNxdWlyZXIuTG9jYWxBbW91bnRCBrpIA8gBARIcCgthY3F1aXJlcl9pZBhGIAEoBEIHukgEMgIgABI4Cgxpbml0aWF0ZWRfYXQYUCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESNgoKc2V0dGxlZF9hdBhaIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBASIdChtTZXR0bGVtZW50SW5pdGlhdGVkUmVzcG9uc2UihwMKGlNldHRsZW1lbnRDb21wbGV0ZWRSZXF1ZXN0Eh4KDXNldHRsZW1lbnRfaWQYCiABKARCB7pIBDICIAASewoRc2V0dGxlbWVudF9hbW91bnQYFCABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEJJukhGugFAEitzZXR0bGVtZW50X2Ftb3VudCBtdXN0IGJlIGdyZWF0ZXIgdGhhbiB6ZXJvGhF0aGlzLnVuc2NhbGVkID4gMMgBARIyChpzZXR0bGVkX3BheW1lbnRfaW50ZW50X2lkcxgeIAMoBEIOukgLkgEICAEiBDICIAASNgoKc2V0dGxlZF9hdBgoIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARJCCgpzZXR0bGVtZW50GDIgASgLMiYudHplcm8udjEucGF5Lk9uQ2hhaW5TZXR0bGVtZW50RGV0YWlsc0IGukgDyAEBEhwKC2FjcXVpcmVyX2lkGDwgASgEQge6SAQyAiAAIh0KG1NldHRsZW1lbnRDb21wbGV0ZWRSZXNwb25zZSLRAQoVUGF5bWVudEV4cGlyZWRSZXF1ZXN0EiIKEXBheW1lbnRfaW50ZW50X2lkGAogASgEQge6SAQyAiAAEhwKC3BheW1lbnRfcmVmGBQgASgJQge6SARyAhABEjYKCmV4cGlyZWRfYXQYHiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESPgoPZmlhdF9zZXR0bGVtZW50GDIgASgLMiUudHplcm8udjEucGF5LmFjcXVpcmVyLkZpYXRTZXR0bGVtZW50IhgKFlBheW1lbnRFeHBpcmVkUmVzcG9uc2Ui1QMKFFBheW1lbnRGYWlsZWRSZXF1ZXN0EiIKEXBheW1lbnRfaW50ZW50X2lkGAogASgEQge6SAQyAiAAEhwKC3BheW1lbnRfcmVmGBQgASgJQge6SARyAhABEm8KC2Ftb3VudF91c2R0GB4gASgLMhUudHplcm8udjEucGF5LkRlY2ltYWxCQ7pIQLoBOhIlYW1vdW50X3VzZHQgbXVzdCBiZSBncmVhdGVyIHRoYW4gemVybxoRdGhpcy51bnNjYWxlZCA+IDDIAQESOQoNdXNkdF9vbl9jaGFpbhgoIAEoCzIgLnR6ZXJvLnYxLnBheS5Vc2R0T25DaGFpblBheW1lbnRIABI/CgtkaXNwb3NpdGlvbhgyIAEoDjIeLnR6ZXJvLnYxLnBheS5GdW5kc0Rpc3Bvc2l0aW9uQgq6SAeCAQQQASAAEjUKCWZhaWxlZF9hdBg8IAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBrpIA8gBARI+Cg9maWF0X3NldHRsZW1lbnQYUCABKAsyJS50emVyby52MS5wYXkuYWNxdWlyZXIuRmlhdFNldHRsZW1lbnRCFwoOcGF5bWVudF9tZXRob2QSBbpIAggBIhcKFVBheW1lbnRGYWlsZWRSZXNwb25zZTKMAwoPQWNxdWlyZXJTZXJ2aWNlEnUKD0dldFBheW1lbnRRdW90ZRItLnR6ZXJvLnYxLnBheS5hY3F1aXJlci5HZXRQYXltZW50UXVvdGVSZXF1ZXN0Gi4udHplcm8udjEucGF5LmFjcXVpcmVyLkdldFBheW1lbnRRdW90ZVJlc3BvbnNlIgOQAgESgQEKE0NyZWF0ZVBheW1lbnRJbnRlbnQSMS50emVyby52MS5wYXkuYWNxdWlyZXIuQ3JlYXRlUGF5bWVudEludGVudFJlcXVlc3QaMi50emVyby52MS5wYXkuYWNxdWlyZXIuQ3JlYXRlUGF5bWVudEludGVudFJlc3BvbnNlIgOQAgISfgoSU2V0dGxlbWVudFJlY2VpdmVkEjAudHplcm8udjEucGF5LmFjcXVpcmVyLlNldHRsZW1lbnRSZWNlaXZlZFJlcXVlc3QaMS50emVyby52MS5wYXkuYWNxdWlyZXIuU2V0dGxlbWVudFJlY2VpdmVkUmVzcG9uc2UiA5ACAjKDBQoXQWNxdWlyZXJDYWxsYmFja1NlcnZpY2USewoRUGF5bWVudEF1dGhvcml6ZWQSLy50emVyby52MS5wYXkuYWNxdWlyZXIuUGF5bWVudEF1dGhvcml6ZWRSZXF1ZXN0GjAudHplcm8udjEucGF5LmFjcXVpcmVyLlBheW1lbnRBdXRob3JpemVkUmVzcG9uc2UiA5ACAhKBAQoTU2V0dGxlbWVudEluaXRpYXRlZBIxLnR6ZXJvLnYxLnBheS5hY3F1aXJlci5TZXR0bGVtZW50SW5pdGlhdGVkUmVxdWVzdBoyLnR6ZXJvLnYxLnBheS5hY3F1aXJlci5TZXR0bGVtZW50SW5pdGlhdGVkUmVzcG9uc2UiA5ACAhKBAQoTU2V0dGxlbWVudENvbXBsZXRlZBIxLnR6ZXJvLnYxLnBheS5hY3F1aXJlci5TZXR0bGVtZW50Q29tcGxldGVkUmVxdWVzdBoyLnR6ZXJvLnYxLnBheS5hY3F1aXJlci5TZXR0bGVtZW50Q29tcGxldGVkUmVzcG9uc2UiA5ACAhJyCg5QYXltZW50RXhwaXJlZBIsLnR6ZXJvLnYxLnBheS5hY3F1aXJlci5QYXltZW50RXhwaXJlZFJlcXVlc3QaLS50emVyby52MS5wYXkuYWNxdWlyZXIuUGF5bWVudEV4cGlyZWRSZXNwb25zZSIDkAICEm8KDVBheW1lbnRGYWlsZWQSKy50emVyby52MS5wYXkuYWNxdWlyZXIuUGF5bWVudEZhaWxlZFJlcXVlc3QaLC50emVyby52MS5wYXkuYWNxdWlyZXIuUGF5bWVudEZhaWxlZFJlc3BvbnNlIgOQAgJiBnByb3RvMw", [file_buf_validate_validate, file_google_protobuf_timestamp, file_tzero_v1_pay_common]);
+
+/**
+ * *
+ * An amount in the local fiat currency the customer was quoted in. Minor units
+ * are t-0's own rule, not ISO 4217's: COP, CLP, PYG and JPY are kept in whole
+ * units, every other currency at two decimal places.
+ *
+ * @generated from message tzero.v1.pay.acquirer.LocalAmount
+ */
+export type LocalAmount = Message<"tzero.v1.pay.acquirer.LocalAmount"> & {
+  /**
+   * * Amount in `currency`; a value finer than the currency's minor units is invalid input. 
+   *
+   * @generated from field: tzero.v1.pay.Decimal value = 10;
+   */
+  value?: Decimal | undefined;
+
+  /**
+   * * Three-letter currency code in ISO 4217 form (e.g. COP); not checked against the ISO list. 
+   *
+   * @generated from field: string currency = 20;
+   */
+  currency: string;
+};
+
+/**
+ * Describes the message tzero.v1.pay.acquirer.LocalAmount.
+ * Use `create(LocalAmountSchema)` to create a new message.
+ */
+export const LocalAmountSchema: GenMessage<LocalAmount> = /*@__PURE__*/
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 0);
+
+/**
+ * *
+ * The fiat terms locked for a payment whose Acquirer is settled in fiat: the
+ * standing quote, its rate, and the local amount the Acquirer is settled.
+ * Returned on CreatePaymentIntent and repeated unchanged on PaymentAuthorized,
+ * PaymentExpired and PaymentFailed; absent for an Acquirer settled on-chain.
+ *
+ * @generated from message tzero.v1.pay.acquirer.FiatSettlement
+ */
+export type FiatSettlement = Message<"tzero.v1.pay.acquirer.FiatSettlement"> & {
+  /**
+   * * t-0's id of the standing quote the intent locked: the referenced one, or the one t-0 resolved when the request named none. 
+   *
+   * @generated from field: uint64 quote_id = 10;
+   */
+  quoteId: bigint;
+
+  /**
+   * * Locked rate, in units of local.currency per 1 USDt. 
+   *
+   * @generated from field: tzero.v1.pay.Decimal fx_rate = 40;
+   */
+  fxRate?: Decimal | undefined;
+
+  /**
+   * *
+   * Fiat amount the Acquirer is settled: as sent in the request's `local`, or,
+   * for a payment denominated in USDt, round(settlement_amount × fx_rate,
+   * half-up) to the currency's minor units.
+   *
+   * @generated from field: tzero.v1.pay.acquirer.LocalAmount local = 60;
+   */
+  local?: LocalAmount | undefined;
+};
+
+/**
+ * Describes the message tzero.v1.pay.acquirer.FiatSettlement.
+ * Use `create(FiatSettlementSchema)` to create a new message.
+ */
+export const FiatSettlementSchema: GenMessage<FiatSettlement> = /*@__PURE__*/
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 1);
 
 /**
  * @generated from message tzero.v1.pay.acquirer.GetPaymentQuoteRequest
  */
 export type GetPaymentQuoteRequest = Message<"tzero.v1.pay.acquirer.GetPaymentQuoteRequest"> & {
   /**
-   * * ISO 4217 currency the merchant is quoting in (e.g. COP). 
+   * * Three-letter currency code in ISO 4217 form the merchant is quoting in (e.g. COP); not checked against the ISO list. 
    *
    * @generated from field: string local_currency = 10;
    */
   localCurrency: string;
 
   /**
-   * * Fiat amount the merchant wants to price. 
+   * * Fiat amount in local_currency to price; a value finer than the currency's minor units is invalid input. 
    *
    * @generated from field: tzero.v1.pay.Decimal local_amount = 20;
    */
@@ -45,7 +118,7 @@ export type GetPaymentQuoteRequest = Message<"tzero.v1.pay.acquirer.GetPaymentQu
  * Use `create(GetPaymentQuoteRequestSchema)` to create a new message.
  */
 export const GetPaymentQuoteRequestSchema: GenMessage<GetPaymentQuoteRequest> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 0);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 2);
 
 /**
  * @generated from message tzero.v1.pay.acquirer.GetPaymentQuoteResponse
@@ -74,25 +147,25 @@ export type GetPaymentQuoteResponse = Message<"tzero.v1.pay.acquirer.GetPaymentQ
  * Use `create(GetPaymentQuoteResponseSchema)` to create a new message.
  */
 export const GetPaymentQuoteResponseSchema: GenMessage<GetPaymentQuoteResponse> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 1);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 3);
 
 /**
  * @generated from message tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Success
  */
 export type GetPaymentQuoteResponse_Success = Message<"tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Success"> & {
   /**
-   * * t-0's id for the priced standing quote. 
+   * * t-0's id for the standing quote that priced this request; not consumed by use, any number of intents may reference it while it stands. 
    *
    * @generated from field: uint64 quote_id = 10;
    */
   quoteId: bigint;
 
   /**
-   * * USDt the customer pays for local_amount at fx_rate. 
+   * * The payment in the settlement asset (USDt): round(local_amount / fx_rate, 2 dp, half-up). Indicative; the binding figure is derived the same way on CreatePaymentIntent. 
    *
-   * @generated from field: tzero.v1.pay.Decimal amount_usdt = 20;
+   * @generated from field: tzero.v1.pay.Decimal settlement_amount = 50;
    */
-  amountUsdt?: Decimal | undefined;
+  settlementAmount?: Decimal | undefined;
 
   /**
    * * Standing quote's rate, in units of local_currency per 1 USDt. 
@@ -102,7 +175,7 @@ export type GetPaymentQuoteResponse_Success = Message<"tzero.v1.pay.acquirer.Get
   fxRate?: Decimal | undefined;
 
   /**
-   * * Moment the standing quote stops standing on t-0's clock. 
+   * * Moment the quote stops standing, on t-0's clock; it cannot be referenced after this. 
    *
    * @generated from field: google.protobuf.Timestamp expires_at = 40;
    */
@@ -114,7 +187,7 @@ export type GetPaymentQuoteResponse_Success = Message<"tzero.v1.pay.acquirer.Get
  * Use `create(GetPaymentQuoteResponse_SuccessSchema)` to create a new message.
  */
 export const GetPaymentQuoteResponse_SuccessSchema: GenMessage<GetPaymentQuoteResponse_Success> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 1, 0);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 3, 0);
 
 /**
  * @generated from message tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Failure
@@ -131,7 +204,7 @@ export type GetPaymentQuoteResponse_Failure = Message<"tzero.v1.pay.acquirer.Get
  * Use `create(GetPaymentQuoteResponse_FailureSchema)` to create a new message.
  */
 export const GetPaymentQuoteResponse_FailureSchema: GenMessage<GetPaymentQuoteResponse_Failure> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 1, 1);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 3, 1);
 
 /**
  * @generated from enum tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Failure.Reason
@@ -154,7 +227,7 @@ export enum GetPaymentQuoteResponse_Failure_Reason {
  * Describes the enum tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Failure.Reason.
  */
 export const GetPaymentQuoteResponse_Failure_ReasonSchema: GenEnum<GetPaymentQuoteResponse_Failure_Reason> = /*@__PURE__*/
-  enumDesc(file_tzero_v1_pay_acquirer_acquirer, 1, 1, 0);
+  enumDesc(file_tzero_v1_pay_acquirer_acquirer, 3, 1, 0);
 
 /**
  * @generated from message tzero.v1.pay.acquirer.CreatePaymentIntentRequest
@@ -162,7 +235,7 @@ export const GetPaymentQuoteResponse_Failure_ReasonSchema: GenEnum<GetPaymentQuo
 export type CreatePaymentIntentRequest = Message<"tzero.v1.pay.acquirer.CreatePaymentIntentRequest"> & {
   /**
    * *
-   * Sale identifier from the Acquirer's own ledger, echoed on PaymentAuthorized,
+   * Payment identifier from the Acquirer's own ledger, echoed on PaymentAuthorized,
    * PaymentExpired, and PaymentFailed. Not an idempotency key, and not required
    * to be unique.
    *
@@ -174,7 +247,7 @@ export type CreatePaymentIntentRequest = Message<"tzero.v1.pay.acquirer.CreatePa
    * *
    * Retry identity for this call, unique per Acquirer. At most one payment intent
    * is ever created under one key, and repeating a key whose intent exists returns
-   * it unchanged. Retrying a declined sale takes a fresh key under the same
+   * it unchanged. Retrying a declined payment takes a fresh key under the same
    * payment_ref.
    *
    * @generated from field: string idempotency_key = 20;
@@ -182,29 +255,49 @@ export type CreatePaymentIntentRequest = Message<"tzero.v1.pay.acquirer.CreatePa
   idempotencyKey: string;
 
   /**
-   * * Fiat amount of the sale, in the settlement currency. 
+   * *
+   * Denomination of the payment, exactly one variant, independent of how the
+   * Acquirer is settled: `settlement` is the USDt figure the settlement leg
+   * moves, `local` the fiat figure the customer was quoted. `local` is refused
+   * as a failed precondition for an Acquirer settled on-chain, which has no
+   * rate to price it with.
    *
-   * @generated from field: tzero.v1.pay.Decimal local_amount = 30;
+   * @generated from oneof tzero.v1.pay.acquirer.CreatePaymentIntentRequest.amount
    */
-  localAmount?: Decimal | undefined;
-
-  /**
-   * * The configured settlement mode selects exactly one terms variant. 
-   *
-   * @generated from oneof tzero.v1.pay.acquirer.CreatePaymentIntentRequest.terms
-   */
-  terms: {
+  amount: {
     /**
-     * @generated from field: tzero.v1.pay.acquirer.CreatePaymentIntentRequest.UsdtSettlementTerms usdt_settlement = 40;
+     * @generated from field: tzero.v1.pay.acquirer.CreatePaymentIntentRequest.SettlementAmount settlement = 100;
      */
-    value: CreatePaymentIntentRequest_UsdtSettlementTerms;
-    case: "usdtSettlement";
+    value: CreatePaymentIntentRequest_SettlementAmount;
+    case: "settlement";
   } | {
     /**
-     * @generated from field: tzero.v1.pay.acquirer.CreatePaymentIntentRequest.FiatSettlementTerms fiat_settlement = 50;
+     * @generated from field: tzero.v1.pay.acquirer.LocalAmount local = 110;
      */
-    value: CreatePaymentIntentRequest_FiatSettlementTerms;
-    case: "fiatSettlement";
+    value: LocalAmount;
+    case: "local";
+  } | { case: undefined; value?: undefined };
+
+  /**
+   * *
+   * Fiat settlement mode only: which standing quote prices the payment. Absent,
+   * t-0 resolves the freshest standing quote for local.currency, or for the
+   * Acquirer's configured settlement currency when the amount is `settlement`;
+   * no standing quote answers QUOTE_UNAVAILABLE.
+   *
+   * @generated from oneof tzero.v1.pay.acquirer.CreatePaymentIntentRequest.settlement_quote
+   */
+  settlementQuote: {
+    /**
+     * * A standing quote from GetPaymentQuote; it must still stand, and its currency must equal local.currency when `local` is given. 
+     *
+     * Reserved, not on the wire yet: `quote_currency`, pricing by the freshest
+     * standing quote for a named currency.
+     *
+     * @generated from field: uint64 quote_id = 120;
+     */
+    value: bigint;
+    case: "quoteId";
   } | { case: undefined; value?: undefined };
 };
 
@@ -213,56 +306,32 @@ export type CreatePaymentIntentRequest = Message<"tzero.v1.pay.acquirer.CreatePa
  * Use `create(CreatePaymentIntentRequestSchema)` to create a new message.
  */
 export const CreatePaymentIntentRequestSchema: GenMessage<CreatePaymentIntentRequest> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 2);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 4);
 
 /**
- * * Acquirer-supplied terms when it settles in USDt and runs its own FX. 
+ * *
+ * The payment in the settlement asset, USDt: the asset every settlement leg
+ * moves, so this figure is present for every payment whatever the Acquirer is
+ * settled in. What it becomes in fiat, and at which rate, is the response's
+ * `fiat` settlement block, never this message.
  *
- * @generated from message tzero.v1.pay.acquirer.CreatePaymentIntentRequest.UsdtSettlementTerms
+ * @generated from message tzero.v1.pay.acquirer.CreatePaymentIntentRequest.SettlementAmount
  */
-export type CreatePaymentIntentRequest_UsdtSettlementTerms = Message<"tzero.v1.pay.acquirer.CreatePaymentIntentRequest.UsdtSettlementTerms"> & {
+export type CreatePaymentIntentRequest_SettlementAmount = Message<"tzero.v1.pay.acquirer.CreatePaymentIntentRequest.SettlementAmount"> & {
   /**
-   * * ISO 4217 currency the merchant quoted the customer in. 
+   * * Amount in USDt, at most 2 decimal places. In fiat settlement mode t-0 derives the local amount from it at the locked rate; in USDt settlement mode it is also what the Acquirer is settled. 
    *
-   * @generated from field: string local_currency = 10;
+   * @generated from field: tzero.v1.pay.Decimal value = 10;
    */
-  localCurrency: string;
-
-  /**
-   * * Units of local_currency per 1 USDt, set by the Acquirer. 
-   *
-   * @generated from field: tzero.v1.pay.Decimal fx_rate = 20;
-   */
-  fxRate?: Decimal | undefined;
+  value?: Decimal | undefined;
 };
 
 /**
- * Describes the message tzero.v1.pay.acquirer.CreatePaymentIntentRequest.UsdtSettlementTerms.
- * Use `create(CreatePaymentIntentRequest_UsdtSettlementTermsSchema)` to create a new message.
+ * Describes the message tzero.v1.pay.acquirer.CreatePaymentIntentRequest.SettlementAmount.
+ * Use `create(CreatePaymentIntentRequest_SettlementAmountSchema)` to create a new message.
  */
-export const CreatePaymentIntentRequest_UsdtSettlementTermsSchema: GenMessage<CreatePaymentIntentRequest_UsdtSettlementTerms> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 2, 0);
-
-/**
- * * Reference to a standing quote when the Acquirer is settled in fiat via an LP. 
- *
- * @generated from message tzero.v1.pay.acquirer.CreatePaymentIntentRequest.FiatSettlementTerms
- */
-export type CreatePaymentIntentRequest_FiatSettlementTerms = Message<"tzero.v1.pay.acquirer.CreatePaymentIntentRequest.FiatSettlementTerms"> & {
-  /**
-   * * Standing quote obtained from GetPaymentQuote; supplies local_currency and fx_rate. 
-   *
-   * @generated from field: uint64 quote_id = 10;
-   */
-  quoteId: bigint;
-};
-
-/**
- * Describes the message tzero.v1.pay.acquirer.CreatePaymentIntentRequest.FiatSettlementTerms.
- * Use `create(CreatePaymentIntentRequest_FiatSettlementTermsSchema)` to create a new message.
- */
-export const CreatePaymentIntentRequest_FiatSettlementTermsSchema: GenMessage<CreatePaymentIntentRequest_FiatSettlementTerms> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 2, 1);
+export const CreatePaymentIntentRequest_SettlementAmountSchema: GenMessage<CreatePaymentIntentRequest_SettlementAmount> = /*@__PURE__*/
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 4, 0);
 
 /**
  * @generated from message tzero.v1.pay.acquirer.CreatePaymentIntentResponse
@@ -291,60 +360,70 @@ export type CreatePaymentIntentResponse = Message<"tzero.v1.pay.acquirer.CreateP
  * Use `create(CreatePaymentIntentResponseSchema)` to create a new message.
  */
 export const CreatePaymentIntentResponseSchema: GenMessage<CreatePaymentIntentResponse> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 3);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 5);
 
 /**
  * @generated from message tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success
  */
 export type CreatePaymentIntentResponse_Success = Message<"tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success"> & {
   /**
-   * * t-0's id for the opened intent. 
+   * * t-0's id for the intent; carried on every later event. 
    *
    * @generated from field: uint64 payment_intent_id = 10;
    */
   paymentIntentId: bigint;
 
   /**
-   * * ISO 4217; echoed in USDt mode, resolved from the quote in fiat mode. 
-   *
-   * @generated from field: string local_currency = 20;
-   */
-  localCurrency: string;
-
-  /**
-   * * Fiat amount of the sale. 
-   *
-   * @generated from field: tzero.v1.pay.Decimal local_amount = 30;
-   */
-  localAmount?: Decimal | undefined;
-
-  /**
-   * * Units of local_currency per 1 USDt locked for this intent. 
-   *
-   * @generated from field: tzero.v1.pay.Decimal fx_rate = 40;
-   */
-  fxRate?: Decimal | undefined;
-
-  /**
-   * * Exact amount the customer pays, round(local_amount / fx_rate, 2dp, half-up). 
-   *
-   * @generated from field: tzero.v1.pay.Decimal amount_usdt = 50;
-   */
-  amountUsdt?: Decimal | undefined;
-
-  /**
-   * * After this moment the Issuer releases the deposit addresses and the QR is invalid. 
+   * * After this moment the payment instructions are invalid; on the QR method the Issuer releases the deposit addresses. 
    *
    * @generated from field: google.protobuf.Timestamp expires_at = 60;
    */
   expiresAt?: Timestamp | undefined;
 
   /**
-   * * One option per chain the Issuer supports for this intent; the customer picks one. 
+   * *
+   * USDt the customer pays and the settlement leg moves, the same figure in
+   * every mode: as sent in `amount.settlement`, or round(local / fx_rate,
+   * 2 dp, half-up) from `amount.local`. In fiat settlement mode the Acquirer
+   * itself receives the `fiat` block's local amount.
    *
-   * @generated from field: repeated tzero.v1.pay.QrOption qr_options = 70;
+   * @generated from field: tzero.v1.pay.Decimal settlement_amount = 140;
    */
-  qrOptions: QrOption[];
+  settlementAmount?: Decimal | undefined;
+
+  /**
+   * *
+   * How the customer pays — one variant per payment method, independent of
+   * how the Acquirer is settled. The MVP's only method is a USDt transfer via QR.
+   *
+   * @generated from oneof tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.instructions
+   */
+  instructions: {
+    /**
+     * @generated from field: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.UsdtOnChainInstructions usdt_on_chain = 80;
+     */
+    value: CreatePaymentIntentResponse_Success_UsdtOnChainInstructions;
+    case: "usdtOnChain";
+  } | { case: undefined; value?: undefined };
+
+  /**
+   * * How the Acquirer is settled for this payment, per its configured settlement mode; always present, also when the variant carries no data. 
+   *
+   * @generated from oneof tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.settlement
+   */
+  settlement: {
+    /**
+     * @generated from field: tzero.v1.pay.acquirer.FiatSettlement fiat = 120;
+     */
+    value: FiatSettlement;
+    case: "fiat";
+  } | {
+    /**
+     * @generated from field: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.OnchainSettlement onchain = 130;
+     */
+    value: CreatePaymentIntentResponse_Success_OnchainSettlement;
+    case: "onchain";
+  } | { case: undefined; value?: undefined };
 };
 
 /**
@@ -352,7 +431,46 @@ export type CreatePaymentIntentResponse_Success = Message<"tzero.v1.pay.acquirer
  * Use `create(CreatePaymentIntentResponse_SuccessSchema)` to create a new message.
  */
 export const CreatePaymentIntentResponse_SuccessSchema: GenMessage<CreatePaymentIntentResponse_Success> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 3, 0);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 5, 0);
+
+/**
+ * * The customer's USDt-via-QR payment instructions. 
+ *
+ * @generated from message tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.UsdtOnChainInstructions
+ */
+export type CreatePaymentIntentResponse_Success_UsdtOnChainInstructions = Message<"tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.UsdtOnChainInstructions"> & {
+  /**
+   * * One deposit option per chain the Issuer supports for this intent; the customer picks one in their wallet. 
+   *
+   * @generated from field: repeated tzero.v1.pay.DepositOption deposit_options = 30;
+   */
+  depositOptions: DepositOption[];
+};
+
+/**
+ * Describes the message tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.UsdtOnChainInstructions.
+ * Use `create(CreatePaymentIntentResponse_Success_UsdtOnChainInstructionsSchema)` to create a new message.
+ */
+export const CreatePaymentIntentResponse_Success_UsdtOnChainInstructionsSchema: GenMessage<CreatePaymentIntentResponse_Success_UsdtOnChainInstructions> = /*@__PURE__*/
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 5, 0, 0);
+
+/**
+ * *
+ * On-chain settlement mode; carries no data. The Issuer settles
+ * settlement_amount in USDt to the Acquirer's registered wallet; no quote
+ * and no FX.
+ *
+ * @generated from message tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.OnchainSettlement
+ */
+export type CreatePaymentIntentResponse_Success_OnchainSettlement = Message<"tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.OnchainSettlement"> & {
+};
+
+/**
+ * Describes the message tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.OnchainSettlement.
+ * Use `create(CreatePaymentIntentResponse_Success_OnchainSettlementSchema)` to create a new message.
+ */
+export const CreatePaymentIntentResponse_Success_OnchainSettlementSchema: GenMessage<CreatePaymentIntentResponse_Success_OnchainSettlement> = /*@__PURE__*/
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 5, 0, 1);
 
 /**
  * @generated from message tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Failure
@@ -369,7 +487,7 @@ export type CreatePaymentIntentResponse_Failure = Message<"tzero.v1.pay.acquirer
  * Use `create(CreatePaymentIntentResponse_FailureSchema)` to create a new message.
  */
 export const CreatePaymentIntentResponse_FailureSchema: GenMessage<CreatePaymentIntentResponse_Failure> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 3, 1);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 5, 1);
 
 /**
  * @generated from enum tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Failure.Reason
@@ -381,7 +499,7 @@ export enum CreatePaymentIntentResponse_Failure_Reason {
   UNSPECIFIED = 0,
 
   /**
-   * The Issuer could not be reached to allocate instructions.
+   * The Issuer could not be reached, or returned no usable instructions.
    *
    * @generated from enum value: REASON_ISSUER_UNAVAILABLE = 10;
    */
@@ -414,13 +532,20 @@ export enum CreatePaymentIntentResponse_Failure_Reason {
    * @generated from enum value: REASON_QUOTE_INSUFFICIENT_HEADROOM = 70;
    */
   QUOTE_INSUFFICIENT_HEADROOM = 70,
+
+  /**
+   * No standing quote for the payment's currency right now (quote_id omitted).
+   *
+   * @generated from enum value: REASON_QUOTE_UNAVAILABLE = 80;
+   */
+  QUOTE_UNAVAILABLE = 80,
 }
 
 /**
  * Describes the enum tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Failure.Reason.
  */
 export const CreatePaymentIntentResponse_Failure_ReasonSchema: GenEnum<CreatePaymentIntentResponse_Failure_Reason> = /*@__PURE__*/
-  enumDesc(file_tzero_v1_pay_acquirer_acquirer, 3, 1, 0);
+  enumDesc(file_tzero_v1_pay_acquirer_acquirer, 5, 1, 0);
 
 /**
  * @generated from message tzero.v1.pay.acquirer.SettlementReceivedRequest
@@ -467,7 +592,7 @@ export type SettlementReceivedRequest = Message<"tzero.v1.pay.acquirer.Settlemen
  * Use `create(SettlementReceivedRequestSchema)` to create a new message.
  */
 export const SettlementReceivedRequestSchema: GenMessage<SettlementReceivedRequest> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 4);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 6);
 
 /**
  * @generated from message tzero.v1.pay.acquirer.SettlementReceivedResponse
@@ -496,9 +621,11 @@ export type SettlementReceivedResponse = Message<"tzero.v1.pay.acquirer.Settleme
  * Use `create(SettlementReceivedResponseSchema)` to create a new message.
  */
 export const SettlementReceivedResponseSchema: GenMessage<SettlementReceivedResponse> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 5);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 7);
 
 /**
+ * * The confirmation is recorded and the covered intents are settled. 
+ *
  * @generated from message tzero.v1.pay.acquirer.SettlementReceivedResponse.Accepted
  */
 export type SettlementReceivedResponse_Accepted = Message<"tzero.v1.pay.acquirer.SettlementReceivedResponse.Accepted"> & {
@@ -509,9 +636,11 @@ export type SettlementReceivedResponse_Accepted = Message<"tzero.v1.pay.acquirer
  * Use `create(SettlementReceivedResponse_AcceptedSchema)` to create a new message.
  */
 export const SettlementReceivedResponse_AcceptedSchema: GenMessage<SettlementReceivedResponse_Accepted> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 5, 0);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 7, 0);
 
 /**
+ * * The confirmation was not recorded and the covered intents stay authorized; resubmit the same (lp_id, bank_transfer_ref) with corrected fields. 
+ *
  * @generated from message tzero.v1.pay.acquirer.SettlementReceivedResponse.Rejected
  */
 export type SettlementReceivedResponse_Rejected = Message<"tzero.v1.pay.acquirer.SettlementReceivedResponse.Rejected"> & {
@@ -526,7 +655,7 @@ export type SettlementReceivedResponse_Rejected = Message<"tzero.v1.pay.acquirer
  * Use `create(SettlementReceivedResponse_RejectedSchema)` to create a new message.
  */
 export const SettlementReceivedResponse_RejectedSchema: GenMessage<SettlementReceivedResponse_Rejected> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 5, 1);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 7, 1);
 
 /**
  * @generated from enum tzero.v1.pay.acquirer.SettlementReceivedResponse.Rejected.Reason
@@ -538,7 +667,7 @@ export enum SettlementReceivedResponse_Rejected_Reason {
   UNSPECIFIED = 0,
 
   /**
-   * amount_received does not equal the matched transfer's settlement amount.
+   * amount_received does not equal the settlement_amount announced on SettlementInitiated.
    *
    * @generated from enum value: REASON_AMOUNT_MISMATCH = 10;
    */
@@ -552,7 +681,7 @@ export enum SettlementReceivedResponse_Rejected_Reason {
   UNKNOWN_TRANSFER = 20,
 
   /**
-   * local_currency is not the currency t-0 recorded for the matched transfer; resend with the correct currency.
+   * local_currency is not the currency announced on SettlementInitiated for the matched transfer.
    *
    * @generated from enum value: REASON_CURRENCY_MISMATCH = 30;
    */
@@ -563,7 +692,7 @@ export enum SettlementReceivedResponse_Rejected_Reason {
  * Describes the enum tzero.v1.pay.acquirer.SettlementReceivedResponse.Rejected.Reason.
  */
 export const SettlementReceivedResponse_Rejected_ReasonSchema: GenEnum<SettlementReceivedResponse_Rejected_Reason> = /*@__PURE__*/
-  enumDesc(file_tzero_v1_pay_acquirer_acquirer, 5, 1, 0);
+  enumDesc(file_tzero_v1_pay_acquirer_acquirer, 7, 1, 0);
 
 /**
  * @generated from message tzero.v1.pay.acquirer.PaymentAuthorizedRequest
@@ -577,17 +706,14 @@ export type PaymentAuthorizedRequest = Message<"tzero.v1.pay.acquirer.PaymentAut
   paymentIntentId: bigint;
 
   /**
-   * *
-   * Echo of the Acquirer's CreatePaymentIntent payment_ref — a non-authoritative
-   * correlation ref, so the merchant order can be matched by either this or
-   * payment_intent_id.
+   * * Echo of the CreatePaymentIntent payment_ref, so the merchant order can be matched by it or by payment_intent_id. 
    *
    * @generated from field: string payment_ref = 20;
    */
   paymentRef: string;
 
   /**
-   * * How the customer paid, relayed from PaymentReceived; always sent in both modes. 
+   * * How the customer paid, as reported by the Issuer; sent in both settlement modes. In fiat settlement mode the chain details are an opaque reference for the receipt and audit trail. 
    *
    * @generated from oneof tzero.v1.pay.acquirer.PaymentAuthorizedRequest.payment_method
    */
@@ -600,11 +726,32 @@ export type PaymentAuthorizedRequest = Message<"tzero.v1.pay.acquirer.PaymentAut
   } | { case: undefined; value?: undefined };
 
   /**
-   * * Moment t-0 accepted PaymentReceived. 
+   * * Moment t-0 accepted the Issuer's report and authorized the payment. 
    *
    * @generated from field: google.protobuf.Timestamp approved_at = 40;
    */
   approvedAt?: Timestamp | undefined;
+
+  /**
+   * * USDt the deposit credited; equals the intent's settlement_amount, stated so the Acquirer's ledger derives nothing. 
+   *
+   * @generated from field: tzero.v1.pay.Decimal settlement_amount = 50;
+   */
+  settlementAmount?: Decimal | undefined;
+
+  /**
+   * * Moment the Issuer observed the deposit final on-chain. 
+   *
+   * @generated from field: google.protobuf.Timestamp received_at = 60;
+   */
+  receivedAt?: Timestamp | undefined;
+
+  /**
+   * no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
+   *
+   * @generated from field: tzero.v1.pay.acquirer.FiatSettlement fiat_settlement = 80;
+   */
+  fiatSettlement?: FiatSettlement | undefined;
 };
 
 /**
@@ -612,7 +759,7 @@ export type PaymentAuthorizedRequest = Message<"tzero.v1.pay.acquirer.PaymentAut
  * Use `create(PaymentAuthorizedRequestSchema)` to create a new message.
  */
 export const PaymentAuthorizedRequestSchema: GenMessage<PaymentAuthorizedRequest> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 6);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 8);
 
 /**
  * @generated from message tzero.v1.pay.acquirer.PaymentAuthorizedResponse
@@ -625,14 +772,14 @@ export type PaymentAuthorizedResponse = Message<"tzero.v1.pay.acquirer.PaymentAu
  * Use `create(PaymentAuthorizedResponseSchema)` to create a new message.
  */
 export const PaymentAuthorizedResponseSchema: GenMessage<PaymentAuthorizedResponse> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 7);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 9);
 
 /**
  * @generated from message tzero.v1.pay.acquirer.SettlementInitiatedRequest
  */
 export type SettlementInitiatedRequest = Message<"tzero.v1.pay.acquirer.SettlementInitiatedRequest"> & {
   /**
-   * * t-0's id for this fiat settlement; the bank-rails leg's key. 
+   * * t-0's id for this fiat settlement; the Acquirer dedupes on it. 
    *
    * @generated from field: uint64 fiat_settlement_id = 10;
    */
@@ -653,28 +800,21 @@ export type SettlementInitiatedRequest = Message<"tzero.v1.pay.acquirer.Settleme
   bankTransferRef: string;
 
   /**
-   * * Intents this settlement clears, resolved by t-0 from the LP's executions. 
+   * * Intents this settlement clears; the Acquirer maps them to its own payment_refs. 
    *
    * @generated from field: repeated uint64 settled_payment_intent_ids = 40;
    */
   settledPaymentIntentIds: bigint[];
 
   /**
-   * * ISO 4217 currency of the bank-rails transfer. 
+   * * Fiat amount and currency of the bank-rails transfer the LP reported; SettlementReceived must confirm exactly this figure. 
    *
-   * @generated from field: string local_currency = 50;
+   * @generated from field: tzero.v1.pay.acquirer.LocalAmount local = 100;
    */
-  localCurrency: string;
+  local?: LocalAmount | undefined;
 
   /**
-   * * Fiat amount the LP transferred. 
-   *
-   * @generated from field: tzero.v1.pay.Decimal settlement_amount = 60;
-   */
-  settlementAmount?: Decimal | undefined;
-
-  /**
-   * * t-0's id for the Acquirer this settlement is addressed to. 
+   * * t-0's id for the Acquirer this settlement is addressed to; the receiver must reject the callback unless it equals its own id. 
    *
    * @generated from field: uint64 acquirer_id = 70;
    */
@@ -686,6 +826,13 @@ export type SettlementInitiatedRequest = Message<"tzero.v1.pay.acquirer.Settleme
    * @generated from field: google.protobuf.Timestamp initiated_at = 80;
    */
   initiatedAt?: Timestamp | undefined;
+
+  /**
+   * * Moment the LP reported completing the bank-rails transfer — the value date to match on the statement. 
+   *
+   * @generated from field: google.protobuf.Timestamp settled_at = 90;
+   */
+  settledAt?: Timestamp | undefined;
 };
 
 /**
@@ -693,7 +840,7 @@ export type SettlementInitiatedRequest = Message<"tzero.v1.pay.acquirer.Settleme
  * Use `create(SettlementInitiatedRequestSchema)` to create a new message.
  */
 export const SettlementInitiatedRequestSchema: GenMessage<SettlementInitiatedRequest> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 8);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 10);
 
 /**
  * @generated from message tzero.v1.pay.acquirer.SettlementInitiatedResponse
@@ -706,21 +853,21 @@ export type SettlementInitiatedResponse = Message<"tzero.v1.pay.acquirer.Settlem
  * Use `create(SettlementInitiatedResponseSchema)` to create a new message.
  */
 export const SettlementInitiatedResponseSchema: GenMessage<SettlementInitiatedResponse> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 9);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 11);
 
 /**
  * @generated from message tzero.v1.pay.acquirer.SettlementCompletedRequest
  */
 export type SettlementCompletedRequest = Message<"tzero.v1.pay.acquirer.SettlementCompletedRequest"> & {
   /**
-   * * t-0's id for the settlement being completed. 
+   * * t-0's id for this on-chain settlement; the Acquirer dedupes on it. 
    *
    * @generated from field: uint64 settlement_id = 10;
    */
   settlementId: bigint;
 
   /**
-   * * Amount the Acquirer actually received; currency set by the settlement variant. 
+   * * USDt amount that reached the Acquirer's wallet. 
    *
    * @generated from field: tzero.v1.pay.Decimal settlement_amount = 20;
    */
@@ -734,20 +881,25 @@ export type SettlementCompletedRequest = Message<"tzero.v1.pay.acquirer.Settleme
   settledPaymentIntentIds: bigint[];
 
   /**
-   * * Moment the settlement reached the Acquirer. 
+   * * Moment t-0 verified the settlement final on-chain. 
    *
    * @generated from field: google.protobuf.Timestamp settled_at = 40;
    */
   settledAt?: Timestamp | undefined;
 
   /**
-   * *
-   * The on-chain USDt settlement that reached the Acquirer. USDt mode only —
-   * fiat mode has no SettlementCompleted (the Acquirer's SettlementReceived is terminal).
+   * * The on-chain USDt transfer that reached the Acquirer's registered wallet. 
    *
    * @generated from field: tzero.v1.pay.OnChainSettlementDetails settlement = 50;
    */
   settlement?: OnChainSettlementDetails | undefined;
+
+  /**
+   * * t-0's id for the Acquirer this settlement is addressed to; the receiver must reject the callback unless it equals its own participant id. 
+   *
+   * @generated from field: uint64 acquirer_id = 60;
+   */
+  acquirerId: bigint;
 };
 
 /**
@@ -755,7 +907,7 @@ export type SettlementCompletedRequest = Message<"tzero.v1.pay.acquirer.Settleme
  * Use `create(SettlementCompletedRequestSchema)` to create a new message.
  */
 export const SettlementCompletedRequestSchema: GenMessage<SettlementCompletedRequest> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 10);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 12);
 
 /**
  * @generated from message tzero.v1.pay.acquirer.SettlementCompletedResponse
@@ -768,11 +920,11 @@ export type SettlementCompletedResponse = Message<"tzero.v1.pay.acquirer.Settlem
  * Use `create(SettlementCompletedResponseSchema)` to create a new message.
  */
 export const SettlementCompletedResponseSchema: GenMessage<SettlementCompletedResponse> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 11);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 13);
 
 /**
  * *
- * The QR window lapsed on t-0's clock with no payment reported; the sale is
+ * The QR window lapsed on t-0's clock with no payment reported; the payment is
  * over and nothing will settle for it.
  *
  * @generated from message tzero.v1.pay.acquirer.PaymentExpiredRequest
@@ -786,20 +938,25 @@ export type PaymentExpiredRequest = Message<"tzero.v1.pay.acquirer.PaymentExpire
   paymentIntentId: bigint;
 
   /**
-   * *
-   * Echo of the Acquirer's CreatePaymentIntent payment_ref — a non-authoritative
-   * correlation ref the Acquirer can match by, alongside payment_intent_id.
+   * * Echo of the CreatePaymentIntent payment_ref, alongside payment_intent_id. 
    *
    * @generated from field: string payment_ref = 20;
    */
   paymentRef: string;
 
   /**
-   * * Moment the intent became terminal. 
+   * * Moment the intent expired on t-0's clock. 
    *
    * @generated from field: google.protobuf.Timestamp expired_at = 30;
    */
   expiredAt?: Timestamp | undefined;
+
+  /**
+   * no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
+   *
+   * @generated from field: tzero.v1.pay.acquirer.FiatSettlement fiat_settlement = 50;
+   */
+  fiatSettlement?: FiatSettlement | undefined;
 };
 
 /**
@@ -807,7 +964,7 @@ export type PaymentExpiredRequest = Message<"tzero.v1.pay.acquirer.PaymentExpire
  * Use `create(PaymentExpiredRequestSchema)` to create a new message.
  */
 export const PaymentExpiredRequestSchema: GenMessage<PaymentExpiredRequest> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 12);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 14);
 
 /**
  * @generated from message tzero.v1.pay.acquirer.PaymentExpiredResponse
@@ -820,14 +977,14 @@ export type PaymentExpiredResponse = Message<"tzero.v1.pay.acquirer.PaymentExpir
  * Use `create(PaymentExpiredResponseSchema)` to create a new message.
  */
 export const PaymentExpiredResponseSchema: GenMessage<PaymentExpiredResponse> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 13);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 15);
 
 /**
  * *
  * A customer deposit against this intent will not settle and the intent is
  * terminally failed: clear the pending order and drop the QR. Sent only while
  * the QR window is still open; once an intent has expired, its expiry notice is
- * the last word on that sale.
+ * the last word on that payment.
  *
  * @generated from message tzero.v1.pay.acquirer.PaymentFailedRequest
  */
@@ -840,21 +997,21 @@ export type PaymentFailedRequest = Message<"tzero.v1.pay.acquirer.PaymentFailedR
   paymentIntentId: bigint;
 
   /**
-   * * Echo of the Acquirer's CreatePaymentIntent payment_ref, alongside payment_intent_id. 
+   * * Echo of the CreatePaymentIntent payment_ref, alongside payment_intent_id. 
    *
    * @generated from field: string payment_ref = 20;
    */
   paymentRef: string;
 
   /**
-   * * Amount the deposit credited, relayed from PaymentReceived; may differ from the intent's amount. 
+   * * USDt the deposit credited, as reported by the Issuer; may differ from the intent's settlement_amount. 
    *
    * @generated from field: tzero.v1.pay.Decimal amount_usdt = 30;
    */
   amountUsdt?: Decimal | undefined;
 
   /**
-   * * How the customer paid, relayed from PaymentReceived. 
+   * * How the customer paid, as reported by the Issuer. 
    *
    * @generated from oneof tzero.v1.pay.acquirer.PaymentFailedRequest.payment_method
    */
@@ -879,6 +1036,13 @@ export type PaymentFailedRequest = Message<"tzero.v1.pay.acquirer.PaymentFailedR
    * @generated from field: google.protobuf.Timestamp failed_at = 60;
    */
   failedAt?: Timestamp | undefined;
+
+  /**
+   * no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
+   *
+   * @generated from field: tzero.v1.pay.acquirer.FiatSettlement fiat_settlement = 80;
+   */
+  fiatSettlement?: FiatSettlement | undefined;
 };
 
 /**
@@ -886,7 +1050,7 @@ export type PaymentFailedRequest = Message<"tzero.v1.pay.acquirer.PaymentFailedR
  * Use `create(PaymentFailedRequestSchema)` to create a new message.
  */
 export const PaymentFailedRequestSchema: GenMessage<PaymentFailedRequest> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 14);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 16);
 
 /**
  * @generated from message tzero.v1.pay.acquirer.PaymentFailedResponse
@@ -899,18 +1063,18 @@ export type PaymentFailedResponse = Message<"tzero.v1.pay.acquirer.PaymentFailed
  * Use `create(PaymentFailedResponseSchema)` to create a new message.
  */
 export const PaymentFailedResponseSchema: GenMessage<PaymentFailedResponse> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 15);
+  messageDesc(file_tzero_v1_pay_acquirer_acquirer, 17);
 
 /**
  * *
- * t-0 endpoints the Acquirer calls to price a sale, open a payment intent, and
+ * t-0 endpoints the Acquirer calls to price a payment, open a payment intent, and
  * confirm fiat receipt.
  *
  * @generated from service tzero.v1.pay.acquirer.AcquirerService
  */
 export const AcquirerService: GenService<{
   /**
-   * * Prices an upcoming fiat sale from t-0's Order Book of standing LP quotes. 
+   * * Prices an upcoming local-fiat payment from t-0's Order Book of standing LP quotes; fiat settlement mode only. 
    *
    * @generated from rpc tzero.v1.pay.acquirer.AcquirerService.GetPaymentQuote
    */
@@ -920,7 +1084,7 @@ export const AcquirerService: GenService<{
     output: typeof GetPaymentQuoteResponseSchema;
   },
   /**
-   * * Opens a payment intent for a sale; t-0 calls the Issuer inline and returns QR options. 
+   * * Opens a payment intent; t-0 reserves deposit addresses with the Issuer inline and returns the payment instructions. 
    *
    * @generated from rpc tzero.v1.pay.acquirer.AcquirerService.CreatePaymentIntent
    */
@@ -930,7 +1094,7 @@ export const AcquirerService: GenService<{
     output: typeof CreatePaymentIntentResponseSchema;
   },
   /**
-   * * Confirms fiat settlement landed in the Acquirer's bank account — the oracle for the bank leg. 
+   * * Confirms that a fiat settlement landed in the Acquirer's bank account; fiat settlement mode only, and the only event that settles the covered intents. 
    *
    * @generated from rpc tzero.v1.pay.acquirer.AcquirerService.SettlementReceived
    */
@@ -944,15 +1108,15 @@ export const AcquirerService: GenService<{
 
 /**
  * *
- * Acquirer-implemented callbacks t-0 pushes — authorization, settlement
- * progress, expiry, and payment failure. Delivered at least once and deduped on
- * the t-0 id.
+ * Acquirer-implemented callbacks t-0 pushes: authorization, settlement
+ * progress, expiry, and payment failure. Each is delivered at least once; the
+ * Acquirer dedupes on the t-0-minted id it carries.
  *
  * @generated from service tzero.v1.pay.acquirer.AcquirerCallbackService
  */
 export const AcquirerCallbackService: GenService<{
   /**
-   * * Tells the merchant the sale is approved; from here the Issuer is obligated to settle. 
+   * * Tells the merchant the payment is approved; from here the Issuer is obligated to settle. 
    *
    * @generated from rpc tzero.v1.pay.acquirer.AcquirerCallbackService.PaymentAuthorized
    */
@@ -962,7 +1126,7 @@ export const AcquirerCallbackService: GenService<{
     output: typeof PaymentAuthorizedResponseSchema;
   },
   /**
-   * * Pre-notice that the LP sent a fiat bank transfer, naming the reference to expect. 
+   * * Pre-notice that the LP sent a fiat bank transfer, naming the reference to expect; fiat settlement mode only, and does not settle the intents. 
    *
    * @generated from rpc tzero.v1.pay.acquirer.AcquirerCallbackService.SettlementInitiated
    */
@@ -972,7 +1136,7 @@ export const AcquirerCallbackService: GenService<{
     output: typeof SettlementInitiatedResponseSchema;
   },
   /**
-   * * Settlement verified on-chain as reached the Acquirer (USDt mode only); lists the intents it clears. 
+   * * The Issuer's USDt settlement verified on-chain as reaching the Acquirer's wallet, with the intents it clears; USDt settlement mode only — in fiat mode the Acquirer's own SettlementReceived is the terminal event. 
    *
    * @generated from rpc tzero.v1.pay.acquirer.AcquirerCallbackService.SettlementCompleted
    */
@@ -992,7 +1156,7 @@ export const AcquirerCallbackService: GenService<{
     output: typeof PaymentExpiredResponseSchema;
   },
   /**
-   * * A deposit arrived that the Issuer will not process; the sale is over and will not settle. 
+   * * A deposit arrived that the Issuer will not process; the payment is over and will not settle. 
    *
    * @generated from rpc tzero.v1.pay.acquirer.AcquirerCallbackService.PaymentFailed
    */
