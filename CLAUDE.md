@@ -54,19 +54,24 @@ A bot PR from the backend adds/updates `proto/` and regenerates `node/sdk/src/ge
 
 ## The CLI sync
 
-`cli/` is synced from `t-0-network/provider-sdk` — most files are upstream-owned
-and local patches will be overwritten by the next sync PR. Repo-owned files:
+`cli/` is synced from `t-0-network/provider-sdk` — the eight synced files are
+`main.go`, `scaffold.go`, `keygen.go`, `keygen_test.go`, `env.go`, `go.mod`,
+`go.sum`, `internal/sync/main.go`. Local patches to these will be overwritten
+by the next sync PR. Fix bugs there by upstreaming to provider-sdk first, then
+letting the sync carry the fix here.
 
-- `cli/config.go` — product-specific config (`ProductName`, `Languages`, `RoleRequired`)
-- `cli/overlay/` — standalone Dockerfiles, `.dockerignore`, and READMEs for
-  scaffolded projects (applied over the repo-context originals after template
-  extraction)
+Repo-owned files (not overwritten by the sync):
+
+- `cli/config.go` — product-specific config (`ProductName`, `Languages`, `RoleRequired`,
+  `PostScaffold`)
+- `cli/overlay.go` — embeds `cli/overlay/` and provides `applyOverlay`, wired via
+  `Config.PostScaffold`; this is the sync-proof seam for applying standalone
+  Dockerfiles, `.dockerignore`, and READMEs over the monorepo-context originals
+- `cli/overlay/` — the overlay files themselves, per `<lang>/<role>`
+- `cli/overlay_test.go` — tests that overlays are wired and applied
+- `cli/scaffold_test.go` — scaffold-level tests (diverged from upstream)
+- `cli/generate.go` — template generation from starters
 - `cli/install.sh` and `cli/install.ps1` — installer scripts
-
-Everything else (`main.go`, `scaffold.go`, `env.go`, `keygen.go`,
-`internal/sync/main.go`, `generate.go`, `keygen_test.go`) comes from the sync.
-Fix bugs there by upstreaming to provider-sdk first, then letting the sync carry
-the fix here.
 
 ## Signatures
 
