@@ -17,6 +17,10 @@ This README says what to build — for what every field and decline code means, 
 
 ## Run it
 
+If you used the scaffolder, skip the `cp` — your generated `.env` already holds
+your key, and copying the example over it destroys it. Only `NETWORK_PUBLIC_KEY`
+is left for you to fill in.
+
 ```bash
 cp .env.example .env      # then fill in PROVIDER_PRIVATE_KEY and NETWORK_PUBLIC_KEY
 

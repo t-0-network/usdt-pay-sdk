@@ -1,8 +1,6 @@
 package main
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -30,52 +28,6 @@ func TestEmbedFS_ForwardSlashWorks(t *testing.T) {
 				t.Errorf("ReadDir(%q) returned 0 entries", dir)
 			}
 		})
-	}
-}
-
-func TestScaffold_AllLanguages(t *testing.T) {
-	for _, lang := range Config.Languages {
-		roles, _ := listRoles(lang)
-		if len(roles) == 0 {
-			roles = []string{""}
-		}
-		for _, role := range roles {
-			name := lang
-			if role != "" {
-				name = lang + "/" + role
-			}
-			t.Run(name, func(t *testing.T) {
-				dir := t.TempDir()
-				projectDir := filepath.Join(dir, "test-project")
-
-				opts := ScaffoldOpts{
-					Lang:        lang,
-					Role:        role,
-					ProjectName: "test-project",
-					ProjectDir:  projectDir,
-					Version:     "dev",
-				}
-				if lang == "go" {
-					opts.ModulePath = "github.com/test/test-project"
-				}
-
-				if err := os.MkdirAll(projectDir, 0777); err != nil {
-					t.Fatal(err)
-				}
-				if err := scaffold(opts); err != nil {
-					t.Fatalf("scaffold(%s): %v", name, err)
-				}
-
-				// .gitignore must exist (dot-gitignore renamed)
-				if _, err := os.Stat(filepath.Join(projectDir, ".gitignore")); err != nil {
-					t.Errorf(".gitignore missing in %s scaffold", name)
-				}
-				// dot-gitignore must NOT exist
-				if _, err := os.Stat(filepath.Join(projectDir, "dot-gitignore")); err == nil {
-					t.Errorf("dot-gitignore still present in %s scaffold", name)
-				}
-			})
-		}
 	}
 }
 

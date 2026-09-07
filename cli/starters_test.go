@@ -10,25 +10,62 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
+	"sort"
 	"strings"
 	"testing"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
-// starterTargets lists every lang/role pair with an embedded starter template,
-// so a new starter is covered by these tests without editing them.
+// starterTargets lists every lang/role pair with an embedded starter template
+// and requires that set to equal the starters in the source tree
+// (<lang>/starter/<role>/), so a starter that drops out of generate.go fails
+// here instead of silently losing coverage. Languages are discovered from the
+// tree, not taken from Config.Languages: a new <lang>/starter/ that is wired
+// into neither generate.go nor config.go must fail too.
 func starterTargets(t *testing.T) [][2]string {
 	t.Helper()
+	var langs []string
+	entries, err := os.ReadDir("..")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range entries {
+		if info, err := os.Stat(filepath.Join("..", e.Name(), "starter")); err == nil && info.IsDir() {
+			langs = append(langs, e.Name())
+		}
+	}
+	sort.Strings(langs)
+	configured := slices.Clone(Config.Languages)
+	sort.Strings(configured)
+	if !slices.Equal(langs, configured) {
+		t.Fatalf("languages with a starter in the tree %v, Config.Languages %v — wire the missing one into cli/config.go", langs, configured)
+	}
+
 	var targets [][2]string
-	for _, lang := range Config.Languages {
+	for _, lang := range langs {
 		roles, err := listRoles(lang)
 		if err != nil {
 			t.Fatalf("listRoles(%s): %v — run 'go generate ./...' first", lang, err)
 		}
-		if len(roles) == 0 {
-			roles = []string{""}
+		sort.Strings(roles)
+
+		var inTree []string
+		entries, err := os.ReadDir(filepath.Join("..", lang, "starter"))
+		if err != nil {
+			t.Fatalf("reading ../%s/starter: %v", lang, err)
 		}
+		for _, e := range entries {
+			if e.IsDir() {
+				inTree = append(inTree, e.Name())
+			}
+		}
+		sort.Strings(inTree)
+		if !slices.Equal(roles, inTree) {
+			t.Fatalf("%s: embedded starters %v, starters in ../%s/starter %v — wire the missing one into cli/generate.go", lang, roles, lang, inTree)
+		}
+
 		for _, role := range roles {
 			targets = append(targets, [2]string{lang, role})
 		}
@@ -37,6 +74,38 @@ func starterTargets(t *testing.T) [][2]string {
 		t.Fatal("no starter templates embedded")
 	}
 	return targets
+}
+
+// entryFiles are what a scaffolded project of each language must contain for
+// "it compiles" in CI to mean anything: an empty tree compiles too.
+var entryFiles = map[string][]string{
+	"java": {"build.gradle.kts", "settings.gradle.kts", "gradlew", "src/main/java"},
+	"node": {"package.json", "tsconfig.json", "src/index.ts"},
+}
+
+func requireEntryFiles(t *testing.T, lang, projectDir string) {
+	t.Helper()
+	files, ok := entryFiles[lang]
+	if !ok {
+		t.Fatalf("no entry files listed for lang=%s — add them to entryFiles", lang)
+	}
+	for _, f := range files {
+		if _, err := os.Stat(filepath.Join(projectDir, filepath.FromSlash(f))); err != nil {
+			t.Errorf("%s missing from the scaffolded project: %v", f, err)
+		}
+	}
+	if lang == "java" {
+		sources := 0
+		filepath.WalkDir(filepath.Join(projectDir, "src", "main", "java"), func(p string, d fs.DirEntry, err error) error {
+			if err == nil && !d.IsDir() && strings.HasSuffix(p, ".java") {
+				sources++
+			}
+			return nil
+		})
+		if sources == 0 {
+			t.Error("no .java sources under src/main/java — the scaffold would compile to nothing")
+		}
+	}
 }
 
 func overlayRootFor(lang, role string) string {
@@ -145,6 +214,12 @@ func TestRun_InstantiatesEveryStarter(t *testing.T) {
 					t.Errorf("%s missing after run(): %v", name, err)
 				}
 			}
+			// The template ships .gitignore as dot-gitignore (a real .gitignore
+			// would be dropped by go:embed); the scaffolder renames it.
+			if _, err := os.Stat(filepath.Join(projectDir, "dot-gitignore")); err == nil {
+				t.Error("dot-gitignore still present — the template rename did not happen")
+			}
+			requireEntryFiles(t, lang, projectDir)
 
 			root := overlayRootFor(lang, role)
 			err := fs.WalkDir(overlayFiles, root, func(src string, d fs.DirEntry, err error) error {

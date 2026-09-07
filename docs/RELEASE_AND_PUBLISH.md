@@ -65,7 +65,7 @@ build. Deliberately not a `+` range, because an SDK bump is the consumer's decis
 
 Dispatch input `bump` — `patch` (default) / `minor` / `major`.
 
-1. **Build gate** — `build-java` and `build-node`, the same three jobs as `ci-java.yaml` / `ci-node.yaml` / `ci-go.yaml` including
+1. **Build gate** — `build-java`, `build-node` and `build-go`, the same three jobs as `ci-java.yaml` / `ci-node.yaml` / `ci-go.yaml` including
    `npm audit --omit=dev --audit-level=high`. A red tree cannot be released.
 2. **`release` job**, guarded by `if: github.ref == 'refs/heads/master'` so a dispatch against a
    feature branch cannot tag.
@@ -313,29 +313,14 @@ version-matches-tag assertion. The [version sites table](#version-sites) above g
 
 ### Go
 
-Copy provider-sdk's [`publish-go` job](https://github.com/t-0-network/provider-sdk/blob/master/.github/workflows/publish.yaml)
-wholesale — Go publishing has the most moving parts:
-
-- Multi-module tags `go/vX.Y.Z` per module, created in **`publish.yaml`**, not `release.yaml` —
-  they must not exist before the modules' `go.sum`s are proven.
-- **sumtool** precomputes `go.sum` against a local `file://` GOPROXY before the tag exists, and the
-  publish step verifies with `-mod=readonly` — a missing or wrong hash fails there.
-- The `GOPROXY` chain is `file://${PROXY_DIR},https://proxy.golang.org,direct`, behind a
-  file-proxy-only `go mod download` gate — copy the block from provider-sdk's `release.yaml`
-  verbatim; its
-  [`RELEASE_AND_PUBLISH.md`](https://github.com/t-0-network/provider-sdk/blob/master/docs/RELEASE_AND_PUBLISH.md)
-  explains the mechanism. In short: the `file://` layout answers every request about the
-  unreleased module and Go moves to the next proxy only on a 404, so `proxy.golang.org` is never
-  asked about a version that has no tag yet (a 404 there is cached for about 30 minutes and blocks
-  the version for everyone); the gate turns a broken layout into a local failure instead of that
-  query. `proxy.golang.org` must stay in the chain: with `direct` alone every third-party module is
-  fetched from its upstream git host, and the build works only while every one of those
-  repositories still exists under its module path — the proxy serves pinned versions from an
-  immutable cache. `GONOSUMDB` covers our own modules so `sum.golang.org` is not consulted for
-  tags it has not seen; never `GOPRIVATE`/`GONOPROXY`, which bypass the `file://` layout too.
-- A `LICENSE` file must sit **in each module directory**. `cmd/go` synthesizes the repo-root
-  LICENSE into the module zip; `x/mod/zip.CreateFromDir` does not — and the two producing
-  different zips is a checksum divergence users see as a security error.
+Go publishing has the most moving parts. Copy provider-sdk's Go steps wholesale and keep them
+identical to upstream: the `release.yaml` "Update Go Starter template SDK version" step, the
+[`publish-go` job](https://github.com/t-0-network/provider-sdk/blob/master/.github/workflows/publish.yaml)
+and `.github/tools/sumtool`. The rules behind them — module tags created in `publish.yaml`,
+`sumtool` precomputing `go.sum` before the tag exists, the `GOPROXY` chain with its file-proxy
+gate, a `LICENSE` in every module directory — are in provider-sdk's
+[`RELEASE_AND_PUBLISH.md`](https://github.com/t-0-network/provider-sdk/blob/master/docs/RELEASE_AND_PUBLISH.md),
+"Precomputing the Go template's `go.sum`". They are deliberately not restated here.
 
 ### Python
 
