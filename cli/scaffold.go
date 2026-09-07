@@ -15,12 +15,30 @@ import (
 //go:embed all:internal/embed
 var embeddedTemplates embed.FS
 
+// CLIConfig is the product's side of the contract: everything the synced
+// scaffolder needs to know about the product it is built into lives here,
+// in the product's config.go, never in the synced files.
 type CLIConfig struct {
-	ProductName  string
-	Command      string
+	ProductName string
+	Command     string
+	// Description of what `init` creates, shown in usage. Empty means
+	// "a new <ProductName> project".
+	Description  string
 	RoleRequired bool
 	DefaultRole  string
 	Languages    []string
+	// JavaRepositories are the values `--repository` accepts, the first one
+	// being the default the Java template declares as `val sdkRepository`.
+	// Empty: the flag does not exist and nothing is rewritten.
+	JavaRepositories []string
+	// JavaSDKArtifacts are the Java SDK coordinates the template depends on
+	// at version `+`; a release build pins them to the CLI's own version.
+	// Empty: the template pins its SDK itself and nothing is rewritten.
+	JavaSDKArtifacts []string
+	// NextSteps are printed after "cd <dir>" and before the run command —
+	// what the user must do before the project works, e.g. a value to fill
+	// in .env.
+	NextSteps []string
 	// OverlayFS, when set, holds product files written over the scaffolded
 	// output after template extraction. Layout: overlay/<lang>[/<role>]/...
 	// Files are copied verbatim (no placeholder or filename transforms).
@@ -36,10 +54,26 @@ type ScaffoldOpts struct {
 	ProjectDir  string
 	// Go-specific: module path for import rewriting
 	ModulePath string
-	// Java-specific: SDK repository (jitpack or maven-central)
+	// Java-specific: the chosen Config.JavaRepositories entry
 	JavaRepo string
-	// CLI version (injected into Java template's SDK version)
+	// CLI version; pins Config.JavaSDKArtifacts in the Java template
 	Version string
+}
+
+func (c CLIConfig) hasLang(lang string) bool {
+	for _, l := range c.Languages {
+		if l == lang {
+			return true
+		}
+	}
+	return false
+}
+
+func (c CLIConfig) description() string {
+	if c.Description != "" {
+		return c.Description
+	}
+	return "a new " + c.ProductName + " project"
 }
 
 func scaffold(opts ScaffoldOpts) error {
@@ -171,15 +205,17 @@ func processPlaceholders(content string, opts ScaffoldOpts, pascalName string) s
 		content = strings.ReplaceAll(content, "{{MODULE_PATH}}", opts.ModulePath)
 	}
 
-	// Java: SDK version pinning
+	// Java: pin the SDK artifacts to this release, select the repository
 	if opts.Lang == "java" {
 		if opts.Version != "" && opts.Version != "dev" {
-			content = strings.ReplaceAll(content, `:+"`, `:`+opts.Version+`"`)
+			for _, artifact := range Config.JavaSDKArtifacts {
+				content = strings.ReplaceAll(content, `"`+artifact+`:+"`, `"`+artifact+`:`+opts.Version+`"`)
+			}
 		}
-		if opts.JavaRepo == "maven-central" {
+		if len(Config.JavaRepositories) > 0 && opts.JavaRepo != "" && opts.JavaRepo != Config.JavaRepositories[0] {
 			content = strings.ReplaceAll(content,
-				`val sdkRepository = "jitpack"`,
-				`val sdkRepository = "maven-central"`)
+				`val sdkRepository = "`+Config.JavaRepositories[0]+`"`,
+				`val sdkRepository = "`+opts.JavaRepo+`"`)
 		}
 	}
 

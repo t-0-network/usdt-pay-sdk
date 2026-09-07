@@ -24,12 +24,26 @@ var (
 func main() {
 	initCmd := flag.NewFlagSet("init", flag.ExitOnError)
 	lang := initCmd.String("lang", "", "Language/ecosystem: "+strings.Join(Config.Languages, ", "))
-	role := initCmd.String("role", Config.DefaultRole, "Role (required for some products)")
 	dir := initCmd.String("dir", "", "Target directory (defaults to ./<project-name>)")
-	javaRepo := initCmd.String("repository", "jitpack", "Java SDK repository: jitpack (default) or maven-central")
-	modulePath := initCmd.String("module", "", "Go module path (defaults to project name)")
 	noColorFlag := initCmd.Bool("no-color", false, "Disable colored output")
 	showVersion := initCmd.Bool("version", false, "Show version")
+	// Product-shaped flags exist only where the product has the thing.
+	role := new(string)
+	if Config.RoleRequired || Config.DefaultRole != "" {
+		roleUsage := "Role"
+		if Config.RoleRequired {
+			roleUsage = "Role (required)"
+		}
+		role = initCmd.String("role", Config.DefaultRole, roleUsage)
+	}
+	modulePath := new(string)
+	if Config.hasLang("go") {
+		modulePath = initCmd.String("module", "", "Go module path (defaults to project name)")
+	}
+	javaRepo := new(string)
+	if len(Config.JavaRepositories) > 0 {
+		javaRepo = initCmd.String("repository", Config.JavaRepositories[0], "Java SDK repository: "+strings.Join(Config.JavaRepositories, "|"))
+	}
 
 	if len(os.Args) < 2 {
 		printUsage()
@@ -86,6 +100,11 @@ func main() {
 		if Config.RoleRequired && *role == "" {
 			fmt.Fprintf(os.Stderr, "%s --role is required\n", color(red, "[ERROR]"))
 			os.Exit(2)
+		}
+
+		if *lang == "java" && len(Config.JavaRepositories) > 0 && !contains(Config.JavaRepositories, *javaRepo) {
+			fmt.Fprintf(os.Stderr, "%s unknown repository %q (options: %s)\n", color(red, "[ERROR]"), *javaRepo, strings.Join(Config.JavaRepositories, ", "))
+			os.Exit(1)
 		}
 
 		projectDir := filepath.Join(".", projectName)
@@ -229,25 +248,34 @@ func printCompletion(opts ScaffoldOpts, kp KeyPair) {
 
 	fmt.Printf("%s\n", color(yellow, "Next Steps:"))
 	fmt.Println()
-	fmt.Println("  1. Navigate to your project:")
+	step := 1
+	fmt.Printf("  %d. Navigate to your project:\n", step)
 	fmt.Printf("     %s\n", color(blue, "cd "+opts.ProjectDir))
 	fmt.Println()
 
+	// Product-specific steps: what must happen before the project works.
+	for _, s := range Config.NextSteps {
+		step++
+		fmt.Printf("  %d. %s\n", step, s)
+		fmt.Println()
+	}
+
+	step++
 	switch opts.Lang {
 	case "go":
-		fmt.Println("  2. Run the application:")
+		fmt.Printf("  %d. Run the application:\n", step)
 		fmt.Printf("     %s\n", color(blue, "go run ./cmd"))
 	case "node":
-		fmt.Println("  2. Install dependencies and run:")
+		fmt.Printf("  %d. Install dependencies and run:\n", step)
 		fmt.Printf("     %s\n", color(blue, "npm install && npm run dev"))
 	case "python":
-		fmt.Println("  2. Install dependencies and run:")
+		fmt.Printf("  %d. Install dependencies and run:\n", step)
 		fmt.Printf("     %s\n", color(blue, "uv sync && uv run python -m provider.main"))
 	case "java":
-		fmt.Println("  2. Run the application:")
+		fmt.Printf("  %d. Run the application:\n", step)
 		fmt.Printf("     %s\n", color(blue, "./gradlew run"))
 	case "csharp":
-		fmt.Println("  2. Run the application:")
+		fmt.Printf("  %d. Run the application:\n", step)
 		fmt.Printf("     %s\n", color(blue, "dotnet run"))
 	}
 	fmt.Println()
@@ -257,27 +285,37 @@ func printUsage() {
 	fmt.Printf("Usage: %s <command> [options]\n", Config.ProductName)
 	fmt.Println()
 	fmt.Println("Commands:")
-	fmt.Printf("  init <project-name>  Initialize a new T-0 Network provider project\n")
-	fmt.Printf("  keygen               Generate a new secp256k1 keypair\n")
-	fmt.Printf("  version              Show version\n")
+	fmt.Printf("  init [options] <project-name>  Initialize %s\n", Config.description())
+	fmt.Printf("  keygen                         Generate a new secp256k1 keypair\n")
+	fmt.Printf("  version                        Show version\n")
 	fmt.Println()
 	fmt.Printf("Languages: %s\n", strings.Join(Config.Languages, ", "))
 	fmt.Println()
-	fmt.Println("Init options:")
+	fmt.Println("Init options (before or after the project name):")
 	fmt.Println("  --lang string        Language/ecosystem (required)")
-	fmt.Println("  --module string      Go module path (Go only)")
-	fmt.Println("  --repository string  Java SDK repository: jitpack|maven-central (Java only)")
+	if Config.RoleRequired {
+		fmt.Println("  --role string        Role (required)")
+	} else if Config.DefaultRole != "" {
+		fmt.Printf("  --role string        Role (default: %s)\n", Config.DefaultRole)
+	}
+	if Config.hasLang("go") {
+		fmt.Println("  --module string      Go module path (Go only)")
+	}
+	if len(Config.JavaRepositories) > 0 {
+		fmt.Printf("  --repository string  Java SDK repository: %s (Java only)\n", strings.Join(Config.JavaRepositories, "|"))
+	}
 	fmt.Println("  --dir string         Target directory (default: ./<project-name>)")
 	fmt.Println("  --no-color           Disable colored output")
 	fmt.Println("  --version            Show version")
-	if Config.RoleRequired {
-		fmt.Println("  --role string        Role (required)")
-	}
 }
 
 func isValidLang(lang string) bool {
-	for _, l := range Config.Languages {
-		if l == lang {
+	return Config.hasLang(lang)
+}
+
+func contains(list []string, s string) bool {
+	for _, v := range list {
+		if v == s {
 			return true
 		}
 	}
