@@ -152,6 +152,7 @@ jobs:
         uses: actions/setup-go@v7
         with:
           go-version-file: cli/go.mod
+          cache-dependency-path: cli/go.sum
 
       - name: Generate templates
         working-directory: cli
@@ -316,6 +317,7 @@ jobs:
         uses: actions/setup-go@v7
         with:
           go-version-file: cli/go.mod
+          cache-dependency-path: cli/go.sum
 
       - name: Get version from tag
         id: version
