@@ -76,9 +76,11 @@ then letting the sync carry the fix here. Everything else is repo-owned:
 
 A green bot sync PR only means `cli/` still compiles: `ci-go.yaml` additionally
 scaffolds every embedded lang/role with the built binary, diffs the result
-against `cli/overlay/`, and (on PRs) compiles the scaffolded project against the
-published SDK. Adding a starter means adding its overlay and, if it is a new
-language, a compile case in that workflow's loop.
+against `cli/overlay/`, and compiles the scaffolded project against the SDK
+**in this tree** (Java via an isolated `publishToMavenLocal` at `0.0.0-local`,
+Node via `npm pack`) — not the published one, which lags the tree between a
+proto sync and the next release. Adding a starter means adding its overlay and,
+if it is a new language, a compile case in that workflow's loop.
 
 ## Signatures
 
