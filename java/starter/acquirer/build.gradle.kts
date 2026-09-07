@@ -40,7 +40,7 @@ dependencies {
     implementation("io.github.cdimascio:dotenv-java:3.2.0")
 
     // Logging
-    implementation("ch.qos.logback:logback-classic:1.5.32")
+    implementation("ch.qos.logback:logback-classic:1.6.3")
 
     // grpc-java logs through java.util.logging, which logback cannot intercept on its
     // own — without this bridge its records ignore logback.xml and print in raw JUL
