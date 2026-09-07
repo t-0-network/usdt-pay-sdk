@@ -11,9 +11,8 @@ import { issuerCallbackHandler } from "./handler.js";
 /**
  * Issuer starter for the t-0 QR payment flow.
  *
- * Work through the numbered TODOs in order; the README explains each phase. Numbers
- * such as §6 are shorthand for the endpoints — the README maps them to RPC names, and
- * the issuer API reference documents every field:
+ * Work through the numbered TODOs in order; the README explains each phase. The
+ * issuer API reference documents every field:
  * https://usdt-pay-docs.t-0.network/docs/integration-guidance/api-reference/pay_issuer/
  */
 async function main(): Promise<void> {
@@ -22,11 +21,11 @@ async function main(): Promise<void> {
   console.log(`Issuer public key: ${config.publicKey}`);
   // TODO: Step 1.2 — send this public key to the t-0 team so they can verify your calls.
 
-  // Outbound: everything you call on t-0 (§6, §9, §14). Each internal/ helper sets its
+  // Outbound: everything you call on t-0 (PaymentReceived, SettlementSent). Each internal/ helper sets its
   // own timeout — a Connect deadline is per call, so there is nothing to install here.
   const t0 = createClient(config.tzeroEndpoint, config.privateKey, IssuerService);
 
-  // Inbound: the one callback t-0 pushes to you (§5).
+  // Inbound: the one callback t-0 pushes to you (CreatePaymentInstructions).
   // Every inbound signature is verified against NETWORK_PUBLIC_KEY.
   const server = await createServer(config.port, config.networkPublicKey, (router) => {
     router.service(IssuerCallbackService, issuerCallbackHandler);

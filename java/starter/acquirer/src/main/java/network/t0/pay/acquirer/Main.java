@@ -89,10 +89,9 @@ public final class Main {
         // TODO: Step 2.1 — replace the demo sale with a real one from your POS. One
         //       sale is one currency, one amount and one paymentRef: quote and intent
         //       must describe the same sale or you price one thing and charge another.
-        //       In USDt mode drop GetPaymentQuote and go straight to
-        //       CreatePaymentIntent with your own rate.
+        //       On-chain settlement: skip GetPaymentQuote and send the amount in USDt.
         String localCurrency = "COP";
-        var localAmount = Decimals.of("100000.00");
+        var localAmount = Decimals.of("100000");
         // paymentRef identifies the sale in your own ledger; t-0 echoes it on
         // PaymentAuthorized and PaymentExpired and does not require it to be unique.
         String paymentRef = UUID.randomUUID().toString();
@@ -112,7 +111,7 @@ public final class Main {
         quoted.value()
                 .ifPresent(quote -> {
                     var intent = CreatePaymentIntent.create(
-                            t0.stub(), paymentRef, idempotencyKey, localAmount, quote.getQuoteId());
+                            t0.stub(), paymentRef, idempotencyKey, localCurrency, localAmount, quote.getQuoteId());
 
                     // CreatePaymentIntent is the opposite case: it is keyed, and
                     // Unknown means t-0 may already have opened the intent. Resending

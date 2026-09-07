@@ -11,43 +11,43 @@ import "google/protobuf/timestamp.proto";
 import "tzero/v1/pay/common.proto";
 
 /**
- * t-0 endpoints the Acquirer calls to price a sale, open a payment intent, and
+ * t-0 endpoints the Acquirer calls to price a payment, open a payment intent, and
  * confirm fiat receipt.
  */
 service AcquirerService {
-  /** Prices an upcoming fiat sale from t-0's Order Book of standing LP quotes. */
+  /** Prices an upcoming local-fiat payment from t-0's Order Book of standing LP quotes; fiat settlement mode only. */
   rpc GetPaymentQuote(GetPaymentQuoteRequest) returns (GetPaymentQuoteResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
 
-  /** Opens a payment intent for a sale; t-0 calls the Issuer inline and returns QR options. */
+  /** Opens a payment intent; t-0 reserves deposit addresses with the Issuer inline and returns the payment instructions. */
   rpc CreatePaymentIntent(CreatePaymentIntentRequest) returns (CreatePaymentIntentResponse) {
     option idempotency_level = IDEMPOTENT;
   }
 
-  /** Confirms fiat settlement landed in the Acquirer's bank account — the oracle for the bank leg. */
+  /** Confirms that a fiat settlement landed in the Acquirer's bank account; fiat settlement mode only, and the only event that settles the covered intents. */
   rpc SettlementReceived(SettlementReceivedRequest) returns (SettlementReceivedResponse) {
     option idempotency_level = IDEMPOTENT;
   }
 }
 
 /**
- * Acquirer-implemented callbacks t-0 pushes — authorization, settlement
- * progress, expiry, and payment failure. Delivered at least once and deduped on
- * the t-0 id.
+ * Acquirer-implemented callbacks t-0 pushes: authorization, settlement
+ * progress, expiry, and payment failure. Each is delivered at least once; the
+ * Acquirer dedupes on the t-0-minted id it carries.
  */
 service AcquirerCallbackService {
-  /** Tells the merchant the sale is approved; from here the Issuer is obligated to settle. */
+  /** Tells the merchant the payment is approved; from here the Issuer is obligated to settle. */
   rpc PaymentAuthorized(PaymentAuthorizedRequest) returns (PaymentAuthorizedResponse) {
     option idempotency_level = IDEMPOTENT;
   }
 
-  /** Pre-notice that the LP sent a fiat bank transfer, naming the reference to expect. */
+  /** Pre-notice that the LP sent a fiat bank transfer, naming the reference to expect; fiat settlement mode only, and does not settle the intents. */
   rpc SettlementInitiated(SettlementInitiatedRequest) returns (SettlementInitiatedResponse) {
     option idempotency_level = IDEMPOTENT;
   }
 
-  /** Settlement verified on-chain as reached the Acquirer (USDt mode only); lists the intents it clears. */
+  /** The Issuer's USDt settlement verified on-chain as reaching the Acquirer's wallet, with the intents it clears; USDt settlement mode only — in fiat mode the Acquirer's own SettlementReceived is the terminal event. */
   rpc SettlementCompleted(SettlementCompletedRequest) returns (SettlementCompletedResponse) {
     option idempotency_level = IDEMPOTENT;
   }
@@ -57,22 +57,71 @@ service AcquirerCallbackService {
     option idempotency_level = IDEMPOTENT;
   }
 
-  /** A deposit arrived that the Issuer will not process; the sale is over and will not settle. */
+  /** A deposit arrived that the Issuer will not process; the payment is over and will not settle. */
   rpc PaymentFailed(PaymentFailedRequest) returns (PaymentFailedResponse) {
     option idempotency_level = IDEMPOTENT;
   }
 }
 
+/**
+ * An amount in the local fiat currency the customer was quoted in. Minor units
+ * are t-0's own rule, not ISO 4217's: COP, CLP, PYG and JPY are kept in whole
+ * units, every other currency at two decimal places.
+ */
+message LocalAmount {
+  /** Amount in `currency`; a value finer than the currency's minor units is invalid input. */
+  tzero.v1.pay.Decimal value = 10 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      message: "value must be greater than zero"
+      expression: "this.unscaled > 0"
+    }
+  ];
+
+  /** Three-letter currency code in ISO 4217 form (e.g. COP); not checked against the ISO list. */
+  string currency = 20 [(buf.validate.field).string = {
+    len: 3
+    pattern: "^[A-Z]{3}$"
+  }];
+}
+
+/**
+ * The fiat terms locked for a payment whose Acquirer is settled in fiat: the
+ * standing quote, its rate, and the local amount the Acquirer is settled.
+ * Returned on CreatePaymentIntent and repeated unchanged on PaymentAuthorized,
+ * PaymentExpired and PaymentFailed; absent for an Acquirer settled on-chain.
+ */
+message FiatSettlement {
+  /** t-0's id of the standing quote the intent locked: the referenced one, or the one t-0 resolved when the request named none. */
+  uint64 quote_id = 10 [(buf.validate.field).uint64.gt = 0];
+
+  /** Locked rate, in units of local.currency per 1 USDt. */
+  tzero.v1.pay.Decimal fx_rate = 40 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      message: "fx_rate must be greater than zero"
+      expression: "this.unscaled > 0"
+    }
+  ];
+
+  /**
+   * Fiat amount the Acquirer is settled: as sent in the request's `local`, or,
+   * for a payment denominated in USDt, round(settlement_amount × fx_rate,
+   * half-up) to the currency's minor units.
+   */
+  LocalAmount local = 60 [(buf.validate.field).required = true];
+}
+
 // ── AcquirerService ──────────────────────────────────────────────────
 
 message GetPaymentQuoteRequest {
-  /** ISO 4217 currency the merchant is quoting in (e.g. COP). */
+  /** Three-letter currency code in ISO 4217 form the merchant is quoting in (e.g. COP); not checked against the ISO list. */
   string local_currency = 10 [(buf.validate.field).string = {
     len: 3
     pattern: "^[A-Z]{3}$"
   }];
 
-  /** Fiat amount the merchant wants to price. */
+  /** Fiat amount in local_currency to price; a value finer than the currency's minor units is invalid input. */
   tzero.v1.pay.Decimal local_amount = 20 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
@@ -90,14 +139,14 @@ message GetPaymentQuoteResponse {
   }
 
   message Success {
-    /** t-0's id for the priced standing quote. */
+    /** t-0's id for the standing quote that priced this request; not consumed by use, any number of intents may reference it while it stands. */
     uint64 quote_id = 10 [(buf.validate.field).uint64.gt = 0];
 
-    /** USDt the customer pays for local_amount at fx_rate. */
-    tzero.v1.pay.Decimal amount_usdt = 20 [
+    /** The payment in the settlement asset (USDt): round(local_amount / fx_rate, 2 dp, half-up). Indicative; the binding figure is derived the same way on CreatePaymentIntent. */
+    tzero.v1.pay.Decimal settlement_amount = 50 [
       (buf.validate.field).required = true,
       (buf.validate.field).cel = {
-        message: "amount_usdt must be greater than zero"
+        message: "settlement_amount must be greater than zero"
         expression: "this.unscaled > 0"
       }
     ];
@@ -111,7 +160,7 @@ message GetPaymentQuoteResponse {
       }
     ];
 
-    /** Moment the standing quote stops standing on t-0's clock. */
+    /** Moment the quote stops standing, on t-0's clock; it cannot be referenced after this. */
     google.protobuf.Timestamp expires_at = 40 [(buf.validate.field).required = true];
   }
 
@@ -128,7 +177,7 @@ message GetPaymentQuoteResponse {
 
 message CreatePaymentIntentRequest {
   /**
-   * Sale identifier from the Acquirer's own ledger, echoed on PaymentAuthorized,
+   * Payment identifier from the Acquirer's own ledger, echoed on PaymentAuthorized,
    * PaymentExpired, and PaymentFailed. Not an idempotency key, and not required
    * to be unique.
    */
@@ -140,7 +189,7 @@ message CreatePaymentIntentRequest {
   /**
    * Retry identity for this call, unique per Acquirer. At most one payment intent
    * is ever created under one key, and repeating a key whose intent exists returns
-   * it unchanged. Retrying a declined sale takes a fresh key under the same
+   * it unchanged. Retrying a declined payment takes a fresh key under the same
    * payment_ref.
    */
   string idempotency_key = 20 [(buf.validate.field).string = {
@@ -148,44 +197,47 @@ message CreatePaymentIntentRequest {
     max_len: 256
   }];
 
-  /** Fiat amount of the sale, in the settlement currency. */
-  tzero.v1.pay.Decimal local_amount = 30 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).cel = {
-      message: "local_amount must be greater than zero"
-      expression: "this.unscaled > 0"
-    }
-  ];
-
-  /** The configured settlement mode selects exactly one terms variant. */
-  oneof terms {
+  /**
+   * Denomination of the payment, exactly one variant, independent of how the
+   * Acquirer is settled: `settlement` is the USDt figure the settlement leg
+   * moves, `local` the fiat figure the customer was quoted. `local` is refused
+   * as a failed precondition for an Acquirer settled on-chain, which has no
+   * rate to price it with.
+   */
+  oneof amount {
     option (buf.validate.oneof).required = true;
-    UsdtSettlementTerms usdt_settlement = 40;
-    FiatSettlementTerms fiat_settlement = 50;
+    SettlementAmount settlement = 100;
+    LocalAmount local = 110;
   }
 
-  /** Acquirer-supplied terms when it settles in USDt and runs its own FX. */
-  message UsdtSettlementTerms {
-    /** ISO 4217 currency the merchant quoted the customer in. */
-    string local_currency = 10 [(buf.validate.field).string = {
-      len: 3
-      pattern: "^[A-Z]{3}$"
-    }];
-
-    /** Units of local_currency per 1 USDt, set by the Acquirer. */
-    tzero.v1.pay.Decimal fx_rate = 20 [
+  /**
+   * The payment in the settlement asset, USDt: the asset every settlement leg
+   * moves, so this figure is present for every payment whatever the Acquirer is
+   * settled in. What it becomes in fiat, and at which rate, is the response's
+   * `fiat` settlement block, never this message.
+   */
+  message SettlementAmount {
+    /** Amount in USDt, at most 2 decimal places. In fiat settlement mode t-0 derives the local amount from it at the locked rate; in USDt settlement mode it is also what the Acquirer is settled. */
+    tzero.v1.pay.Decimal value = 10 [
       (buf.validate.field).required = true,
       (buf.validate.field).cel = {
-        message: "fx_rate must be greater than zero"
-        expression: "this.unscaled > 0"
+        message: "value must be greater than zero with at most 2 decimal places"
+        expression: "this.unscaled > 0 && this.exponent >= -2"
       }
     ];
   }
 
-  /** Reference to a standing quote when the Acquirer is settled in fiat via an LP. */
-  message FiatSettlementTerms {
-    /** Standing quote obtained from GetPaymentQuote; supplies local_currency and fx_rate. */
-    uint64 quote_id = 10 [(buf.validate.field).uint64.gt = 0];
+  /**
+   * Fiat settlement mode only: which standing quote prices the payment. Absent,
+   * t-0 resolves the freshest standing quote for local.currency, or for the
+   * Acquirer's configured settlement currency when the amount is `settlement`;
+   * no standing quote answers QUOTE_UNAVAILABLE.
+   */
+  oneof settlement_quote {
+    /** A standing quote from GetPaymentQuote; it must still stand, and its currency must equal local.currency when `local` is given. */
+    uint64 quote_id = 120 [(buf.validate.field).uint64.gt = 0];
+    // Reserved, not on the wire yet: `quote_currency`, pricing by the freshest
+    // standing quote for a named currency.
   }
 }
 
@@ -197,47 +249,54 @@ message CreatePaymentIntentResponse {
   }
 
   message Success {
-    /** t-0's id for the opened intent. */
+    /** t-0's id for the intent; carried on every later event. */
     uint64 payment_intent_id = 10 [(buf.validate.field).uint64.gt = 0];
 
-    /** ISO 4217; echoed in USDt mode, resolved from the quote in fiat mode. */
-    string local_currency = 20 [(buf.validate.field).string = {
-      len: 3
-      pattern: "^[A-Z]{3}$"
-    }];
-
-    /** Fiat amount of the sale. */
-    tzero.v1.pay.Decimal local_amount = 30 [
-      (buf.validate.field).required = true,
-      (buf.validate.field).cel = {
-        message: "local_amount must be greater than zero"
-        expression: "this.unscaled > 0"
-      }
-    ];
-
-    /** Units of local_currency per 1 USDt locked for this intent. */
-    tzero.v1.pay.Decimal fx_rate = 40 [
-      (buf.validate.field).required = true,
-      (buf.validate.field).cel = {
-        message: "fx_rate must be greater than zero"
-        expression: "this.unscaled > 0"
-      }
-    ];
-
-    /** Exact amount the customer pays, round(local_amount / fx_rate, 2dp, half-up). */
-    tzero.v1.pay.Decimal amount_usdt = 50 [
-      (buf.validate.field).required = true,
-      (buf.validate.field).cel = {
-        message: "amount_usdt must be greater than zero"
-        expression: "this.unscaled > 0"
-      }
-    ];
-
-    /** After this moment the Issuer releases the deposit addresses and the QR is invalid. */
+    /** After this moment the payment instructions are invalid; on the QR method the Issuer releases the deposit addresses. */
     google.protobuf.Timestamp expires_at = 60 [(buf.validate.field).required = true];
 
-    /** One option per chain the Issuer supports for this intent; the customer picks one. */
-    repeated tzero.v1.pay.QrOption qr_options = 70 [(buf.validate.field).repeated = {min_items: 1}];
+    /**
+     * USDt the customer pays and the settlement leg moves, the same figure in
+     * every mode: as sent in `amount.settlement`, or round(local / fx_rate,
+     * 2 dp, half-up) from `amount.local`. In fiat settlement mode the Acquirer
+     * itself receives the `fiat` block's local amount.
+     */
+    tzero.v1.pay.Decimal settlement_amount = 140 [
+      (buf.validate.field).required = true,
+      (buf.validate.field).cel = {
+        message: "settlement_amount must be greater than zero"
+        expression: "this.unscaled > 0"
+      }
+    ];
+
+    /**
+     * How the customer pays — one variant per payment method, independent of
+     * how the Acquirer is settled. The MVP's only method is a USDt transfer via QR.
+     */
+    oneof instructions {
+      option (buf.validate.oneof).required = true;
+      UsdtOnChainInstructions usdt_on_chain = 80;
+    }
+
+    /** The customer's USDt-via-QR payment instructions. */
+    message UsdtOnChainInstructions {
+      /** One deposit option per chain the Issuer supports for this intent; the customer picks one in their wallet. */
+      repeated tzero.v1.pay.DepositOption deposit_options = 30 [(buf.validate.field).repeated = {min_items: 1}];
+    }
+
+    /** How the Acquirer is settled for this payment, per its configured settlement mode; always present, also when the variant carries no data. */
+    oneof settlement {
+      option (buf.validate.oneof).required = true;
+      FiatSettlement fiat = 120;
+      OnchainSettlement onchain = 130;
+    }
+
+    /**
+     * On-chain settlement mode; carries no data. The Issuer settles
+     * settlement_amount in USDt to the Acquirer's registered wallet; no quote
+     * and no FX.
+     */
+    message OnchainSettlement {}
   }
 
   message Failure {
@@ -245,7 +304,7 @@ message CreatePaymentIntentResponse {
 
     enum Reason {
       REASON_UNSPECIFIED = 0;
-      // The Issuer could not be reached to allocate instructions.
+      // The Issuer could not be reached, or returned no usable instructions.
       REASON_ISSUER_UNAVAILABLE = 10;
       // The Issuer has no free one-time deposit addresses.
       REASON_ADDRESS_POOL_EMPTY = 20;
@@ -255,6 +314,8 @@ message CreatePaymentIntentResponse {
       REASON_QUOTE_EXPIRED = 50;
       // The quote's remaining validity is too short to guarantee execution before it expires.
       REASON_QUOTE_INSUFFICIENT_HEADROOM = 70;
+      // No standing quote for the payment's currency right now (quote_id omitted).
+      REASON_QUOTE_UNAVAILABLE = 80;
     }
   }
 }
@@ -295,18 +356,20 @@ message SettlementReceivedResponse {
     Rejected rejected = 20;
   }
 
+  /** The confirmation is recorded and the covered intents are settled. */
   message Accepted {}
 
+  /** The confirmation was not recorded and the covered intents stay authorized; resubmit the same (lp_id, bank_transfer_ref) with corrected fields. */
   message Rejected {
     Reason reason = 10 [(buf.validate.field).enum.not_in = 0];
 
     enum Reason {
       REASON_UNSPECIFIED = 0;
-      // amount_received does not equal the matched transfer's settlement amount.
+      // amount_received does not equal the settlement_amount announced on SettlementInitiated.
       REASON_AMOUNT_MISMATCH = 10;
       // No fiat settlement matches the (lp_id, bank_transfer_ref) pair.
       REASON_UNKNOWN_TRANSFER = 20;
-      // local_currency is not the currency t-0 recorded for the matched transfer; resend with the correct currency.
+      // local_currency is not the currency announced on SettlementInitiated for the matched transfer.
       REASON_CURRENCY_MISMATCH = 30;
     }
   }
@@ -318,27 +381,39 @@ message PaymentAuthorizedRequest {
   /** Intent that was authorized. */
   uint64 payment_intent_id = 10 [(buf.validate.field).uint64.gt = 0];
 
-  /**
-   * Echo of the Acquirer's CreatePaymentIntent payment_ref — a non-authoritative
-   * correlation ref, so the merchant order can be matched by either this or
-   * payment_intent_id.
-   */
+  /** Echo of the CreatePaymentIntent payment_ref, so the merchant order can be matched by it or by payment_intent_id. */
   string payment_ref = 20 [(buf.validate.field).string = {min_len: 1}];
 
-  /** How the customer paid, relayed from PaymentReceived; always sent in both modes. */
+  /** How the customer paid, as reported by the Issuer; sent in both settlement modes. In fiat settlement mode the chain details are an opaque reference for the receipt and audit trail. */
   oneof payment_method {
     option (buf.validate.oneof).required = true;
     tzero.v1.pay.UsdtOnChainPayment usdt_on_chain = 30;
   }
 
-  /** Moment t-0 accepted PaymentReceived. */
+  /** Moment t-0 accepted the Issuer's report and authorized the payment. */
   google.protobuf.Timestamp approved_at = 40 [(buf.validate.field).required = true];
+
+  /** USDt the deposit credited; equals the intent's settlement_amount, stated so the Acquirer's ledger derives nothing. */
+  tzero.v1.pay.Decimal settlement_amount = 50 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      message: "settlement_amount must be greater than zero"
+      expression: "this.unscaled > 0"
+    }
+  ];
+
+  /** Moment the Issuer observed the deposit final on-chain. */
+  google.protobuf.Timestamp received_at = 60 [(buf.validate.field).required = true];
+
+  /** The fiat terms locked on CreatePaymentIntent; present only for an Acquirer settled in fiat. */
+  // no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
+  FiatSettlement fiat_settlement = 80;
 }
 
 message PaymentAuthorizedResponse {}
 
 message SettlementInitiatedRequest {
-  /** t-0's id for this fiat settlement; the bank-rails leg's key. */
+  /** t-0's id for this fiat settlement; the Acquirer dedupes on it. */
   uint64 fiat_settlement_id = 10 [(buf.validate.field).uint64.gt = 0];
 
   /** t-0's id for the LP that sent the transfer; scopes bank_transfer_ref. */
@@ -350,41 +425,32 @@ message SettlementInitiatedRequest {
     max_len: 256
   }];
 
-  /** Intents this settlement clears, resolved by t-0 from the LP's executions. */
+  /** Intents this settlement clears; the Acquirer maps them to its own payment_refs. */
   repeated uint64 settled_payment_intent_ids = 40 [
     (buf.validate.field).repeated.min_items = 1,
     (buf.validate.field).repeated.items.uint64.gt = 0
   ];
 
-  /** ISO 4217 currency of the bank-rails transfer. */
-  string local_currency = 50 [(buf.validate.field).string = {
-    len: 3
-    pattern: "^[A-Z]{3}$"
-  }];
+  /** Fiat amount and currency of the bank-rails transfer the LP reported; SettlementReceived must confirm exactly this figure. */
+  LocalAmount local = 100 [(buf.validate.field).required = true];
 
-  /** Fiat amount the LP transferred. */
-  tzero.v1.pay.Decimal settlement_amount = 60 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).cel = {
-      message: "settlement_amount must be greater than zero"
-      expression: "this.unscaled > 0"
-    }
-  ];
-
-  /** t-0's id for the Acquirer this settlement is addressed to. */
+  /** t-0's id for the Acquirer this settlement is addressed to; the receiver must reject the callback unless it equals its own id. */
   uint64 acquirer_id = 70 [(buf.validate.field).uint64.gt = 0];
 
   /** Moment t-0 accepted the LP's fiat-settlement report. */
   google.protobuf.Timestamp initiated_at = 80 [(buf.validate.field).required = true];
+
+  /** Moment the LP reported completing the bank-rails transfer — the value date to match on the statement. */
+  google.protobuf.Timestamp settled_at = 90 [(buf.validate.field).required = true];
 }
 
 message SettlementInitiatedResponse {}
 
 message SettlementCompletedRequest {
-  /** t-0's id for the settlement being completed. */
+  /** t-0's id for this on-chain settlement; the Acquirer dedupes on it. */
   uint64 settlement_id = 10 [(buf.validate.field).uint64.gt = 0];
 
-  /** Amount the Acquirer actually received; currency set by the settlement variant. */
+  /** USDt amount that reached the Acquirer's wallet. */
   tzero.v1.pay.Decimal settlement_amount = 20 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
@@ -394,36 +460,40 @@ message SettlementCompletedRequest {
   ];
 
   /** Intents this settlement clears. */
-  repeated uint64 settled_payment_intent_ids = 30 [(buf.validate.field).repeated = {min_items: 1}];
+  repeated uint64 settled_payment_intent_ids = 30 [
+    (buf.validate.field).repeated.min_items = 1,
+    (buf.validate.field).repeated.items.uint64.gt = 0
+  ];
 
-  /** Moment the settlement reached the Acquirer. */
+  /** Moment t-0 verified the settlement final on-chain. */
   google.protobuf.Timestamp settled_at = 40 [(buf.validate.field).required = true];
 
-  /**
-   * The on-chain USDt settlement that reached the Acquirer. USDt mode only —
-   * fiat mode has no SettlementCompleted (the Acquirer's SettlementReceived is terminal).
-   */
+  /** The on-chain USDt transfer that reached the Acquirer's registered wallet. */
   tzero.v1.pay.OnChainSettlementDetails settlement = 50 [(buf.validate.field).required = true];
+
+  /** t-0's id for the Acquirer this settlement is addressed to; the receiver must reject the callback unless it equals its own participant id. */
+  uint64 acquirer_id = 60 [(buf.validate.field).uint64.gt = 0];
 }
 
 message SettlementCompletedResponse {}
 
 /**
- * The QR window lapsed on t-0's clock with no payment reported; the sale is
+ * The QR window lapsed on t-0's clock with no payment reported; the payment is
  * over and nothing will settle for it.
  */
 message PaymentExpiredRequest {
   /** Intent that expired. */
   uint64 payment_intent_id = 10 [(buf.validate.field).uint64.gt = 0];
 
-  /**
-   * Echo of the Acquirer's CreatePaymentIntent payment_ref — a non-authoritative
-   * correlation ref the Acquirer can match by, alongside payment_intent_id.
-   */
+  /** Echo of the CreatePaymentIntent payment_ref, alongside payment_intent_id. */
   string payment_ref = 20 [(buf.validate.field).string = {min_len: 1}];
 
-  /** Moment the intent became terminal. */
+  /** Moment the intent expired on t-0's clock. */
   google.protobuf.Timestamp expired_at = 30 [(buf.validate.field).required = true];
+
+  /** The fiat terms locked on CreatePaymentIntent; present only for an Acquirer settled in fiat. */
+  // no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
+  FiatSettlement fiat_settlement = 50;
 }
 
 message PaymentExpiredResponse {}
@@ -432,16 +502,16 @@ message PaymentExpiredResponse {}
  * A customer deposit against this intent will not settle and the intent is
  * terminally failed: clear the pending order and drop the QR. Sent only while
  * the QR window is still open; once an intent has expired, its expiry notice is
- * the last word on that sale.
+ * the last word on that payment.
  */
 message PaymentFailedRequest {
   /** Intent the deposit was made against. */
   uint64 payment_intent_id = 10 [(buf.validate.field).uint64.gt = 0];
 
-  /** Echo of the Acquirer's CreatePaymentIntent payment_ref, alongside payment_intent_id. */
+  /** Echo of the CreatePaymentIntent payment_ref, alongside payment_intent_id. */
   string payment_ref = 20 [(buf.validate.field).string = {min_len: 1}];
 
-  /** Amount the deposit credited, relayed from PaymentReceived; may differ from the intent's amount. */
+  /** USDt the deposit credited, as reported by the Issuer; may differ from the intent's settlement_amount. */
   tzero.v1.pay.Decimal amount_usdt = 30 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
@@ -450,7 +520,7 @@ message PaymentFailedRequest {
     }
   ];
 
-  /** How the customer paid, relayed from PaymentReceived. */
+  /** How the customer paid, as reported by the Issuer. */
   oneof payment_method {
     option (buf.validate.oneof).required = true;
     tzero.v1.pay.UsdtOnChainPayment usdt_on_chain = 40;
@@ -464,6 +534,10 @@ message PaymentFailedRequest {
 
   /** Moment the intent became terminally failed. */
   google.protobuf.Timestamp failed_at = 60 [(buf.validate.field).required = true];
+
+  /** The fiat terms locked on CreatePaymentIntent; present only for an Acquirer settled in fiat. */
+  // no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
+  FiatSettlement fiat_settlement = 80;
 }
 
 message PaymentFailedResponse {}

@@ -14,20 +14,19 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file tzero/v1/pay/common.proto.
  */
 export const file_tzero_v1_pay_common: GenFile = /*@__PURE__*/
-  fileDesc("Chl0emVyby92MS9wYXkvY29tbW9uLnByb3RvEgx0emVyby52MS5wYXkiQQoHRGVjaW1hbBIQCgh1bnNjYWxlZBgKIAEoAxIkCghleHBvbmVudBgUIAEoBUISukgPGg0YCCj4//////////8BIpEBChJVc2R0T25DaGFpblBheW1lbnQSMwoFY2hhaW4YCiABKA4yGC50emVyby52MS5wYXkuQmxvY2tjaGFpbkIKukgHggEEEAEgABIjChBvbl9jaGFpbl90eF9oYXNoGBQgASgJQgm6SAZyBIi1GAESIQoOc2VuZGVyX2FkZHJlc3MYHiABKAlCCbpIBnIEkLUYASKIAQoIUXJPcHRpb24SMwoFY2hhaW4YCiABKA4yGC50emVyby52MS5wYXkuQmxvY2tjaGFpbkIKukgHggEEEAEgABIiCg9kZXBvc2l0X2FkZHJlc3MYFCABKAlCCbpIBnIEkLUYARIjChJyZW5kZXJhYmxlX3BheWxvYWQYHiABKAlCB7pIBHICEAEinAEKGE9uQ2hhaW5TZXR0bGVtZW50RGV0YWlscxIjChBvbl9jaGFpbl90eF9oYXNoGAogASgJQgm6SAZyBIi1GAESMwoFY2hhaW4YFCABKA4yGC50emVyby52MS5wYXkuQmxvY2tjaGFpbkIKukgHggEEEAEgABImChNkZXN0aW5hdGlvbl9hZGRyZXNzGB4gASgJQgm6SAZyBJC1GAEqZQoKQmxvY2tjaGFpbhIaChZCTE9DS0NIQUlOX1VOU1BFQ0lGSUVEEAASEwoPQkxPQ0tDSEFJTl9UUk9OEAoSEgoOQkxPQ0tDSEFJTl9FVEgQFBISCg5CTE9DS0NIQUlOX0JTQxAeKokBChBGdW5kc0Rpc3Bvc2l0aW9uEiEKHUZVTkRTX0RJU1BPU0lUSU9OX1VOU1BFQ0lGSUVEEAASKAokRlVORFNfRElTUE9TSVRJT05fUkVUVVJORURfVE9fU0VOREVSEAoSKAokRlVORFNfRElTUE9TSVRJT05fUkVUQUlORURfQllfSVNTVUVSEBRiBnByb3RvMw", [file_buf_validate_validate, file_tzero_v1_pay_validate]);
+  fileDesc("Chl0emVyby92MS9wYXkvY29tbW9uLnByb3RvEgx0emVyby52MS5wYXkiQQoHRGVjaW1hbBIQCgh1bnNjYWxlZBgKIAEoAxIkCghleHBvbmVudBgUIAEoBUISukgPGg0YCCj4//////////8BIpEBChJVc2R0T25DaGFpblBheW1lbnQSMwoFY2hhaW4YCiABKA4yGC50emVyby52MS5wYXkuQmxvY2tjaGFpbkIKukgHggEEEAEgABIjChBvbl9jaGFpbl90eF9oYXNoGBQgASgJQgm6SAZyBIi1GAESIQoOc2VuZGVyX2FkZHJlc3MYHiABKAlCCbpIBnIEkLUYASKpAQoNRGVwb3NpdE9wdGlvbhIzCgVjaGFpbhgKIAEoDjIYLnR6ZXJvLnYxLnBheS5CbG9ja2NoYWluQgq6SAeCAQQQASAAEiIKD2RlcG9zaXRfYWRkcmVzcxgUIAEoCUIJukgGcgSQtRgBEhwKC3BheW1lbnRfdXJpGB4gASgJQge6SARyAhABEiEKDnRva2VuX2NvbnRyYWN0GCggASgJQgm6SAZyBJC1GAEinAEKGE9uQ2hhaW5TZXR0bGVtZW50RGV0YWlscxIjChBvbl9jaGFpbl90eF9oYXNoGAogASgJQgm6SAZyBIi1GAESMwoFY2hhaW4YFCABKA4yGC50emVyby52MS5wYXkuQmxvY2tjaGFpbkIKukgHggEEEAEgABImChNkZXN0aW5hdGlvbl9hZGRyZXNzGB4gASgJQgm6SAZyBJC1GAEqZQoKQmxvY2tjaGFpbhIaChZCTE9DS0NIQUlOX1VOU1BFQ0lGSUVEEAASEwoPQkxPQ0tDSEFJTl9UUk9OEAoSEgoOQkxPQ0tDSEFJTl9FVEgQFBISCg5CTE9DS0NIQUlOX0JTQxAeKokBChBGdW5kc0Rpc3Bvc2l0aW9uEiEKHUZVTkRTX0RJU1BPU0lUSU9OX1VOU1BFQ0lGSUVEEAASKAokRlVORFNfRElTUE9TSVRJT05fUkVUVVJORURfVE9fU0VOREVSEAoSKAokRlVORFNfRElTUE9TSVRJT05fUkVUQUlORURfQllfSVNTVUVSEBRiBnByb3RvMw", [file_buf_validate_validate, file_tzero_v1_pay_validate]);
 
 /**
  * *
  * Fixed-point monetary amount: unscaled * 10^exponent, so 123.45 is
- * unscaled=12345, exponent=-2. Local to the pay contract — `pay` is an
- * independent service and deliberately shares no types with `tzero.v1.common`,
- * so a participant's generated code carries exactly one Decimal and one
- * Blockchain.
+ * unscaled=12345, exponent=-2.
  *
  * @generated from message tzero.v1.pay.Decimal
  */
 export type Decimal = Message<"tzero.v1.pay.Decimal"> & {
   /**
+   * no validation: sign and magnitude are constrained per field by the predicate on the enclosing amount.
+   *
    * @generated from field: int64 unscaled = 10;
    */
   unscaled: bigint;
@@ -84,12 +83,13 @@ export const UsdtOnChainPaymentSchema: GenMessage<UsdtOnChainPayment> = /*@__PUR
 
 /**
  * *
- * One selectable QR payment option for an intent — the renderable payload is
- * chain-native and encoded by the POS without modification.
+ * One selectable deposit option for an intent: the chain, the one-time address
+ * reserved on it, and the chain-native payment URI the POS carries to the customer
+ * (as a QR image, a wallet deep link, or any other carrier) without modification.
  *
- * @generated from message tzero.v1.pay.QrOption
+ * @generated from message tzero.v1.pay.DepositOption
  */
-export type QrOption = Message<"tzero.v1.pay.QrOption"> & {
+export type DepositOption = Message<"tzero.v1.pay.DepositOption"> & {
   /**
    * * Chain this deposit option pays on. 
    *
@@ -105,24 +105,31 @@ export type QrOption = Message<"tzero.v1.pay.QrOption"> & {
   depositAddress: string;
 
   /**
-   * * Chain-native URI (e.g. ERC-681 on EVM) the POS encodes as a QR image as-is. 
+   * * Chain-native payment URI (EIP-681 on EVM chains); produced only by the Issuer and carried to the customer unchanged. 
    *
-   * @generated from field: string renderable_payload = 30;
+   * @generated from field: string payment_uri = 30;
    */
-  renderablePayload: string;
+  paymentUri: string;
+
+  /**
+   * * USDt token contract on `chain` the deposit must be made in. 
+   *
+   * @generated from field: string token_contract = 40;
+   */
+  tokenContract: string;
 };
 
 /**
- * Describes the message tzero.v1.pay.QrOption.
- * Use `create(QrOptionSchema)` to create a new message.
+ * Describes the message tzero.v1.pay.DepositOption.
+ * Use `create(DepositOptionSchema)` to create a new message.
  */
-export const QrOptionSchema: GenMessage<QrOption> = /*@__PURE__*/
+export const DepositOptionSchema: GenMessage<DepositOption> = /*@__PURE__*/
   messageDesc(file_tzero_v1_pay_common, 2);
 
 /**
  * *
- * USDt-on-chain settlement payload, shared by the issuer's SettlementSent and
- * the acquirer's SettlementCompleted usdt variant.
+ * One on-chain USDt settlement transfer, as reported by the Issuer on
+ * SettlementSent and relayed to the Acquirer on SettlementCompleted.
  *
  * @generated from message tzero.v1.pay.OnChainSettlementDetails
  */
@@ -158,11 +165,9 @@ export const OnChainSettlementDetailsSchema: GenMessage<OnChainSettlementDetails
 
 /**
  * *
- * On-chain network a USDt leg moves over. Local to the pay contract, which is
- * an independent service and shares no types with `tzero.v1.common`.
- * Launch-live: ETH, BSC. TRON is committed for a later phase and already carries
- * a value here; Arbitrum, Polygon, and Avalanche are announced as upcoming and
- * added here as they go live.
+ * On-chain network a USDt transfer moves over. Live at launch: ETH and BSC.
+ * TRON already carries a value but is not accepted until it goes live in a
+ * later phase; Arbitrum, Polygon and Avalanche are added as they go live.
  *
  * @generated from enum tzero.v1.pay.Blockchain
  */
@@ -196,7 +201,7 @@ export const BlockchainSchema: GenEnum<Blockchain> = /*@__PURE__*/
 
 /**
  * *
- * Where a deposit's funds end up when the sale will not settle. Final when
+ * Where a deposit's funds end up when the payment will not settle. Final when
  * reported: whether a retained deposit is later released is decided out of band
  * and is not part of this contract.
  *

@@ -31,10 +31,10 @@ service LpService {
 
 /**
  * LP-implemented endpoint t-0 calls to request the LP's durable decision on a
- * standing quote execution for one authorized sale. Fiat mode only.
+ * standing quote execution for one authorized payment. Fiat mode only.
  */
 service LpCallbackService {
-  /** Requests a durable Accepted or Rejected result; only Accepted creates the LP's firm per-sale obligation. */
+  /** Requests a durable Accepted or Rejected result; only Accepted creates the LP's firm per-payment obligation. */
   rpc ExecuteQuote(ExecuteQuoteRequest) returns (ExecuteQuoteResponse) {
     option idempotency_level = IDEMPOTENT;
   }
@@ -45,8 +45,8 @@ service LpCallbackService {
 message PublishQuoteRequest {
   /**
    * Standing quotes to publish in one call, at most one per currency, each
-   * under its own quoteRef. The batch is atomic: one invalid quote declines
-   * the whole call and consumes no quoteRef.
+   * under its own quote_ref. The batch is atomic: one invalid quote declines
+   * the whole call and consumes no quote_ref.
    */
   repeated Quote quotes = 10 [(buf.validate.field).repeated = {
     min_items: 1
@@ -95,7 +95,7 @@ message PublishQuoteResponse {
     repeated PublishedQuote quotes = 10 [(buf.validate.field).repeated = {min_items: 1}];
 
     message PublishedQuote {
-      /** Echo of the quote's quoteRef. */
+      /** Echo of the quote's quote_ref. */
       string quote_ref = 10 [(buf.validate.field).string = {min_len: 1}];
 
       /** t-0's id for the standing quote, used everywhere downstream. */
@@ -191,16 +191,15 @@ message ExecuteQuoteRequest {
   uint64 quote_id = 20 [(buf.validate.field).uint64.gt = 0];
 
   /**
-   * LP's own identifier for that quote — a non-authoritative correlation echo.
-   * Lets the LP attribute the execution even when it arrives before the LP has
-   * recorded t-0's quote_id (publish-vs-execute race).
+   * The LP's own quote_ref for that quote, echoed so the LP can attribute the
+   * execution even before it has recorded t-0's quote_id.
    */
   string quote_ref = 30 [(buf.validate.field).string = {min_len: 1}];
 
   /** t-0's stable id for the Acquirer whose local-fiat obligation is being executed. */
   uint64 acquirer_id = 40 [(buf.validate.field).uint64.gt = 0];
 
-  /** Fiat amount owed to the Acquirer for this sale, in the standing quote's currency. */
+  /** Fiat amount owed to the Acquirer for this payment, in the standing quote's currency. */
   tzero.v1.pay.Decimal local_amount = 50 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
@@ -209,7 +208,7 @@ message ExecuteQuoteRequest {
     }
   ];
 
-  /** USDt the LP receives at settlement for this sale. */
+  /** USDt the LP receives at settlement for this payment. */
   tzero.v1.pay.Decimal amount_usdt = 60 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {
@@ -220,6 +219,21 @@ message ExecuteQuoteRequest {
 
   /** Moment t-0 created this durable execution command at authorization. */
   google.protobuf.Timestamp executed_at = 70 [(buf.validate.field).required = true];
+
+  /** Currency of local_amount — the standing quote's. */
+  string local_currency = 80 [(buf.validate.field).string = {
+    len: 3
+    pattern: "^[A-Z]{3}$"
+  }];
+
+  /** The standing quote's rate, in units of local_currency per 1 USDt, locked for this payment. */
+  tzero.v1.pay.Decimal fx_rate = 90 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      message: "fx_rate must be greater than zero"
+      expression: "this.unscaled > 0"
+    }
+  ];
 }
 
 /** The LP's durable decision on one ExecuteQuote command. */
@@ -233,7 +247,7 @@ message ExecuteQuoteResponse {
     Rejected rejected = 20;
   }
 
-  /** Acceptance creates the LP's firm per-sale obligation. */
+  /** Acceptance creates the LP's firm per-payment obligation. */
   message Accepted {}
 
   /** Rejection leaves the payment intent authorized for manual handling. */

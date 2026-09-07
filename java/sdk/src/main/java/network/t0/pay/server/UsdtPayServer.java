@@ -8,8 +8,9 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
- * The server a pay participant runs so t-0 can call it: acquirers host §7/§11/§13/§15,
- * issuers host §5, LPs host §8.
+ * The server a pay participant runs so t-0 can call it: acquirers host
+ * PaymentAuthorized / SettlementInitiated / SettlementCompleted / PaymentExpired / PaymentFailed,
+ * issuers host CreatePaymentInstructions, LPs host ExecuteQuote.
  *
  * <p>Every inbound request is signature-verified against the t-0 network public key
  * before it reaches your handler, and every response is validated against the
