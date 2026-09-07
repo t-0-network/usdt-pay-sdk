@@ -12,8 +12,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * GetPaymentQuote — prices an upcoming fiat sale against your LP's standing
- * quotes. Fiat-settlement acquirers only; in USDt mode you run your own FX and
- * pass the rate straight to CreatePaymentIntent.
+ * quotes. Fiat-settlement acquirers only; on-chain-settled acquirers skip this
+ * entirely and send the USDt amount directly to CreatePaymentIntent.
  *
  * <p>Stateless lookup, no idempotency key: it always returns the current standing
  * quote, so an {@link Outcome.Unknown} here is safe to retry as often as you like.
@@ -47,7 +47,7 @@ public final class GetPaymentQuote {
                             success.getQuoteId(),
                             Decimals.format(localAmount),
                             localCurrency,
-                            Decimals.format(success.getAmountUsdt()),
+                            Decimals.format(success.getSettlementAmount()),
                             Decimals.format(success.getFxRate()),
                             Times.format(success.getExpiresAt()));
                     return new Outcome.Accepted<>(success);

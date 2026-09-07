@@ -10,7 +10,9 @@ import network.t0.pay.proto.tzero.v1.pay.acquirer.AcquirerServiceGrpc;
 import network.t0.pay.proto.tzero.v1.pay.Blockchain;
 import network.t0.pay.proto.tzero.v1.pay.acquirer.CreatePaymentIntentRequest;
 import network.t0.pay.proto.tzero.v1.pay.acquirer.CreatePaymentIntentResponse;
-import network.t0.pay.proto.tzero.v1.pay.QrOption;
+import network.t0.pay.proto.tzero.v1.pay.DepositOption;
+import network.t0.pay.proto.tzero.v1.pay.acquirer.FiatSettlement;
+import network.t0.pay.proto.tzero.v1.pay.acquirer.LocalAmount;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -67,7 +69,7 @@ class CreatePaymentIntentTest {
             AcquirerServiceGrpc.AcquirerServiceBlockingStub t0) {
 
         return CreatePaymentIntent.create(
-                t0, PAYMENT_REF, IDEMPOTENCY_KEY, Decimals.of("100000.00"), QUOTE_ID);
+                t0, PAYMENT_REF, IDEMPOTENCY_KEY, "COP", Decimals.of("100000"), QUOTE_ID);
     }
 
     @AfterEach
@@ -82,20 +84,25 @@ class CreatePaymentIntentTest {
 
     @Test
     void acceptedWhenTZeroOpensTheIntent() throws IOException {
-        // COP 100,000 at 4100, one QR option to render.
+        // COP 100,000 at 4100, one deposit option to render.
         var t0 = t0(observer -> {
             observer.onNext(CreatePaymentIntentResponse.newBuilder()
                     .setSuccess(CreatePaymentIntentResponse.Success.newBuilder()
                             .setPaymentIntentId(4242)
-                            .setLocalCurrency("COP")
-                            .setLocalAmount(Decimals.of("100000.00"))
-                            .setFxRate(Decimals.of("4100.00"))
-                            .setAmountUsdt(Decimals.of("24.39"))
+                            .setSettlementAmount(Decimals.of("24.39"))
                             .setExpiresAt(Times.from(Instant.parse("2026-01-01T00:05:00Z")))
-                            .addQrOptions(QrOption.newBuilder()
-                                    .setChain(Blockchain.BLOCKCHAIN_TRON)
-                                    .setDepositAddress("TXYZexampleDepositAddress")
-                                    .setRenderablePayload("tron:TXYZexampleDepositAddress?amount=24.39")))
+                            .setUsdtOnChain(CreatePaymentIntentResponse.Success.UsdtOnChainInstructions.newBuilder()
+                                    .addDepositOptions(DepositOption.newBuilder()
+                                            .setChain(Blockchain.BLOCKCHAIN_TRON)
+                                            .setDepositAddress("TXYZexampleDepositAddress")
+                                            .setPaymentUri("tron:TXYZexampleDepositAddress?amount=24.39")
+                                            .setTokenContract("TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t")))
+                            .setFiat(FiatSettlement.newBuilder()
+                                    .setQuoteId(77)
+                                    .setFxRate(Decimals.of("4100.00"))
+                                    .setLocal(LocalAmount.newBuilder()
+                                            .setValue(Decimals.of("100000"))
+                                            .setCurrency("COP"))))
                     .build());
             observer.onCompleted();
         });
@@ -112,7 +119,9 @@ class CreatePaymentIntentTest {
         // second intent for the same sale.
         assertEquals(IDEMPOTENCY_KEY, sent.getIdempotencyKey());
         assertEquals(PAYMENT_REF, sent.getPaymentRef());
-        assertEquals(QUOTE_ID, sent.getFiatSettlement().getQuoteId());
+        assertEquals(QUOTE_ID, sent.getQuoteId());
+        assertEquals("COP", sent.getLocal().getCurrency());
+        assertEquals(Decimals.of("100000"), sent.getLocal().getValue());
     }
 
     @Test

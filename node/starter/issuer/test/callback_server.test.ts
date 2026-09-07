@@ -45,7 +45,7 @@ const request = {
  * true — if it starts failing because someone wired the success branch up with example
  * addresses, that is the bug it exists to catch.
  */
-test("§5 declines until the addresses are yours", async () => {
+test("CreatePaymentInstructions declines until the addresses are yours", async () => {
   const response = await t0.createPaymentInstructions(request);
 
   assert.equal(response.result.case, "failure");

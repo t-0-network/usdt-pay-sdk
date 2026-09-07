@@ -53,10 +53,12 @@ public class AcquirerCallbackHandler extends AcquirerCallbackServiceGrpc.Acquire
             PaymentAuthorizedRequest request,
             StreamObserver<PaymentAuthorizedResponse> responseObserver) {
 
-        log.info("PaymentAuthorized: intent={} sale={} tx={} at {}",
+        log.info("PaymentAuthorized: intent={} sale={} tx={} settlement={} USDt receivedAt={} at {}",
                 request.getPaymentIntentId(),
                 request.getPaymentRef(),
                 request.getUsdtOnChain().getOnChainTxHash(),
+                Decimals.format(request.getSettlementAmount()),
+                Times.format(request.getReceivedAt()),
                 Times.format(request.getApprovedAt()));
 
         // TODO: Step 3.1 — dedup on paymentIntentId, mark the sale authorized, tell
@@ -76,16 +78,20 @@ public class AcquirerCallbackHandler extends AcquirerCallbackServiceGrpc.Acquire
             SettlementInitiatedRequest request,
             StreamObserver<SettlementInitiatedResponse> responseObserver) {
 
-        log.info("SettlementInitiated: fiatSettlementId={} lp={} ref={} {} {} covering {}",
+        log.info("SettlementInitiated: fiatSettlementId={} lp={} ref={} {} {} settledAt={} acquirerId={} covering {}",
                 request.getFiatSettlementId(),
                 request.getLpId(),
                 request.getBankTransferRef(),
-                Decimals.format(request.getSettlementAmount()),
-                request.getLocalCurrency(),
+                Decimals.format(request.getLocal().getValue()),
+                request.getLocal().getCurrency(),
+                Times.format(request.getSettledAt()),
+                request.getAcquirerId(),
                 request.getSettledPaymentIntentIdsList());
 
         // TODO: Step 3.2 — dedup on fiatSettlementId, then record (lpId, bankTransferRef)
         //       as a transfer to watch for on the bank statement.
+        // TODO: compare acquirerId against your own participant id from onboarding;
+        //       refuse the callback if it differs.
         // See Step 4.1 — when reconciliation matches it, call
         //       SettlementReceived.confirm(stub, lpId, bankTransferRef, ...).
 
@@ -102,14 +108,17 @@ public class AcquirerCallbackHandler extends AcquirerCallbackServiceGrpc.Acquire
             SettlementCompletedRequest request,
             StreamObserver<SettlementCompletedResponse> responseObserver) {
 
-        log.info("SettlementCompleted: settlementId={} amount={} tx={} covering {}",
+        log.info("SettlementCompleted: settlementId={} amount={} tx={} acquirerId={} covering {}",
                 request.getSettlementId(),
                 Decimals.format(request.getSettlementAmount()),
                 request.getSettlement().getOnChainTxHash(),
+                request.getAcquirerId(),
                 request.getSettledPaymentIntentIdsList());
 
         // USDt only — leave as a no-op in fiat mode. Dedup on settlementId, then
         // close out every intent in settledPaymentIntentIds.
+        // TODO: compare acquirerId against your own participant id from onboarding;
+        //       refuse the callback if it differs.
 
         responseObserver.onNext(SettlementCompletedResponse.getDefaultInstance());
         responseObserver.onCompleted();

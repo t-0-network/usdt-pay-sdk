@@ -13,16 +13,16 @@ import { accepted, noResultVariant, outcomeFromError, rejected, type Outcome } f
 const TIMEOUT_MS = 10_000;
 
 /**
- * §6 PaymentReceived — the customer's transfer is final on-chain and KYT-cleared.
- * This call is what authorizes the sale: t-0 fires §7 to the acquirer off it, and from
+ * PaymentReceived — the customer's transfer is final on-chain and KYT-cleared.
+ * This call is what authorizes the sale: t-0 fires PaymentAuthorized to the acquirer off it, and from
  * here you own the on-chain risk and are obligated to settle.
  *
  * Idempotency key: `paymentIntentId`. Retry with the same id and identical content
  * until t-0 answers; it is delivered at least once by design.
  *
- * `amountUsdt` must equal the intent's stored amount *exactly* — t-0 rejects anything
- * else with AMOUNT_MISMATCH. Pass through the `Decimal` §5 handed you rather than
- * rebuilding it from your own records.
+ * `amountUsdt` — report the amount the deposit actually credited; t-0 compares it to
+ * the intent and answers AMOUNT_MISMATCH on the authorized outcome. Build the
+ * `Decimal` from your on-chain observation rather than from your own records.
  */
 export async function reportPaymentReceived(
   t0: Client<typeof IssuerService>,
@@ -57,7 +57,7 @@ export async function reportPaymentReceived(
     switch (response.result.case) {
       case "accepted":
         console.log(
-          `§6 accepted: intent=${payment.paymentIntentId} ${decimalToString(payment.amountUsdt)} USDt via ${payment.txHash}`,
+          `PaymentReceived accepted: intent=${payment.paymentIntentId} ${decimalToString(payment.amountUsdt)} USDt via ${payment.txHash}`,
         );
         return accepted(response.result.value);
 
@@ -68,7 +68,7 @@ export async function reportPaymentReceived(
         const { reason } = response.result.value;
         // Numeric on the wire; name it so a log line is greppable against the docs.
         const name = PaymentReceivedResponse_Rejected_Reason[reason] ?? String(reason);
-        console.warn(`§6 rejected for intent ${payment.paymentIntentId}: ${name}`);
+        console.warn(`PaymentReceived rejected for intent ${payment.paymentIntentId}: ${name}`);
         return rejected(name);
       }
 
@@ -76,7 +76,7 @@ export async function reportPaymentReceived(
         return noResultVariant();
     }
   } catch (error) {
-    console.error(`§6 failed for intent ${payment.paymentIntentId}:`, error);
+    console.error(`PaymentReceived failed for intent ${payment.paymentIntentId}:`, error);
     return outcomeFromError(error);
   }
 }

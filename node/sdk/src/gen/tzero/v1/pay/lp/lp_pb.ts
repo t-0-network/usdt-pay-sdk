@@ -19,7 +19,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file tzero/v1/pay/lp/lp.proto.
  */
 export const file_tzero_v1_pay_lp_lp: GenFile = /*@__PURE__*/
-  fileDesc("Chh0emVyby92MS9wYXkvbHAvbHAucHJvdG8SD3R6ZXJvLnYxLnBheS5scCLUAgoTUHVibGlzaFF1b3RlUmVxdWVzdBJGCgZxdW90ZXMYCiADKAsyKi50emVyby52MS5wYXkubHAuUHVibGlzaFF1b3RlUmVxdWVzdC5RdW90ZUIKukgHkgEECAEQZBr0AQoFUXVvdGUSHAoJcXVvdGVfcmVmGAogASgJQgm6SAZyBBABGEASLAoObG9jYWxfY3VycmVuY3kYFCABKAlCFLpIEXIPMgpeW0EtWl17M30kmAEDEmcKB2Z4X3JhdGUYHiABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEI/ukg8ugE2EiFmeF9yYXRlIG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBEjYKCmV4cGlyZXNfYXQYKCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEi8wMKFFB1Ymxpc2hRdW90ZVJlc3BvbnNlEkAKB3N1Y2Nlc3MYCiABKAsyLS50emVyby52MS5wYXkubHAuUHVibGlzaFF1b3RlUmVzcG9uc2UuU3VjY2Vzc0gAEkAKB2ZhaWx1cmUYFCABKAsyLS50emVyby52MS5wYXkubHAuUHVibGlzaFF1b3RlUmVzcG9uc2UuRmFpbHVyZUgAGqoBCgdTdWNjZXNzElYKBnF1b3RlcxgKIAMoCzI8LnR6ZXJvLnYxLnBheS5scC5QdWJsaXNoUXVvdGVSZXNwb25zZS5TdWNjZXNzLlB1Ymxpc2hlZFF1b3RlQgi6SAWSAQIIARpHCg5QdWJsaXNoZWRRdW90ZRIaCglxdW90ZV9yZWYYCiABKAlCB7pIBHICEAESGQoIcXVvdGVfaWQYFCABKARCB7pIBDICIAAamAEKB0ZhaWx1cmUSTgoGcmVhc29uGAogASgOMjQudHplcm8udjEucGF5LmxwLlB1Ymxpc2hRdW90ZVJlc3BvbnNlLkZhaWx1cmUuUmVhc29uQgi6SAWCAQIgACI9CgZSZWFzb24SFgoSUkVBU09OX1VOU1BFQ0lGSUVEEAASGwoXUkVBU09OX1ZBTElESVRZX0lOVkFMSUQQHkIPCgZyZXN1bHQSBbpIAggBIt4CChlGaWF0U2V0dGxlbWVudFNlbnRSZXF1ZXN0EiUKEWJhbmtfdHJhbnNmZXJfcmVmGAogASgJQgq6SAdyBRABGIACEjcKFXNldHRsZWRfZXhlY3V0aW9uX2lkcxgUIAMoBEIYukgVkgESCAEiDjIMGP//////////fyAAEiwKDmxvY2FsX2N1cnJlbmN5GB4gASgJQhS6SBFyDzIKXltBLVpdezN9JJgBAxJ7ChFzZXR0bGVtZW50X2Ftb3VudBgoIAEoCzIVLnR6ZXJvLnYxLnBheS5EZWNpbWFsQkm6SEa6AUASK3NldHRsZW1lbnRfYW1vdW50IG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBEjYKCnNldHRsZWRfYXQYPCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEilAQKGkZpYXRTZXR0bGVtZW50U2VudFJlc3BvbnNlEkgKCGFjY2VwdGVkGAogASgLMjQudHplcm8udjEucGF5LmxwLkZpYXRTZXR0bGVtZW50U2VudFJlc3BvbnNlLkFjY2VwdGVkSAASSAoIcmVqZWN0ZWQYFCABKAsyNC50emVyby52MS5wYXkubHAuRmlhdFNldHRsZW1lbnRTZW50UmVzcG9uc2UuUmVqZWN0ZWRIABoKCghBY2NlcHRlZBrEAgoIUmVqZWN0ZWQSVQoGcmVhc29uGAogASgOMjsudHplcm8udjEucGF5LmxwLkZpYXRTZXR0bGVtZW50U2VudFJlc3BvbnNlLlJlamVjdGVkLlJlYXNvbkIIukgFggECIAAi4AEKBlJlYXNvbhIWChJSRUFTT05fVU5TUEVDSUZJRUQQABIcChhSRUFTT05fRVhFQ1VUSU9OX1VOS05PV04QChIkCiBSRUFTT05fRVhFQ1VUSU9OX0FMUkVBRFlfQ09WRVJFRBAUEhwKGFJFQVNPTl9DVVJSRU5DWV9NSVNNQVRDSBAeEhoKFlJFQVNPTl9BTU9VTlRfTUlTTUFUQ0gQKBIZChVSRUFTT05fQUNRVUlSRVJfTUlYRUQQPBIlCiFSRUFTT05fQkFOS19UUkFOU0ZFUl9SRUZfQ09ORkxJQ1QQRkIPCgZyZXN1bHQSBbpIAggBIqYDChNFeGVjdXRlUXVvdGVSZXF1ZXN0Eh0KDGV4ZWN1dGlvbl9pZBgKIAEoBEIHukgEMgIgABIZCghxdW90ZV9pZBgUIAEoBEIHukgEMgIgABIaCglxdW90ZV9yZWYYHiABKAlCB7pIBHICEAESHAoLYWNxdWlyZXJfaWQYKCABKARCB7pIBDICIAAScQoMbG9jYWxfYW1vdW50GDIgASgLMhUudHplcm8udjEucGF5LkRlY2ltYWxCRLpIQboBOxImbG9jYWxfYW1vdW50IG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBEm8KC2Ftb3VudF91c2R0GDwgASgLMhUudHplcm8udjEucGF5LkRlY2ltYWxCQ7pIQLoBOhIlYW1vdW50X3VzZHQgbXVzdCBiZSBncmVhdGVyIHRoYW4gemVybxoRdGhpcy51bnNjYWxlZCA+IDDIAQESNwoLZXhlY3V0ZWRfYXQYRiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEi8gIKFEV4ZWN1dGVRdW90ZVJlc3BvbnNlEkIKCGFjY2VwdGVkGAogASgLMi4udHplcm8udjEucGF5LmxwLkV4ZWN1dGVRdW90ZVJlc3BvbnNlLkFjY2VwdGVkSAASQgoIcmVqZWN0ZWQYFCABKAsyLi50emVyby52MS5wYXkubHAuRXhlY3V0ZVF1b3RlUmVzcG9uc2UuUmVqZWN0ZWRIABoKCghBY2NlcHRlZBq0AQoIUmVqZWN0ZWQSTwoGcmVhc29uGAogASgOMjUudHplcm8udjEucGF5LmxwLkV4ZWN1dGVRdW90ZVJlc3BvbnNlLlJlamVjdGVkLlJlYXNvbkIIukgFggECIAASIwoHZGV0YWlscxgUIAEoCUISukgPcg0QARiACDIGLipcUy4qIjIKBlJlYXNvbhIWChJSRUFTT05fVU5TUEVDSUZJRUQQABIQCgxSRUFTT05fT1RIRVIQCkIPCgZyZXN1bHQSBbpIAggBMuEBCglMcFNlcnZpY2USYAoMUHVibGlzaFF1b3RlEiQudHplcm8udjEucGF5LmxwLlB1Ymxpc2hRdW90ZVJlcXVlc3QaJS50emVyby52MS5wYXkubHAuUHVibGlzaFF1b3RlUmVzcG9uc2UiA5ACAhJyChJGaWF0U2V0dGxlbWVudFNlbnQSKi50emVyby52MS5wYXkubHAuRmlhdFNldHRsZW1lbnRTZW50UmVxdWVzdBorLnR6ZXJvLnYxLnBheS5scC5GaWF0U2V0dGxlbWVudFNlbnRSZXNwb25zZSIDkAICMnUKEUxwQ2FsbGJhY2tTZXJ2aWNlEmAKDEV4ZWN1dGVRdW90ZRIkLnR6ZXJvLnYxLnBheS5scC5FeGVjdXRlUXVvdGVSZXF1ZXN0GiUudHplcm8udjEucGF5LmxwLkV4ZWN1dGVRdW90ZVJlc3BvbnNlIgOQAgJiBnByb3RvMw", [file_buf_validate_validate, file_google_protobuf_timestamp, file_tzero_v1_pay_common]);
+  fileDesc("Chh0emVyby92MS9wYXkvbHAvbHAucHJvdG8SD3R6ZXJvLnYxLnBheS5scCLUAgoTUHVibGlzaFF1b3RlUmVxdWVzdBJGCgZxdW90ZXMYCiADKAsyKi50emVyby52MS5wYXkubHAuUHVibGlzaFF1b3RlUmVxdWVzdC5RdW90ZUIKukgHkgEECAEQZBr0AQoFUXVvdGUSHAoJcXVvdGVfcmVmGAogASgJQgm6SAZyBBABGEASLAoObG9jYWxfY3VycmVuY3kYFCABKAlCFLpIEXIPMgpeW0EtWl17M30kmAEDEmcKB2Z4X3JhdGUYHiABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEI/ukg8ugE2EiFmeF9yYXRlIG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBEjYKCmV4cGlyZXNfYXQYKCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEi8wMKFFB1Ymxpc2hRdW90ZVJlc3BvbnNlEkAKB3N1Y2Nlc3MYCiABKAsyLS50emVyby52MS5wYXkubHAuUHVibGlzaFF1b3RlUmVzcG9uc2UuU3VjY2Vzc0gAEkAKB2ZhaWx1cmUYFCABKAsyLS50emVyby52MS5wYXkubHAuUHVibGlzaFF1b3RlUmVzcG9uc2UuRmFpbHVyZUgAGqoBCgdTdWNjZXNzElYKBnF1b3RlcxgKIAMoCzI8LnR6ZXJvLnYxLnBheS5scC5QdWJsaXNoUXVvdGVSZXNwb25zZS5TdWNjZXNzLlB1Ymxpc2hlZFF1b3RlQgi6SAWSAQIIARpHCg5QdWJsaXNoZWRRdW90ZRIaCglxdW90ZV9yZWYYCiABKAlCB7pIBHICEAESGQoIcXVvdGVfaWQYFCABKARCB7pIBDICIAAamAEKB0ZhaWx1cmUSTgoGcmVhc29uGAogASgOMjQudHplcm8udjEucGF5LmxwLlB1Ymxpc2hRdW90ZVJlc3BvbnNlLkZhaWx1cmUuUmVhc29uQgi6SAWCAQIgACI9CgZSZWFzb24SFgoSUkVBU09OX1VOU1BFQ0lGSUVEEAASGwoXUkVBU09OX1ZBTElESVRZX0lOVkFMSUQQHkIPCgZyZXN1bHQSBbpIAggBIt4CChlGaWF0U2V0dGxlbWVudFNlbnRSZXF1ZXN0EiUKEWJhbmtfdHJhbnNmZXJfcmVmGAogASgJQgq6SAdyBRABGIACEjcKFXNldHRsZWRfZXhlY3V0aW9uX2lkcxgUIAMoBEIYukgVkgESCAEiDjIMGP//////////fyAAEiwKDmxvY2FsX2N1cnJlbmN5GB4gASgJQhS6SBFyDzIKXltBLVpdezN9JJgBAxJ7ChFzZXR0bGVtZW50X2Ftb3VudBgoIAEoCzIVLnR6ZXJvLnYxLnBheS5EZWNpbWFsQkm6SEa6AUASK3NldHRsZW1lbnRfYW1vdW50IG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBEjYKCnNldHRsZWRfYXQYPCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQEilAQKGkZpYXRTZXR0bGVtZW50U2VudFJlc3BvbnNlEkgKCGFjY2VwdGVkGAogASgLMjQudHplcm8udjEucGF5LmxwLkZpYXRTZXR0bGVtZW50U2VudFJlc3BvbnNlLkFjY2VwdGVkSAASSAoIcmVqZWN0ZWQYFCABKAsyNC50emVyby52MS5wYXkubHAuRmlhdFNldHRsZW1lbnRTZW50UmVzcG9uc2UuUmVqZWN0ZWRIABoKCghBY2NlcHRlZBrEAgoIUmVqZWN0ZWQSVQoGcmVhc29uGAogASgOMjsudHplcm8udjEucGF5LmxwLkZpYXRTZXR0bGVtZW50U2VudFJlc3BvbnNlLlJlamVjdGVkLlJlYXNvbkIIukgFggECIAAi4AEKBlJlYXNvbhIWChJSRUFTT05fVU5TUEVDSUZJRUQQABIcChhSRUFTT05fRVhFQ1VUSU9OX1VOS05PV04QChIkCiBSRUFTT05fRVhFQ1VUSU9OX0FMUkVBRFlfQ09WRVJFRBAUEhwKGFJFQVNPTl9DVVJSRU5DWV9NSVNNQVRDSBAeEhoKFlJFQVNPTl9BTU9VTlRfTUlTTUFUQ0gQKBIZChVSRUFTT05fQUNRVUlSRVJfTUlYRUQQPBIlCiFSRUFTT05fQkFOS19UUkFOU0ZFUl9SRUZfQ09ORkxJQ1QQRkIPCgZyZXN1bHQSBbpIAggBIr0EChNFeGVjdXRlUXVvdGVSZXF1ZXN0Eh0KDGV4ZWN1dGlvbl9pZBgKIAEoBEIHukgEMgIgABIZCghxdW90ZV9pZBgUIAEoBEIHukgEMgIgABIaCglxdW90ZV9yZWYYHiABKAlCB7pIBHICEAESHAoLYWNxdWlyZXJfaWQYKCABKARCB7pIBDICIAAScQoMbG9jYWxfYW1vdW50GDIgASgLMhUudHplcm8udjEucGF5LkRlY2ltYWxCRLpIQboBOxImbG9jYWxfYW1vdW50IG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBEm8KC2Ftb3VudF91c2R0GDwgASgLMhUudHplcm8udjEucGF5LkRlY2ltYWxCQ7pIQLoBOhIlYW1vdW50X3VzZHQgbXVzdCBiZSBncmVhdGVyIHRoYW4gemVybxoRdGhpcy51bnNjYWxlZCA+IDDIAQESNwoLZXhlY3V0ZWRfYXQYRiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQga6SAPIAQESLAoObG9jYWxfY3VycmVuY3kYUCABKAlCFLpIEXIPMgpeW0EtWl17M30kmAEDEmcKB2Z4X3JhdGUYWiABKAsyFS50emVyby52MS5wYXkuRGVjaW1hbEI/ukg8ugE2EiFmeF9yYXRlIG11c3QgYmUgZ3JlYXRlciB0aGFuIHplcm8aEXRoaXMudW5zY2FsZWQgPiAwyAEBIvICChRFeGVjdXRlUXVvdGVSZXNwb25zZRJCCghhY2NlcHRlZBgKIAEoCzIuLnR6ZXJvLnYxLnBheS5scC5FeGVjdXRlUXVvdGVSZXNwb25zZS5BY2NlcHRlZEgAEkIKCHJlamVjdGVkGBQgASgLMi4udHplcm8udjEucGF5LmxwLkV4ZWN1dGVRdW90ZVJlc3BvbnNlLlJlamVjdGVkSAAaCgoIQWNjZXB0ZWQatAEKCFJlamVjdGVkEk8KBnJlYXNvbhgKIAEoDjI1LnR6ZXJvLnYxLnBheS5scC5FeGVjdXRlUXVvdGVSZXNwb25zZS5SZWplY3RlZC5SZWFzb25CCLpIBYIBAiAAEiMKB2RldGFpbHMYFCABKAlCErpID3INEAEYgAgyBi4qXFMuKiIyCgZSZWFzb24SFgoSUkVBU09OX1VOU1BFQ0lGSUVEEAASEAoMUkVBU09OX09USEVSEApCDwoGcmVzdWx0EgW6SAIIATLhAQoJTHBTZXJ2aWNlEmAKDFB1Ymxpc2hRdW90ZRIkLnR6ZXJvLnYxLnBheS5scC5QdWJsaXNoUXVvdGVSZXF1ZXN0GiUudHplcm8udjEucGF5LmxwLlB1Ymxpc2hRdW90ZVJlc3BvbnNlIgOQAgIScgoSRmlhdFNldHRsZW1lbnRTZW50EioudHplcm8udjEucGF5LmxwLkZpYXRTZXR0bGVtZW50U2VudFJlcXVlc3QaKy50emVyby52MS5wYXkubHAuRmlhdFNldHRsZW1lbnRTZW50UmVzcG9uc2UiA5ACAjJ1ChFMcENhbGxiYWNrU2VydmljZRJgCgxFeGVjdXRlUXVvdGUSJC50emVyby52MS5wYXkubHAuRXhlY3V0ZVF1b3RlUmVxdWVzdBolLnR6ZXJvLnYxLnBheS5scC5FeGVjdXRlUXVvdGVSZXNwb25zZSIDkAICYgZwcm90bzM", [file_buf_validate_validate, file_google_protobuf_timestamp, file_tzero_v1_pay_common]);
 
 /**
  * @generated from message tzero.v1.pay.lp.PublishQuoteRequest
@@ -28,8 +28,8 @@ export type PublishQuoteRequest = Message<"tzero.v1.pay.lp.PublishQuoteRequest">
   /**
    * *
    * Standing quotes to publish in one call, at most one per currency, each
-   * under its own quoteRef. The batch is atomic: one invalid quote declines
-   * the whole call and consumes no quoteRef.
+   * under its own quote_ref. The batch is atomic: one invalid quote declines
+   * the whole call and consumes no quote_ref.
    *
    * @generated from field: repeated tzero.v1.pay.lp.PublishQuoteRequest.Quote quotes = 10;
    */
@@ -138,7 +138,7 @@ export const PublishQuoteResponse_SuccessSchema: GenMessage<PublishQuoteResponse
  */
 export type PublishQuoteResponse_Success_PublishedQuote = Message<"tzero.v1.pay.lp.PublishQuoteResponse.Success.PublishedQuote"> & {
   /**
-   * * Echo of the quote's quoteRef. 
+   * * Echo of the quote's quote_ref. 
    *
    * @generated from field: string quote_ref = 10;
    */
@@ -385,9 +385,8 @@ export type ExecuteQuoteRequest = Message<"tzero.v1.pay.lp.ExecuteQuoteRequest">
 
   /**
    * *
-   * LP's own identifier for that quote — a non-authoritative correlation echo.
-   * Lets the LP attribute the execution even when it arrives before the LP has
-   * recorded t-0's quote_id (publish-vs-execute race).
+   * The LP's own quote_ref for that quote, echoed so the LP can attribute the
+   * execution even before it has recorded t-0's quote_id.
    *
    * @generated from field: string quote_ref = 30;
    */
@@ -401,14 +400,14 @@ export type ExecuteQuoteRequest = Message<"tzero.v1.pay.lp.ExecuteQuoteRequest">
   acquirerId: bigint;
 
   /**
-   * * Fiat amount owed to the Acquirer for this sale, in the standing quote's currency. 
+   * * Fiat amount owed to the Acquirer for this payment, in the standing quote's currency. 
    *
    * @generated from field: tzero.v1.pay.Decimal local_amount = 50;
    */
   localAmount?: Decimal | undefined;
 
   /**
-   * * USDt the LP receives at settlement for this sale. 
+   * * USDt the LP receives at settlement for this payment. 
    *
    * @generated from field: tzero.v1.pay.Decimal amount_usdt = 60;
    */
@@ -420,6 +419,20 @@ export type ExecuteQuoteRequest = Message<"tzero.v1.pay.lp.ExecuteQuoteRequest">
    * @generated from field: google.protobuf.Timestamp executed_at = 70;
    */
   executedAt?: Timestamp | undefined;
+
+  /**
+   * * Currency of local_amount — the standing quote's. 
+   *
+   * @generated from field: string local_currency = 80;
+   */
+  localCurrency: string;
+
+  /**
+   * * The standing quote's rate, in units of local_currency per 1 USDt, locked for this payment. 
+   *
+   * @generated from field: tzero.v1.pay.Decimal fx_rate = 90;
+   */
+  fxRate?: Decimal | undefined;
 };
 
 /**
@@ -467,7 +480,7 @@ export const ExecuteQuoteResponseSchema: GenMessage<ExecuteQuoteResponse> = /*@_
   messageDesc(file_tzero_v1_pay_lp_lp, 5);
 
 /**
- * * Acceptance creates the LP's firm per-sale obligation. 
+ * * Acceptance creates the LP's firm per-payment obligation. 
  *
  * @generated from message tzero.v1.pay.lp.ExecuteQuoteResponse.Accepted
  */
@@ -569,13 +582,13 @@ export const LpService: GenService<{
 /**
  * *
  * LP-implemented endpoint t-0 calls to request the LP's durable decision on a
- * standing quote execution for one authorized sale. Fiat mode only.
+ * standing quote execution for one authorized payment. Fiat mode only.
  *
  * @generated from service tzero.v1.pay.lp.LpCallbackService
  */
 export const LpCallbackService: GenService<{
   /**
-   * * Requests a durable Accepted or Rejected result; only Accepted creates the LP's firm per-sale obligation. 
+   * * Requests a durable Accepted or Rejected result; only Accepted creates the LP's firm per-payment obligation. 
    *
    * @generated from rpc tzero.v1.pay.lp.LpCallbackService.ExecuteQuote
    */
