@@ -13,10 +13,10 @@ import {
 import { decimalToString, decimalToUnits } from "./internal/decimals.js";
 
 /**
- * §5 CreatePaymentInstructions — the only callback t-0 pushes to the issuer.
+ * CreatePaymentInstructions — the only callback t-0 pushes to the issuer.
  *
  * Synchronous and on the critical path: t-0 calls it inline while the acquirer waits
- * on §4, so answer fast and never block on anything slow.
+ * on CreatePaymentIntent, so answer fast and never block on anything slow.
  *
  * Delivered at least once, dedup key `paymentIntentId`. A repeat for an id you already
  * reserved must return the *same* addresses rather than burning a second set out of
@@ -25,7 +25,7 @@ import { decimalToString, decimalToUnits } from "./internal/decimals.js";
 export const issuerCallbackHandler: ServiceImpl<typeof IssuerCallbackService> = {
   async createPaymentInstructions(request) {
     console.log(
-      `§5 reserve: intent=${request.paymentIntentId} acquirer=${request.acquirerId} ` +
+      `CreatePaymentInstructions: intent=${request.paymentIntentId} acquirer=${request.acquirerId} ` +
         `amount=${request.amountUsdt ? decimalToString(request.amountUsdt) : "?"} USDt ` +
         `until ${request.expiresAt ? timestampDate(request.expiresAt).toISOString() : "?"}`,
     );
@@ -33,7 +33,7 @@ export const issuerCallbackHandler: ServiceImpl<typeof IssuerCallbackService> = 
     // TODO: Step 2.1 — look up paymentIntentId first and return the existing
     //       reservation if you have one; only then take fresh addresses from the pool.
     // TODO: Step 2.2 — resolve the settlement wallet for request.acquirerId from your
-    //       onboarding mapping. You will need it for §9 SettlementSent, and resolving
+    //       onboarding mapping. You will need it for SettlementSent, and resolving
     //       it yourself is what makes t-0's on-chain check a real cross-check rather
     //       than an echo of its own input.
     // TODO: Step 2.3 — hold the reservation until request.expiresAt, then release the

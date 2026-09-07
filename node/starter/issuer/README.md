@@ -151,9 +151,10 @@ resending those same bytes only spins.
 `decimalToUnits(amount, 6)` for the integer an ERC-681 URI carries. A USDt amount
 routed through a JS float loses cents at amounts a POS actually rings up.
 
-The cheapest correct thing to do with an amount t-0 sent you is not to convert it at
-all — report the amount the deposit actually credited; t-0 compares it to the
-intent and answers AMOUNT_MISMATCH on the authorized outcome.
+`PaymentReceived` reports the amount the deposit actually credited — t-0 compares
+it to the intent and answers AMOUNT_MISMATCH when they differ. Build that `Decimal`
+with `decimalFromString` from your on-chain reader's string output, not from an
+intermediate `number` arithmetic step that already lost precision.
 
 ## Testing your integration
 

@@ -9,9 +9,10 @@ import { type Decimal, DecimalSchema } from "@t-0/usdt-pay-sdk";
  * through a JS float loses cents at amounts a POS actually rings up. Everything below
  * is integer arithmetic on purpose — there is no `toNumber`.
  *
- * The cheapest correct thing you can do with an amount t-0 sent you is *not convert
- * it*: `PaymentReceived` reports the amount the deposit actually credited, so pass
- * that `Decimal` through untouched rather than rebuilding it.
+ * The cheapest correct thing you can do with an inbound amount is *not convert it* —
+ * pass the `Decimal` t-0 sent you through untouched. For the outbound
+ * `PaymentReceived` call, build the `Decimal` from your chain reader's string output
+ * with `decimalFromString`, never from an intermediate floating-point step.
  */
 
 /** The contract constrains exponent to this range; anything else is rejected on the wire. */

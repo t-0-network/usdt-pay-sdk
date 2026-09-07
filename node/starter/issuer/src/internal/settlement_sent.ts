@@ -18,14 +18,14 @@ import { accepted, noResultVariant, outcomeFromError, rejected, type Outcome } f
 const TIMEOUT_MS = 15_000;
 
 /**
- * §9 SettlementSent — you broadcast a USDt settlement transfer; t-0 verifies it
+ * SettlementSent — you broadcast a USDt settlement transfer; t-0 verifies it
  * on-chain against the intents it covers.
  *
  * Idempotency key: `settlementRef`, your own id, unique per issuer. It identifies one
  * real transfer: a second broadcast is a new settlement under a new ref, never a
  * correction of an old one.
  *
- * `destinationAddress` is the wallet you resolved from `acquirerId` at §5 — the
+ * `destinationAddress` is the wallet you resolved from `acquirerId` during CreatePaymentInstructions — the
  * acquirer's in USDt mode, that acquirer's LP in fiat mode.
  */
 export async function reportSettlementSent(
@@ -59,7 +59,7 @@ export async function reportSettlementSent(
     switch (response.result.case) {
       case "accepted":
         console.log(
-          `§9 accepted: ref=${settlement.settlementRef} ${decimalToString(settlement.amountUsdt)} USDt covering ${settlement.settledPaymentIntentIds}`,
+          `SettlementSent accepted: ref=${settlement.settlementRef} ${decimalToString(settlement.amountUsdt)} USDt covering ${settlement.settledPaymentIntentIds}`,
         );
         return accepted(response.result.value);
 
@@ -80,7 +80,7 @@ export async function reportSettlementSent(
     }
   } catch (error) {
     // Never broadcast a second transfer to "retry" — resend this same ref.
-    console.error(`§9 failed for ref ${settlement.settlementRef}:`, error);
+    console.error(`SettlementSent failed for ref ${settlement.settlementRef}:`, error);
     return outcomeFromError(error);
   }
 }
