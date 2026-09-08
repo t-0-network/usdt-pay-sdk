@@ -183,6 +183,7 @@ func transformFilename(name, projectName, pascalName string) string {
 
 	// dot-gitignore → .gitignore (dotfiles stripped by Gradle/NuGet packaging)
 	name = strings.ReplaceAll(name, "dot-gitignore", ".gitignore")
+	name = strings.ReplaceAll(name, "dot-dockerignore", ".dockerignore")
 
 	// All templates use "my-provider" as the project name literal
 	name = strings.ReplaceAll(name, "my-provider", projectName)

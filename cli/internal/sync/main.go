@@ -189,7 +189,7 @@ func isTextFile(name string) bool {
 		return true
 	}
 	lower := strings.ToLower(name)
-	return lower == "dockerfile" || lower == "gradlew" || lower == "dot-gitignore" || lower == "makefile"
+	return lower == "dockerfile" || lower == "gradlew" || lower == "dot-gitignore" || lower == "dot-dockerignore" || lower == "makefile"
 }
 
 func findRepoRoot() (string, error) {
