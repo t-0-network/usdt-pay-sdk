@@ -76,8 +76,8 @@ endpoint's mode. Fiat mode: `SettlementCompleted` never fires. USDt mode: skip
    `CreatePaymentIntent`.
 2. **2.2** Mint `paymentRef` and `idempotencyKey` when the sale is created rather
    than at call time, and persist the returned `paymentIntentId` against the sale.
-   `paymentRef` is your sale's correlation ref — t-0 echoes it on `PaymentAuthorized`
-   and `PaymentExpired`, and it is explicitly **not** an idempotency key and not
+   `paymentRef` is your sale's correlation ref — t-0 echoes it on `PaymentAuthorized`,
+   `PaymentExpired` and `PaymentFailed`, and it is explicitly **not** an idempotency key and not
    required to be unique.
    `idempotencyKey` is the only thing `CreatePaymentIntent` is keyed on: at most one
    intent is ever created under one key, repeating a key returns that intent unchanged,
