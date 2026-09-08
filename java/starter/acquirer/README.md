@@ -51,6 +51,7 @@ To run the tests:
 | t-0 → you | `SettlementInitiated` | LP sent a bank transfer, pre-notice (fiat only) | `handler/AcquirerCallbackHandler.java` |
 | t-0 → you | `SettlementCompleted` | On-chain settlement verified (USDt only) | `handler/AcquirerCallbackHandler.java` |
 | t-0 → you | `PaymentExpired` | QR expired, cancel the sale | `handler/AcquirerCallbackHandler.java` |
+| t-0 → you | `PaymentFailed` | Deposit won't settle, cancel the sale | `handler/AcquirerCallbackHandler.java` |
 
 Your settlement mode decides which endpoints apply. The table above marks each
 endpoint's mode. Fiat mode: `SettlementCompleted` never fires. USDt mode: skip
@@ -103,6 +104,11 @@ Implement the callbacks in `handler/AcquirerCallbackHandler.java`.
    `settledPaymentIntentIds`. USDt mode only; leave as a no-op in fiat mode. Check
    `acquirerId` is yours; refuse the callback otherwise.
 4. **3.4** `PaymentExpired` — cancel the pending sale and take the QR off the POS.
+5. **3.5** `PaymentFailed` — the issuer reported the deposit as unprocessable.
+   Cancel the pending sale and communicate the outcome to the customer based on
+   `disposition`: `RETURNED_TO_SENDER` means the issuer refunds to the sender
+   address; `RETAINED_BY_ISSUER` means the customer resolves out of band. Check
+   `acquirerId` is yours; refuse the callback otherwise.
 
 ### Phase 4 — confirm the fiat leg
 
@@ -130,11 +136,11 @@ repeat under a key you already hold is a no-op you still acknowledge.
 | `SettlementInitiated` | `fiatSettlementId` |
 | `SettlementCompleted` | `settlementId` |
 | `PaymentExpired` | `paymentIntentId` |
+| `PaymentFailed` | `paymentIntentId` |
 
-Scope the key **per callback**, not globally: `PaymentAuthorized` and
-`PaymentExpired` are both keyed on `paymentIntentId`, so one shared
-`processed(key)` table collides an intent's expiry with its authorization and drops
-one of them.
+Scope the key **per callback**, not globally: `PaymentAuthorized`,
+`PaymentExpired` and `PaymentFailed` are all keyed on `paymentIntentId`, so one
+shared `processed(key)` table collides them and silently drops one of them.
 
 The same discipline applies to what you send: `CreatePaymentIntent` is keyed on
 your `idempotencyKey` and `SettlementReceived` on the pair
@@ -217,7 +223,8 @@ src/main/java/network/t0/pay/acquirer/
 ├── Main.java                            # entry point, phases in order
 ├── Config.java                          # what .env supplies
 ├── handler/AcquirerCallbackHandler.java # PaymentAuthorized, SettlementInitiated,
-│                                        # SettlementCompleted, PaymentExpired
+│                                        # SettlementCompleted, PaymentExpired,
+│                                        # PaymentFailed
 └── internal/
     ├── GetPaymentQuote.java             # prices a fiat sale
     ├── CreatePaymentIntent.java         # opens an intent, returns payment instructions
