@@ -12,7 +12,7 @@ Pick yours and go straight to its SDK.
 |---|---|---|
 | **Acquirer** | Own the merchant. Price the sale, open the intent, show the QR, learn when it settles. | [Java](java/) |
 | **Issuer** | Reserve deposit addresses, watch the chain for the customer's USDt, settle on-chain. | [Node](node/) |
-| **Liquidity Provider** | Price USDt↔local fiat, take the per-sale obligation, settle fiat over bank rails. | Not yet published |
+| **Liquidity Provider** | Price USDt↔local fiat, take the per-sale obligation, settle fiat over bank rails. | [API reference](https://usdt-pay-docs.t-0.network/docs/integration-guidance/api-reference/pay_lp/) |
 
 Not sure which you are? The acquirer talks to the POS, the issuer talks to the
 blockchain, the LP talks to a bank. t-0 sits in the middle and no two of you ever
@@ -25,41 +25,20 @@ onboarding.
 
 ## Quick start
 
-Scaffold a project with one command:
-
-**Java (acquirer):**
+Scaffold a project with one command — this is the Java acquirer; the Node issuer
+is `--lang=node --role=issuer`:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/t-0-network/usdt-pay-sdk/master/cli/install.sh | sh -s -- init --lang=java --role=acquirer my-acquirer
 ```
 
-**Node (issuer):**
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/t-0-network/usdt-pay-sdk/master/cli/install.sh | sh -s -- init --lang=node --role=issuer my-issuer
-```
-
-**Windows (PowerShell):**
-
-```powershell
-iwr -Uri https://raw.githubusercontent.com/t-0-network/usdt-pay-sdk/master/cli/install.ps1 -OutFile install.ps1
-.\install.ps1 init --lang=java --role=acquirer my-acquirer
-```
-
-Then follow your project's README.
-See [java/](java/) or [node/](node/) for SDK-only usage without the scaffolder.
+Windows, the install-only form and every flag: [`cli/README.md`](cli/README.md).
+Then follow your project's README; [java/](java/) and [node/](node/) cover the
+SDKs on their own.
 
 ## What is in here
 
-```
-proto/tzero/v1/pay/      protocol definitions, snapshot-synced from the t-0 backend
-java/                    Java SDK + acquirer starter
-node/                    Node SDK + issuer starter
-cli/                     unified scaffolder (Go) — `usdt-pay init`
-```
-
-Each directory has its own README:
-
+- [`proto/tzero/v1/pay/`](proto/tzero/v1/pay/) — protocol definitions, snapshot-synced from the t-0 backend
 - [`java/`](java/) — SDK coordinates, starter
 - [`java/sdk/`](java/sdk/) — client patterns: blocking, non-blocking, V2 stubs
 - [`java/starter/acquirer/`](java/starter/acquirer/) — acquirer integration guide
@@ -68,6 +47,7 @@ Each directory has its own README:
   `createHandler` for mounting into an existing server, and
   `@t-0/usdt-pay-sdk/crypto` for verifying requests in any HTTP stack
 - [`node/starter/issuer/`](node/starter/issuer/) — issuer integration guide
+- [`cli/`](cli/README.md) — the `usdt-pay init` scaffolder: install, create a project
 
 ## Before you write code
 

@@ -31,7 +31,7 @@ See [sdk/](sdk/) for `createClient`, `createServer` and `createHandler` in full.
 
 ## Starter
 
-Node 22 or newer. Scaffold with the [CLI](../cli/):
+Node 22 or newer. Scaffold with the [CLI](../cli/README.md):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/t-0-network/usdt-pay-sdk/master/cli/install.sh | sh -s -- init --lang=node --role=issuer my-issuer
@@ -46,8 +46,7 @@ After scaffolding:
 ```bash
 cd my-issuer
 # add NETWORK_PUBLIC_KEY to .env — your t-0 onboarding contact gives you this
-npm install && npm run build
-npm start
+npm install && npm run dev
 ```
 
 Then follow your project's README.

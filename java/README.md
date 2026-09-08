@@ -22,7 +22,7 @@ blocking and non-blocking stubs, `CallDeadline`, V2 checked exceptions.
 
 ## Starter
 
-Scaffold with the [CLI](../cli/):
+Scaffold with the [CLI](../cli/README.md):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/t-0-network/usdt-pay-sdk/master/cli/install.sh | sh -s -- init --lang=java --role=acquirer my-acquirer
@@ -37,8 +37,7 @@ After scaffolding:
 ```bash
 cd my-acquirer
 # add NETWORK_PUBLIC_KEY to .env — your t-0 onboarding contact gives you this
-./gradlew installDist
-./build/install/acquirer/bin/acquirer
+./gradlew run
 ```
 
 Then follow your project's README.
@@ -51,7 +50,7 @@ needs a 21 runtime. The SDK jar is compiled for 17, so consuming it does not for
 you off 17.
 
 If your build network blocks `api.foojay.io`, install a 21 JDK yourself and the
-resolver stays out of the way — or put the starter back on 17: change
+resolver stays out of the way — or move the starter to 17: change
 `JavaLanguageVersion.of(21)` to `of(17)` in its `build.gradle.kts` and the
 `eclipse-temurin:21-*` tags in its `Dockerfile`. Nothing in the starter code uses a
 language feature newer than 17.

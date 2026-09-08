@@ -3,8 +3,10 @@
 Java SDK for the **t-0 QR payment flow** — generated gRPC stubs for all three
 roles, over a transport that signs what you send and verifies what arrives.
 
-Start from a role's starter rather than from here:
-[`java/starter/acquirer`](../starter/acquirer/).
+Start from a scaffolded project rather than from here —
+`usdt-pay init --lang=java --role=acquirer <project-name>`
+([`cli/README.md`](../../cli/README.md)); its README is the
+[acquirer integration guide](../starter/acquirer/README.md).
 
 ## Install
 
@@ -37,19 +39,21 @@ your handler:
 
 ```java
 var server = UsdtPayServer.create(config.port(), config.networkPublicKey())
-        .addService(new AcquirerCallbackHandler())
+        .withService(new AcquirerCallbackHandler())
         .start();
 ```
 
 Verification runs over the bytes that arrived — protobuf encoding is not
 canonical, so a re-serialized message is a different message to secp256k1.
 
-Mount one service per role edge you implement — `AcquirerCallbackImplBase`,
-`IssuerCallbackImplBase`, `LpCallbackImplBase`.
+Mount one service per role edge you implement —
+`AcquirerCallbackServiceGrpc.AcquirerCallbackServiceImplBase`,
+`IssuerCallbackServiceGrpc.IssuerCallbackServiceImplBase`,
+`LpCallbackServiceGrpc.LpCallbackServiceImplBase`.
 
 ## Calling t-0
 
-All 15 endpoints are unary request/response — nothing in this protocol streams,
+All 14 endpoints are unary request/response — nothing in this protocol streams,
 which is why the starters use the blocking stub everywhere, and why you probably
 should too.
 
@@ -78,8 +82,8 @@ until the deadline passes and then fails every later call with
 `GetPaymentQuote` a shorter one at the call site.
 
 `BlockingNetworkClient.create(endpoint, signer, stubFactory, timeoutSeconds)`
-looks like the built-in knob for this. As of provider-sdk-java 1.1.25 it is not:
-the argument is accepted and never read.
+looks like the built-in knob for this. It is not: provider-sdk-java accepts the
+argument and never reads it.
 
 ## Non-blocking
 

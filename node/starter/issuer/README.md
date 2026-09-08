@@ -10,29 +10,27 @@ This README says what to build — for what every field and decline code means, 
 ## Prerequisites
 
 - Node 22+.
-- A secp256k1 private key. Any 32 random bytes will do: `openssl rand -hex 32`.
 - The t-0 network public key — an uncompressed secp256k1 key, `0x04…` and 130 hex
   digits. It comes from your t-0 onboarding contact, along with a `TZERO_ENDPOINT`
   you can reach.
 
 ## Run it
 
+`usdt-pay init` ([usdt-pay-sdk](https://github.com/t-0-network/usdt-pay-sdk))
+created this project and wrote `.env` with a fresh `PROVIDER_PRIVATE_KEY`; the
+matching public key is on the comment line under it. Fill in `NETWORK_PUBLIC_KEY`
+with the key your t-0 onboarding contact gives you, then install and run:
+
 ```bash
-cp .env.example .env      # then fill in PROVIDER_PRIVATE_KEY and NETWORK_PUBLIC_KEY
-
-# Install and build from node/ — the starter compiles against the local sdk workspace.
-(cd ../.. && npm install && npm run build)
-
-# Run from here: .env is read from the working directory.
-npm start
+npm install && npm run dev
 ```
 
-It prints your public key and starts the callback server. Nothing else happens until
-t-0 calls `CreatePaymentInstructions` — and until you implement that handler it
-declines, so nobody can pay against addresses that are not yours.
+It prints your public key and starts the callback server under `tsx watch`,
+restarting as you edit. Nothing else happens until t-0 calls
+`CreatePaymentInstructions` — and until you implement that handler it declines,
+so nobody can pay against addresses that are not yours.
 
-`npm run dev` runs the same thing under `tsx watch` while you are editing;
-`npm test` runs the tests.
+`npm run build && npm start` runs the compiled build; `npm test` runs the tests.
 
 ## What you implement
 
@@ -52,14 +50,14 @@ an echo of its own input.
 
 ### Phase 1 — server
 
-1. **1.1** With `PROVIDER_PRIVATE_KEY` set in `.env`, start the app and see it print your public key.
+1. **1.1** With `PROVIDER_PRIVATE_KEY` set in `.env`, start the app and see it print your public key
+   (it is also recorded as a comment in `.env`, right under the private key).
 2. **1.2** Send that public key to your t-0 onboarding contact, together with the
-   base URL where this service listens. Onboarding runs through the contact you
-   already have at t-0 — there is no self-service channel, and the same exchange is
-   where `NETWORK_PUBLIC_KEY` comes back to you. `CreatePaymentInstructions` is synchronous and on the
-   critical path: if t-0 cannot reach that URL, no intent can be opened, so a laptop
-   on `localhost:8080` needs a tunnel or a deployed host before this step means
-   anything.
+   base URL where this service listens. Onboarding runs through your t-0 contact,
+   and the same exchange is where `NETWORK_PUBLIC_KEY` comes back to you.
+   `CreatePaymentInstructions` is synchronous and on the critical path: if t-0
+   cannot reach that URL, no intent can be opened, so a laptop on `localhost:8080`
+   needs a tunnel or a deployed host before this step means anything.
 
 ### Phase 2 — the one inbound endpoint
 
@@ -72,8 +70,10 @@ Implement `createPaymentInstructions` in `src/handler.ts`.
    mapping and keep it with the reservation; `SettlementSent` needs it.
 3. **2.3** Reserve one address per chain you support, build each option's `paymentUri` as a chain-native URI and set
    `tokenContract` to the USDT contract on that chain (the POS encodes it untouched), and
-   hold the reservation until `expiresAt`. t-0 currently asks for a 60–120 second
-   window.
+   hold the reservation until `expiresAt`. t-0 sizes that window per intent rather
+   than to a fixed value, and your response's `expiresAt` must be at or after the
+   requested one — earlier, and t-0 discards the instructions and declines the
+   payment. Size your address pool for windows on the order of a minute or two.
 4. **2.4** Out of addresses, or the amount is outside your range? Answer with the
    `failure` variant (`ADDRESS_POOL_EMPTY`, `AMOUNT_OUT_OF_RANGE`,
    `ISSUER_UNAVAILABLE`) rather than throwing.
@@ -95,11 +95,12 @@ are real and stay as they are — it is the deposit addresses that must become y
 Wire your chain watcher to these; nothing here belongs on a timer.
 
 1. **3.1** `reportPaymentReceived` — a deposit landed on-chain and your screening
-   is complete. Pass `outcome: authorized` when the deposit passes; t-0 fires
+   is complete. The helper reports the deposit as `authorized`; t-0 fires
    `PaymentAuthorized` to the acquirer off it, and from that moment you own the
-   on-chain risk and are obligated to settle. Pass `outcome: unprocessable` with a
-   `FundsDisposition` when you will not process it; t-0 fires `PaymentFailed` to
-   the acquirer and the intent ends failed.
+   on-chain risk and are obligated to settle. For a deposit you will not process,
+   extend the helper's `payment` argument to send the request's `unprocessable`
+   variant with its `disposition` (a `FundsDisposition`) instead; t-0 then fires
+   `PaymentFailed` to the acquirer and the intent ends failed.
 2. **3.2** `reportSettlementSent` — after you broadcast a settlement transfer,
    report it with the transfer's own id as `settlementRef`. On
    `ON_CHAIN_UNCONFIRMED`, resend the same ref once it confirms. Never broadcast a
@@ -134,7 +135,7 @@ exhaustive:
 const outcome = await reportSettlementSent(t0, settlement);
 switch (outcome.kind) {
   case "accepted": markSettled(settlement.settlementRef); break;
-  case "rejected": alertOps(outcome.reason, outcome.failingIds); break;
+  case "rejected": alertOps(outcome.reason); break;
   case "unknown": scheduleRetry(settlement); break;
 }
 ```
@@ -196,13 +197,10 @@ test/
 
 ## Docker
 
-The build context is `node/`, because the starter compiles against the SDK next to
-it.
-
 ```bash
-cd ../..                    # node/
-docker build -f starter/issuer/Dockerfile -t usdt-pay-issuer .
-docker run -p 8080:8080 --env-file starter/issuer/.env usdt-pay-issuer
+npm install                 # writes package-lock.json; the image installs from it
+docker build -t usdt-pay-issuer .
+docker run -p 8080:8080 --env-file .env usdt-pay-issuer
 ```
 
 The image carries no `.env` on purpose: your private key does not belong in a layer.
