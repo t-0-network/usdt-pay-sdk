@@ -105,9 +105,10 @@ Implement the callbacks in `handler/AcquirerCallbackHandler.java`.
    `acquirerId` is yours; refuse the callback otherwise.
 4. **3.4** `PaymentExpired` — cancel the pending sale and take the QR off the POS.
 5. **3.5** `PaymentFailed` — the issuer reported the deposit as unprocessable.
-   Cancel the pending sale and communicate the outcome to the customer based on
-   `disposition`: `RETURNED_TO_SENDER` means the issuer refunds to the sender
-   address; `RETAINED_BY_ISSUER` means the customer resolves out of band.
+   Cancel the pending sale, take the QR off the POS, and communicate the outcome
+   to the customer based on `disposition`: `RETURNED_TO_SENDER` means the issuer
+   refunds to the sender address; `RETAINED_BY_ISSUER` means the customer
+   resolves out of band.
 
 ### Phase 4 — confirm the fiat leg
 

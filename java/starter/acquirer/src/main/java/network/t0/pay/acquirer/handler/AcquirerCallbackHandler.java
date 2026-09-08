@@ -165,8 +165,9 @@ public class AcquirerCallbackHandler extends AcquirerCallbackServiceGrpc.Acquire
                 Times.format(request.getFailedAt()));
 
         // TODO: Step 3.5 — dedup on paymentIntentId (scoped to this callback, not shared with
-        //   PaymentAuthorized or PaymentExpired), cancel the pending sale, and tell the customer
-        //   what to expect based on disposition (RETURNED_TO_SENDER or RETAINED_BY_ISSUER).
+        //   PaymentAuthorized or PaymentExpired), cancel the pending sale, take the QR off the
+        //   POS, and tell the customer what to expect based on disposition (RETURNED_TO_SENDER
+        //   or RETAINED_BY_ISSUER).
 
         responseObserver.onNext(PaymentFailedResponse.getDefaultInstance());
         responseObserver.onCompleted();
