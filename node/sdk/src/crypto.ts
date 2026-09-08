@@ -17,15 +17,21 @@
  *
  * The one rule that cannot be broken: **verify the exact bytes that arrived.**
  * No body parsers, no decompression, no re-serialized protobuf — protobuf
- * encoding is not canonical, so a re-encoded message is a different message to
- * secp256k1.
+ * encoding is not canonical, so re-encoding may change the signed bytes, and
+ * then the signature no longer matches.
+ *
+ * Every provider-sdk import here uses `@t-0/provider-sdk/crypto`, not the
+ * package root: the root re-exports the Connect node adapter and drags
+ * `node:http`/`node:https` into whatever imports it, which is exactly what a
+ * non-Node-http stack does not want. `test/crypto-isolation.test.ts` keeps it
+ * that way.
  */
 
 import {
   createRequestDecoder as createBaseRequestDecoder,
   type CreateVerifierOptions,
   type RequestDecoder,
-} from "@t-0/provider-sdk";
+} from "@t-0/provider-sdk/crypto";
 import { payRegistry } from "./registry.js";
 
 /**
@@ -47,7 +53,7 @@ export {
   parsePublicKey,
   publicKeysEqual,
   NetworkHeaders,
-} from "@t-0/provider-sdk";
+} from "@t-0/provider-sdk/crypto";
 export type {
   CreateVerifierOptions,
   RejectedRequest,
@@ -64,4 +70,4 @@ export type {
   DecodeError,
   Violation,
   RequestDecoder,
-} from "@t-0/provider-sdk";
+} from "@t-0/provider-sdk/crypto";
