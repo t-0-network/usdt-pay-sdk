@@ -4,8 +4,10 @@ TypeScript SDK for the **t-0 QR payment flow** — the contract under
 `proto/tzero/v1/pay/`. Generated Connect clients and servers for all three roles,
 over a transport that signs what you send and verifies what arrives.
 
-Start from a role's starter rather than from here:
-[`node/starter/issuer`](https://github.com/t-0-network/usdt-pay-sdk/tree/master/node/starter/issuer).
+Start from a scaffolded project rather than from here: `usdt-pay init --lang=node --role=issuer <project-name>`
+(install and every flag: [`cli/README.md`](https://github.com/t-0-network/usdt-pay-sdk/blob/master/cli/README.md)).
+The project's README is the
+[issuer integration guide](https://github.com/t-0-network/usdt-pay-sdk/blob/master/node/starter/issuer/README.md).
 
 ## Install
 
@@ -13,8 +15,7 @@ Start from a role's starter rather than from here:
 npm install @t-0/usdt-pay-sdk
 ```
 
-Scaffolding a project with the CLI (`usdt-pay init`) adds this dependency for you. Working inside a clone of the repo instead? The starters resolve the SDK through
-the `node/` npm workspace, so no install is needed.
+Scaffolding a project with the CLI (`usdt-pay init`) adds this dependency for you.
 
 ## Serving the callbacks t-0 pushes to you
 
@@ -190,7 +191,7 @@ const t0 = createClient(process.env.TZERO_ENDPOINT!, privateKeyHex, IssuerServic
 const response = await t0.paymentReceived(request, { timeoutMs: 10_000 });
 ```
 
-All 15 endpoints are unary request/response — nothing in this contract streams.
+All 14 endpoints are unary request/response — nothing in this contract streams.
 
 `endpoint` is required: the underlying provider client defaults to a different t-0
 API, and a pay participant that omitted it would sign perfectly valid requests and

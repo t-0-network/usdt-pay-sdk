@@ -13,24 +13,19 @@ and decline code means, see the
 
 - Java 21+. If your JDK is older the Gradle build still works — it provisions a 21
   toolchain on its own — but the binary it produces needs a 21 runtime.
-- A secp256k1 private key. Any 32 random bytes will do: `openssl rand -hex 32`.
 - The t-0 network public key — an uncompressed secp256k1 key, `0x04…` and 130 hex
   digits. It comes from your t-0 onboarding contact, along with a `TZERO_ENDPOINT`
   you can reach.
 
 ## Run it
 
-If you used the scaffolder, skip the `cp` — your generated `.env` already holds
-your key, and copying the example over it destroys it.
+`usdt-pay init` ([usdt-pay-sdk](https://github.com/t-0-network/usdt-pay-sdk))
+created this project and wrote `.env` with a fresh `PROVIDER_PRIVATE_KEY`; the
+matching public key is on the comment line under it. Fill in `NETWORK_PUBLIC_KEY`
+with the key your t-0 onboarding contact gives you, then build and start:
 
 ```bash
-cp .env.example .env      # then fill in PROVIDER_PRIVATE_KEY and NETWORK_PUBLIC_KEY
-
-# Build from the java/ root — the starter compiles against the local :sdk project.
-(cd ../.. && ./gradlew :starter:acquirer:installDist)
-
-# Run from here: .env is read from the working directory.
-./build/install/acquirer/bin/acquirer
+./gradlew run
 ```
 
 It prints your public key, starts the callback server, and runs one demo sale
@@ -39,13 +34,9 @@ sale: if you settle in USDt you skip `GetPaymentQuote` entirely and send the
 amount in USDt on `CreatePaymentIntent`, so do not read your own first call off it —
 [What you implement](#what-you-implement) says which half is yours.
 
-To run the starter's own tests:
+To run the tests:
 
 ```bash
-# From a clone of the repository:
-(cd ../.. && ./gradlew :starter:acquirer:test)
-
-# From a scaffolded standalone project:
 ./gradlew test
 ```
 
@@ -69,11 +60,11 @@ endpoint's mode. Fiat mode: `SettlementCompleted` never fires. USDt mode: skip
 
 ### Phase 1 — keys and server
 
-1. **1.1** With `PROVIDER_PRIVATE_KEY` set in `.env`, start the app and see it print your public key.
+1. **1.1** With `PROVIDER_PRIVATE_KEY` set in `.env`, start the app and see it print your public key
+   (it is also recorded as a comment in `.env`, right under the private key).
 2. **1.2** Send that public key to your t-0 onboarding contact. Until they have it,
-   every call you make is rejected. Onboarding runs through the contact you already
-   have at t-0 — there is no self-service channel, and the same exchange is where
-   `NETWORK_PUBLIC_KEY` comes back to you.
+   every call you make is rejected. Onboarding runs through your t-0 contact, and
+   the same exchange is where `NETWORK_PUBLIC_KEY` comes back to you.
 3. **1.3** Confirm the callback server came up on `PORT`.
 
 ### Phase 2 — quote → intent
@@ -238,13 +229,9 @@ src/main/java/network/t0/pay/acquirer/
 
 ## Docker
 
-The build context is the repository root — `java/sdk/src/main/proto` is a symlink
-into `proto/`, so a narrower context cannot resolve it.
-
 ```bash
-cd ../../..                 # repository root
-docker build -f java/starter/acquirer/Dockerfile -t usdt-pay-acquirer .
-docker run -p 8080:8080 --env-file java/starter/acquirer/.env usdt-pay-acquirer
+docker build -t usdt-pay-acquirer .
+docker run -p 8080:8080 --env-file .env usdt-pay-acquirer
 ```
 
 The image carries no `.env` on purpose: your private key does not belong in a layer.
