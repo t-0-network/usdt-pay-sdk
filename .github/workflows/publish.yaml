@@ -80,7 +80,7 @@ jobs:
           done
           [ "$ERRORS" -eq 0 ] || exit 1
 
-  # --- Build gate: the build/test core of ci-java.yaml / ci-node.yaml / ci-cli.yaml, minus `npm audit`. Deliberate — post-tag, an
+  # --- Build gate: the build/test core of ci-java.yaml / ci-node.yaml / ci-python.yaml / ci-cli.yaml, minus `npm audit`. Deliberate — post-tag, an
   # advisory published in the minutes between tag and publish would strand a tagged
   # release that cannot be re-cut without a dependency bump. Pre-tag it still blocks. ---
   build-java:
@@ -166,9 +166,49 @@ jobs:
         working-directory: cli
         run: go test ./...
 
+  build-python:
+    name: Build Python
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          show-progress: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: python/uv.lock
+
+      - name: Install
+        working-directory: python
+        run: uv sync --all-packages
+
+      - name: Build SDK
+        working-directory: python
+        run: uv build --package t0-usdt-pay-sdk
+
+      - name: Test
+        working-directory: python
+        run: uv run pytest -v
+
+      - name: Lint
+        working-directory: python
+        run: uv run ruff check .
+
+      - name: Format check
+        working-directory: python
+        run: uv run ruff format --check .
+
   publish-node-sdk:
     name: Publish Node SDK
-    needs: [preflight, build-java, build-node, build-cli]
+    needs: [preflight, build-java, build-node, build-python, build-cli]
     # npm rejects --provenance from self-hosted runners.
     runs-on: ubuntu-latest
     permissions:
@@ -244,7 +284,7 @@ jobs:
 
   publish-java:
     name: Publish Java
-    needs: [preflight, build-java, build-node, build-cli]
+    needs: [preflight, build-java, build-node, build-python, build-cli]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -293,9 +333,56 @@ jobs:
           MAVEN_CENTRAL_USERNAME: ${{ vars.OSSRH_USERNAME }}
           MAVEN_CENTRAL_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
 
+  publish-python-sdk:
+    name: Publish Python SDK
+    needs: [preflight, build-java, build-node, build-python]
+    runs-on: ubuntu-latest
+    environment: pypi-sdk
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          show-progress: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Verify version matches tag
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          ERRORS=0
+          PKG=$(grep -oP '(?<=^version = ")[^"]+' python/sdk/pyproject.toml)
+          [ "$PKG" = "$VERSION" ] || { echo "::error::python/sdk/pyproject.toml has $PKG, tag is v$VERSION"; ERRORS=$((ERRORS + 1)); }
+          SDK=$(grep -oP '(?<=__version__ = ")[^"]+' python/sdk/src/t0_usdt_pay_sdk/_version.py)
+          [ "$SDK" = "$VERSION" ] || { echo "::error::_version.py has $SDK, tag is v$VERSION"; ERRORS=$((ERRORS + 1)); }
+          FLOOR=$(grep -oP '(?<=t0-usdt-pay-sdk>=)[^"]+' python/starter/acquirer/pyproject.toml)
+          [ "$FLOOR" = "$VERSION" ] || { echo "::error::python/starter/acquirer SDK floor is $FLOOR, tag is v$VERSION"; ERRORS=$((ERRORS + 1)); }
+          (cd python && uv lock --check) || {
+            echo "::error::python/uv.lock is out of date"
+            ERRORS=$((ERRORS + 1))
+          }
+          [ "$ERRORS" -eq 0 ] || exit 1
+          echo "Python version sites match tag v$VERSION"
+
+      - name: Build
+        working-directory: python
+        run: uv build --package t0-usdt-pay-sdk
+
+      - name: Publish to PyPI
+        working-directory: python
+        run: uv publish --trusted-publishing always dist/t0_usdt_pay_sdk-*
+
   publish-cli:
     name: Publish CLI
-    needs: [preflight, build-java, build-node, build-cli]
+    needs: [preflight, build-java, build-node, build-python, build-cli, publish-python-sdk]
     runs-on: ubuntu-latest
     steps:
       - name: Generate GitHub App token

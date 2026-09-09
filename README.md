@@ -10,7 +10,7 @@ Pick yours and go straight to its SDK.
 
 | You are | You do | SDK |
 |---|---|---|
-| **Acquirer** | Own the merchant. Price the sale, open the intent, show the QR, learn when it settles. | [Java](java/) |
+| **Acquirer** | Own the merchant. Price the sale, open the intent, show the QR, learn when it settles. | [Java](java/) · [Python](python/) |
 | **Issuer** | Reserve deposit addresses, watch the chain for the customer's USDt, settle on-chain. | [Node](node/) |
 | **Liquidity Provider** | Price USDt↔local fiat, take the per-sale obligation, settle fiat over bank rails. | [API reference](https://usdt-pay-docs.t-0.network/docs/integration-guidance/api-reference/pay_lp/) |
 
@@ -26,15 +26,15 @@ onboarding.
 ## Quick start
 
 Scaffold a project with one command — this is the Java acquirer; the Node issuer
-is `--lang=node --role=issuer`:
+is `--lang=node --role=issuer`, the Python acquirer is `--lang=python --role=acquirer`:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/t-0-network/usdt-pay-sdk/master/cli/install.sh | sh -s -- init --lang=java --role=acquirer my-acquirer
 ```
 
 Windows, the install-only form and every flag: [`cli/README.md`](cli/README.md).
-Then follow your project's README; [java/](java/) and [node/](node/) cover the
-SDKs on their own.
+Then follow your project's README; [java/](java/), [node/](node/) and
+[python/](python/) cover the SDKs on their own.
 
 ## What is in here
 
@@ -47,6 +47,10 @@ SDKs on their own.
   `createHandler` for mounting into an existing server, and
   `@t-0/usdt-pay-sdk/crypto` for verifying requests in any HTTP stack
 - [`node/starter/issuer/`](node/starter/issuer/) — issuer integration guide
+- [`python/`](python/) — SDK install, starter
+- [`python/sdk/`](python/sdk/) — `create_client`, `create_asgi_app` / `create_wsgi_app`,
+  and `crypto` for verifying requests in any ASGI/WSGI stack
+- [`python/starter/acquirer/`](python/starter/acquirer/) — acquirer integration guide
 - [`cli/`](cli/README.md) — the `usdt-pay init` scaffolder: install, create a project
 
 ## Before you write code
@@ -60,8 +64,10 @@ Write first under the callback's dedup key, return second.
 
 **Every state-changing call has an idempotency key.** Retry with the *original* key
 and identical content. A rejection is itself an acknowledgment — stop retrying —
-but it never consumes the key: correct the fields and resend the same key. A fresh
-key on a retry is a second sale, a second settlement, a second obligation.
+but it never consumes the key: correct the fields and resend the same key. The one
+exception: retrying a *declined* `CreatePaymentIntent` takes a **fresh** idempotency
+key under the same `payment_ref`. A fresh key on any other retry is a second sale,
+a second settlement, a second obligation.
 
 Each starter README lists the keys for its role, and
 [Idempotency & reliability](https://usdt-pay-docs.t-0.network/docs/integration-guidance/idempotency/)

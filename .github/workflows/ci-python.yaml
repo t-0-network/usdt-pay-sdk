@@ -1,0 +1,92 @@
+name: CI / Python
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "python/**"
+      - "proto/**"
+      - ".github/workflows/ci-python.yaml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "python/**"
+      - "proto/**"
+      - ".github/workflows/ci-python.yaml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          show-progress: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: python/uv.lock
+
+      - name: Install
+        working-directory: python
+        run: uv sync --all-packages
+
+      - name: Build SDK
+        working-directory: python
+        run: uv build --package t0-usdt-pay-sdk
+
+      - name: Test
+        working-directory: python
+        run: uv run pytest -v
+
+      - name: Lint
+        working-directory: python
+        run: uv run ruff check .
+
+      - name: Format check
+        working-directory: python
+        run: uv run ruff format --check .
+
+  python-latest-deps:
+    name: Python (latest deps)
+    runs-on: ubuntu-latest
+    needs: [python]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          show-progress: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Build SDK wheel
+        working-directory: python
+        run: uv build --package t0-usdt-pay-sdk -o "$RUNNER_TEMP/pydist"
+
+      - name: Install wheel with latest deps
+        run: |
+          uv venv "$RUNNER_TEMP/latest-venv"
+          VIRTUAL_ENV="$RUNNER_TEMP/latest-venv" uv pip install --resolution highest "$RUNNER_TEMP"/pydist/t0_usdt_pay_sdk-*.whl pytest pytest-asyncio
+
+      - name: Run SDK tests
+        working-directory: python
+        run: |
+          "$RUNNER_TEMP/latest-venv/bin/python" -m pytest sdk/tests -v

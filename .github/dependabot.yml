@@ -26,3 +26,8 @@ updates:
     directory: "/java"
     schedule:
       interval: "weekly"
+
+  - package-ecosystem: "uv"
+    directory: "/python"
+    schedule:
+      interval: "weekly"

@@ -34,19 +34,24 @@ any site disagrees.
 | `node/starter/issuer/package.json` | `.version` |
 | `node/starter/issuer/package.json` | `.dependencies["@t-0/usdt-pay-sdk"]` = `^X.Y.Z` |
 | `node/package-lock.json` | the `sdk` and `starter/issuer` entries — two `.version`s and the starter SDK pin |
+| `python/sdk/pyproject.toml` | `version = "X.Y.Z"` |
+| `python/sdk/src/t0_usdt_pay_sdk/_version.py` | `__version__` |
+| `python/starter/acquirer/pyproject.toml` | `t0-usdt-pay-sdk>=X.Y.Z` dependency |
+| `python/uv.lock` | regenerated after the three sites above are bumped |
 
 ---
 
 ## Starters
 
-Starters are live, tested projects under `java/starter/` and `node/starter/`. They are **not
-published as packages** — the unified CLI in `cli/` (`usdt-pay init`) embeds them as templates at
-build time via `go generate`.
+Starters are live, tested projects under `java/starter/`, `node/starter/` and `python/starter/`.
+They are **not published as packages** — the unified CLI in `cli/` (`usdt-pay init`) embeds them
+as templates at build time via `go generate`.
 
 | Platform | Starter source | Role |
 |---|---|---|
 | Java | `java/starter/acquirer/` | acquirer |
 | Node | `node/starter/issuer/` | issuer |
+| Python | `python/starter/acquirer/` | acquirer |
 
 Adding a role is adding a directory under the appropriate `starter/` and wiring it into
 `cli/generate.go`. Each starter carries its own standalone `Dockerfile` and `.dockerignore` —
@@ -112,24 +117,24 @@ Dispatch input `bump` — `patch` (default) / `minor` / `major`.
 
 Fires on `v[0-9]+.[0-9]+.[0-9]+`.
 
-**Build gate** — `build-java` + `build-node` + `build-cli` again, **minus `npm audit`**. Deliberate:
-pre-tag a fresh advisory should block the release; post-tag it must not, or an advisory published
-in the minutes between tag and publish strands a tagged release that cannot be re-cut without a
-dependency bump.
+**Build gate** — `build-java` + `build-node` + `build-python` + `build-cli` again, **minus `npm audit`**.
+Deliberate: pre-tag a fresh advisory should block the release; post-tag it must not, or an
+advisory published in the minutes between tag and publish strands a tagged release that cannot be
+re-cut without a dependency bump.
 
 ```
-    preflight      build-java      build-node      build-cli
-         \              |              |              /
-          \-------------+--------------+-------------/
-                                |
-                   /------------+------------\
-                  /             |             \
-        publish-node-sdk   publish-java   publish-cli
+    preflight    build-java    build-node    build-python    build-cli
+         \            |            |              |             /
+          \-----------+------------+--------------+------------/
+                                   |
+                   /---------------+----------------------\
+                  /         /      |       \               \
+        publish-node-sdk  publish-java  publish-python-sdk  publish-cli
 ```
 
 Nothing publishes until everything builds and the shared **`preflight`** job passes.
 
-`preflight` checks *both* registries' prerequisites in one place:
+`preflight` checks the registries' prerequisites in one place:
 
 - the repository is public (`gh api repos/$GITHUB_REPOSITORY --jq .private` = `false`, which npm
   provenance requires);
@@ -162,6 +167,19 @@ publish.
 |---|---|---|
 | `publish-node-sdk` | `@t-0/usdt-pay-sdk` | `node/sdk` |
 
+### `publish-python-sdk`
+
+`ubuntu-latest`, `id-token: write`, GitHub environment `pypi-sdk`. Auth is OIDC via
+`uv publish --trusted-publishing always` — no API tokens.
+
+Version-matches-tag (including `_version.py`, starter floor, `uv lock --check`), `uv build
+--package t0-usdt-pay-sdk`, publish. The SDK only — the starter is embedded by the CLI, not
+published.
+
+| Job | Package | Directory |
+|---|---|---|
+| `publish-python-sdk` | `t0-usdt-pay-sdk` | `python/sdk` |
+
 ### `publish-java`
 
 Version-matches-tag (including `Version.java` and `java/starter/acquirer/gradle.properties`),
@@ -191,7 +209,7 @@ version via `-ldflags "-X main.Version=${VERSION}"`. Uploads the binaries as rel
 No ruleset or GitHub App change is needed: the org ruleset `default-branch-protection` already
 grants the t-0-ci App `bypass_mode: always` on `refs/heads/master` for `~ALL` repos.
 
-npm needs no secret at all — publishing is OIDC through the package's trusted publisher.
+npm and PyPI need no secret at all — publishing is OIDC through each package's trusted publisher.
 
 ---
 
@@ -246,7 +264,22 @@ In this order. The preflights enforce it, but they enforce it by failing a run.
 
    Verify one OIDC run before revoking any token-based publish rights.
 
-4. **Check the Java signing prerequisites**, neither of which `preflight` can see. The GPG key
+4. **Create the `pypi-sdk` GitHub environment** and configure a **pending** trusted publisher on
+   PyPI under the owning account (`stepan-romankov`):
+
+   | Field | Value |
+   |---|---|
+   | PyPI project name | `t0-usdt-pay-sdk` |
+   | Owner | `t-0-network` |
+   | Repository | `usdt-pay-sdk` |
+   | Workflow name | `publish.yaml` |
+   | Environment name | `pypi-sdk` |
+
+   Unlike npm, PyPI allows configuring a trusted publisher *before* the first publish, so no
+   bootstrap publish is needed. The `pypi-sdk` environment exists only to scope the OIDC trust —
+   it needs no secrets or protection rules.
+
+5. **Check the Java signing prerequisites**, neither of which `preflight` can see. The GPG key
    must be **passphrase-less** — `java/sdk/build.gradle.kts` passes an empty passphrase to
    `useInMemoryPgpKeys` — and its **public half must be on a public keyserver**
    (`keyserver.ubuntu.com` or `keys.openpgp.org`), or Central rejects the deployment at
@@ -255,7 +288,7 @@ In this order. The preflights enforce it, but they enforce it by failing a run.
    `OSSRH_USERNAME` / `OSSRH_PASSWORD` must be Central **Portal user tokens** for the account that
    owns the verified `network.t-0` namespace, not legacy OSSRH credentials.
 
-5. **Dispatch `release.yaml`.** The first run ignores the `bump` input and ships the tree version.
+6. **Dispatch `release.yaml`.** The first run ignores the `bump` input and ships the tree version.
 
 ---
 
@@ -263,7 +296,7 @@ In this order. The preflights enforce it, but they enforce it by failing a run.
 
 ### Registry publication is immutable
 
-npm and Maven Central both refuse to replace a published version. Never re-run a publish job
+npm, Maven Central and PyPI all refuse to replace a published version. Never re-run a publish job
 blind: read which registries actually received the artifact first.
 
 What a failure costs depends on where it happened, and the two cases are not the same:
@@ -274,10 +307,9 @@ What a failure costs depends on where it happened, and the two cases are not the
 - **The publish landed and something after it failed.** That version is spent. If the fix needs a
   new commit, recovery is a new patch release, decided deliberately — not a re-run.
 
-`publish-java` and `publish-node-sdk` run independently of each other — one side failing does not
-stop the other — so a partial release across registries is possible in either direction: npm
-published and Central not, or the reverse. Neither is worse than the other to sit in, and both
-recover the same way, with *Re-run failed jobs* at the same version.
+`publish-java`, `publish-node-sdk` and `publish-python-sdk` run independently of each other — one
+side failing does not stop the others — so a partial release across registries is possible in any
+direction. All recover the same way, with *Re-run failed jobs* at the same version.
 
 **Re-running after a partial success:** use *Re-run failed jobs*, never *Re-run all jobs* — the
 latter re-enters a publish that already succeeded and fails on the duplicate.

@@ -1,0 +1,12 @@
+version: v2
+plugins:
+  - remote: buf.build/protocolbuffers/python:v34.1
+    out: src/t0_usdt_pay_sdk/api
+  - remote: buf.build/protocolbuffers/pyi:v34.1
+    out: src/t0_usdt_pay_sdk/api
+  - local: [uv, run, --project, .., protoc-gen-connectrpc]
+    out: src/t0_usdt_pay_sdk/api
+    opt:
+      - protobuf=google
+inputs:
+  - directory: proto
