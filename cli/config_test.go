@@ -105,6 +105,101 @@ func TestCompletion_PrintsNextSteps(t *testing.T) {
 	}
 }
 
+func TestCompletion_RunStep(t *testing.T) {
+	t.Run("lang/role entry wins over built-in", func(t *testing.T) {
+		withConfig(t, CLIConfig{
+			ProductName: "usdt-pay",
+			Languages:   []string{"python"},
+			RunSteps: map[string]RunStep{
+				"python/acquirer": {Label: "Run the acquirer:", Command: "uv sync && uv run python -m acquirer.main"},
+			},
+		})
+		out := captureOutput(t, func() {
+			printCompletion(ScaffoldOpts{Lang: "python", Role: "acquirer", ProjectDir: "demo"}, KeyPair{PublicKey: "0x04"})
+		})
+		if !strings.Contains(out, "Run the acquirer:") {
+			t.Errorf("override label missing:\n%s", out)
+		}
+		if !strings.Contains(out, "uv sync && uv run python -m acquirer.main") {
+			t.Errorf("override command missing:\n%s", out)
+		}
+		if strings.Contains(out, "provider.main") {
+			t.Errorf("built-in command leaked through:\n%s", out)
+		}
+	})
+
+	t.Run("lang entry wins over built-in when no role entry matches", func(t *testing.T) {
+		withConfig(t, CLIConfig{
+			ProductName: "example",
+			Languages:   []string{"python"},
+			RunSteps: map[string]RunStep{
+				"python": {Label: "Start the service:", Command: "uv sync && uv run python -m service.main"},
+			},
+		})
+		out := captureOutput(t, func() {
+			printCompletion(ScaffoldOpts{Lang: "python", Role: "issuer", ProjectDir: "demo"}, KeyPair{PublicKey: "0x04"})
+		})
+		if !strings.Contains(out, "Start the service:") {
+			t.Errorf("lang-level override missing:\n%s", out)
+		}
+		if strings.Contains(out, "provider.main") {
+			t.Errorf("built-in command leaked through:\n%s", out)
+		}
+	})
+
+	t.Run("nil RunSteps keeps built-in", func(t *testing.T) {
+		withConfig(t, CLIConfig{
+			ProductName: "t0",
+			Languages:   []string{"go"},
+		})
+		out := captureOutput(t, func() {
+			printCompletion(ScaffoldOpts{Lang: "go", ProjectDir: "demo"}, KeyPair{PublicKey: "0x04"})
+		})
+		if !strings.Contains(out, "Run the application:") {
+			t.Errorf("built-in label missing:\n%s", out)
+		}
+		if !strings.Contains(out, "go run ./cmd") {
+			t.Errorf("built-in command missing:\n%s", out)
+		}
+	})
+
+	t.Run("different role entry does not leak", func(t *testing.T) {
+		withConfig(t, CLIConfig{
+			ProductName: "usdt-pay",
+			Languages:   []string{"python"},
+			RunSteps: map[string]RunStep{
+				"python/issuer": {Label: "Run the issuer:", Command: "uv sync && uv run python -m issuer.main"},
+			},
+		})
+		out := captureOutput(t, func() {
+			printCompletion(ScaffoldOpts{Lang: "python", Role: "acquirer", ProjectDir: "demo"}, KeyPair{PublicKey: "0x04"})
+		})
+		if strings.Contains(out, "issuer") {
+			t.Errorf("wrong role entry leaked:\n%s", out)
+		}
+		if !strings.Contains(out, "provider.main") {
+			t.Errorf("should fall back to built-in for python:\n%s", out)
+		}
+	})
+
+	t.Run("numbering with NextSteps", func(t *testing.T) {
+		withConfig(t, CLIConfig{
+			ProductName: "usdt-pay",
+			Languages:   []string{"python"},
+			NextSteps:   []string{"Add NETWORK_PUBLIC_KEY to .env", "Deploy behind a public URL"},
+			RunSteps: map[string]RunStep{
+				"python/acquirer": {Label: "Run the acquirer:", Command: "uv sync && uv run python -m acquirer.main"},
+			},
+		})
+		out := captureOutput(t, func() {
+			printCompletion(ScaffoldOpts{Lang: "python", Role: "acquirer", ProjectDir: "demo"}, KeyPair{PublicKey: "0x04"})
+		})
+		if !strings.Contains(out, "4. Run the acquirer:") {
+			t.Errorf("run step should be numbered 4 (1=cd, 2+3=NextSteps):\n%s", out)
+		}
+	})
+}
+
 func TestProcessPlaceholders_JavaPinsOnlyConfiguredArtifacts(t *testing.T) {
 	withConfig(t, CLIConfig{
 		Languages:        []string{"java"},
