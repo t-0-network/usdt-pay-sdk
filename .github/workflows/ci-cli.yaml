@@ -13,6 +13,7 @@ on:
       - "cli/**"
       - "java/**"
       - "node/**"
+      - "python/**"
       - "proto/**"
       - ".github/workflows/ci-cli.yaml"
   pull_request:
@@ -21,6 +22,7 @@ on:
       - "cli/**"
       - "java/**"
       - "node/**"
+      - "python/**"
       - "proto/**"
       - ".github/workflows/ci-cli.yaml"
 
@@ -62,6 +64,17 @@ jobs:
         with:
           cache-read-only: true
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: python/uv.lock
+
       - name: Sync templates (go generate)
         working-directory: cli
         run: go generate ./...
@@ -93,6 +106,11 @@ jobs:
           (cd java && ./gradlew :sdk:publishToMavenLocal --no-daemon -q -Pversion=0.0.0-local -Dmaven.repo.local="${RUNNER_TEMP}/m2")
           test -d "${RUNNER_TEMP}/m2/network/t-0/usdt-pay-sdk-java/0.0.0-local"
           printf 'allprojects { repositories { mavenLocal() } }\n' > "${RUNNER_TEMP}/mavenlocal.init.gradle"
+
+      - name: Build Python SDK wheel for scaffold test
+        run: |
+          (cd python && uv build --package t0-usdt-pay-sdk -o "${RUNNER_TEMP}/pydist")
+          ls "${RUNNER_TEMP}"/pydist/t0_usdt_pay_sdk-*.whl
 
       - name: Scaffold Java project
         run: |
@@ -132,6 +150,25 @@ jobs:
           npm install --silent --no-save --package-lock=false --no-audit --no-fund "${RUNNER_TEMP}"/t-0-usdt-pay-sdk-*.tgz
           npm run build
           npm test
+
+      - name: Scaffold Python project
+        run: |
+          set -euo pipefail
+          ./usdt-pay init test-python-acquirer --lang=python --role=acquirer --no-color --dir=test-python
+          test -f test-python/pyproject.toml
+          test -f test-python/.env
+          test -f test-python/.gitignore
+          test -f test-python/Dockerfile
+          test -f test-python/.dockerignore
+          test -f test-python/src/acquirer/main.py
+          grep -q 'PROVIDER_PRIVATE_KEY=0x' test-python/.env
+
+      - name: Verify Python scaffold builds and tests against this tree's SDK
+        working-directory: test-python
+        run: |
+          uv add --no-sync "${RUNNER_TEMP}"/pydist/t0_usdt_pay_sdk-*.whl
+          uv sync
+          uv run pytest
 
   cli-windows:
     name: Build & Test (Windows)
