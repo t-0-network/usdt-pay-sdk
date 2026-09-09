@@ -60,7 +60,7 @@ After scaffolding:
 
 ```bash
 cd my-acquirer
-# add NETWORK_PUBLIC_KEY and ACQUIRER_ID to .env — your t-0 onboarding contact gives you these
+# add NETWORK_PUBLIC_KEY to .env — your t-0 onboarding contact gives you this
 uv sync && uv run python -m acquirer.main
 ```
 

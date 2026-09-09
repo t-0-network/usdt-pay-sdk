@@ -71,3 +71,22 @@ def test_zero():
     assert d.unscaled == 0
     assert d.exponent == 0
     assert decimal_to_string(d) == "0"
+
+
+@pytest.mark.parametrize(
+    "bad_input",
+    [
+        "100.0\n",
+        " 100",
+        "100 ",
+        "",
+        "abc",
+        "100.0.0",
+        "1,000",
+        "100.0 ",
+        "\n100",
+    ],
+)
+def test_rejects_malformed_input(bad_input):
+    with pytest.raises(ValueError, match="not a plain decimal"):
+        decimal_from_string(bad_input)
