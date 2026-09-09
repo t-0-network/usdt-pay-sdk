@@ -3,6 +3,8 @@ package network.t0.pay.acquirer.handler;
 import io.grpc.stub.StreamObserver;
 import network.t0.pay.proto.tzero.v1.pay.acquirer.PaymentExpiredRequest;
 import network.t0.pay.proto.tzero.v1.pay.acquirer.PaymentExpiredResponse;
+import network.t0.pay.proto.tzero.v1.pay.acquirer.PaymentFailedRequest;
+import network.t0.pay.proto.tzero.v1.pay.acquirer.PaymentFailedResponse;
 import network.t0.pay.proto.tzero.v1.pay.acquirer.AcquirerCallbackServiceGrpc;
 import network.t0.pay.proto.tzero.v1.pay.acquirer.PaymentAuthorizedRequest;
 import network.t0.pay.proto.tzero.v1.pay.acquirer.PaymentAuthorizedResponse;
@@ -17,7 +19,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * The callbacks t-0 pushes to the acquirer: PaymentAuthorized, SettlementInitiated,
- * SettlementCompleted, PaymentExpired.
+ * SettlementCompleted, PaymentExpired, PaymentFailed.
  *
  * <p><b>Every one of these is delivered at least once.</b> t-0 retries with backoff
  * until you acknowledge, and your acknowledgment means "recorded, stop retrying".
@@ -31,14 +33,15 @@ import org.slf4j.LoggerFactory;
  *   <li>SettlementInitiated — {@code fiatSettlementId}</li>
  *   <li>SettlementCompleted — {@code settlementId}</li>
  *   <li>PaymentExpired — {@code paymentIntentId}</li>
+ *   <li>PaymentFailed — {@code paymentIntentId}</li>
  * </ul>
  * A repeat delivery under a key you have already written is a no-op that you
  * still acknowledge.
  *
- * <p>Scope the key <b>per callback</b>, not globally: PaymentAuthorized and
- * PaymentExpired are both keyed on {@code paymentIntentId}, so a single
- * {@code processed(key)} table collides the expiry of an intent with its
- * authorization and silently drops one of them.
+ * <p>Scope the key <b>per callback</b>, not globally: PaymentAuthorized,
+ * PaymentExpired and PaymentFailed are all keyed on {@code paymentIntentId},
+ * so a single {@code processed(key)} table collides them and silently drops
+ * one of them.
  */
 public class AcquirerCallbackHandler extends AcquirerCallbackServiceGrpc.AcquirerCallbackServiceImplBase {
 
@@ -142,6 +145,31 @@ public class AcquirerCallbackHandler extends AcquirerCallbackServiceGrpc.Acquire
         //       QR off the POS.
 
         responseObserver.onNext(PaymentExpiredResponse.getDefaultInstance());
+        responseObserver.onCompleted();
+    }
+
+    /**
+     * PaymentFailed — the issuer reported the deposit as unprocessable. Cancel the
+     * pending sale and communicate the outcome based on disposition.
+     */
+    @Override
+    public void paymentFailed(
+            PaymentFailedRequest request,
+            StreamObserver<PaymentFailedResponse> responseObserver) {
+
+        log.info("PaymentFailed: intent={} sale={} amount={} disposition={} at {}",
+                request.getPaymentIntentId(),
+                request.getPaymentRef(),
+                Decimals.format(request.getAmountUsdt()),
+                request.getDisposition(),
+                Times.format(request.getFailedAt()));
+
+        // TODO: Step 3.5 — dedup on paymentIntentId (scoped to this callback, not shared with
+        //   PaymentAuthorized or PaymentExpired), cancel the pending sale, take the QR off the
+        //   POS, and tell the customer what to expect based on disposition (RETURNED_TO_SENDER
+        //   or RETAINED_BY_ISSUER).
+
+        responseObserver.onNext(PaymentFailedResponse.getDefaultInstance());
         responseObserver.onCompleted();
     }
 }

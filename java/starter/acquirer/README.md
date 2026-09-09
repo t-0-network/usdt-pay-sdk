@@ -51,6 +51,7 @@ To run the tests:
 | t-0 → you | `SettlementInitiated` | LP sent a bank transfer, pre-notice (fiat only) | `handler/AcquirerCallbackHandler.java` |
 | t-0 → you | `SettlementCompleted` | On-chain settlement verified (USDt only) | `handler/AcquirerCallbackHandler.java` |
 | t-0 → you | `PaymentExpired` | QR expired, cancel the sale | `handler/AcquirerCallbackHandler.java` |
+| t-0 → you | `PaymentFailed` | Deposit won't settle, cancel the sale | `handler/AcquirerCallbackHandler.java` |
 
 Your settlement mode decides which endpoints apply. The table above marks each
 endpoint's mode. Fiat mode: `SettlementCompleted` never fires. USDt mode: skip
@@ -75,8 +76,8 @@ endpoint's mode. Fiat mode: `SettlementCompleted` never fires. USDt mode: skip
    `CreatePaymentIntent`.
 2. **2.2** Mint `paymentRef` and `idempotencyKey` when the sale is created rather
    than at call time, and persist the returned `paymentIntentId` against the sale.
-   `paymentRef` is your sale's correlation ref — t-0 echoes it on `PaymentAuthorized`
-   and `PaymentExpired`, and it is explicitly **not** an idempotency key and not
+   `paymentRef` is your sale's correlation ref — t-0 echoes it on `PaymentAuthorized`,
+   `PaymentExpired` and `PaymentFailed`, and it is explicitly **not** an idempotency key and not
    required to be unique.
    `idempotencyKey` is the only thing `CreatePaymentIntent` is keyed on: at most one
    intent is ever created under one key, repeating a key returns that intent unchanged,
@@ -103,6 +104,11 @@ Implement the callbacks in `handler/AcquirerCallbackHandler.java`.
    `settledPaymentIntentIds`. USDt mode only; leave as a no-op in fiat mode. Check
    `acquirerId` is yours; refuse the callback otherwise.
 4. **3.4** `PaymentExpired` — cancel the pending sale and take the QR off the POS.
+5. **3.5** `PaymentFailed` — the issuer reported the deposit as unprocessable.
+   Cancel the pending sale, take the QR off the POS, and communicate the outcome
+   to the customer based on `disposition`: `RETURNED_TO_SENDER` means the issuer
+   refunds to the sender address; `RETAINED_BY_ISSUER` means the customer
+   resolves out of band.
 
 ### Phase 4 — confirm the fiat leg
 
@@ -130,11 +136,11 @@ repeat under a key you already hold is a no-op you still acknowledge.
 | `SettlementInitiated` | `fiatSettlementId` |
 | `SettlementCompleted` | `settlementId` |
 | `PaymentExpired` | `paymentIntentId` |
+| `PaymentFailed` | `paymentIntentId` |
 
-Scope the key **per callback**, not globally: `PaymentAuthorized` and
-`PaymentExpired` are both keyed on `paymentIntentId`, so one shared
-`processed(key)` table collides an intent's expiry with its authorization and drops
-one of them.
+Scope the key **per callback**, not globally: `PaymentAuthorized`,
+`PaymentExpired` and `PaymentFailed` are all keyed on `paymentIntentId`, so one
+shared `processed(key)` table collides them and silently drops one of them.
 
 The same discipline applies to what you send: `CreatePaymentIntent` is keyed on
 your `idempotencyKey` and `SettlementReceived` on the pair
@@ -217,7 +223,8 @@ src/main/java/network/t0/pay/acquirer/
 ├── Main.java                            # entry point, phases in order
 ├── Config.java                          # what .env supplies
 ├── handler/AcquirerCallbackHandler.java # PaymentAuthorized, SettlementInitiated,
-│                                        # SettlementCompleted, PaymentExpired
+│                                        # SettlementCompleted, PaymentExpired,
+│                                        # PaymentFailed
 └── internal/
     ├── GetPaymentQuote.java             # prices a fiat sale
     ├── CreatePaymentIntent.java         # opens an intent, returns payment instructions
