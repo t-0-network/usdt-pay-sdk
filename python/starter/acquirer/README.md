@@ -101,12 +101,13 @@ Nothing runs on a timer: the bank statement drives it.
 
 ```
 OPEN → AUTHORIZED → SETTLED
-                  ↘ EXPIRED
-                  ↘ FAILED
+     ↘ EXPIRED
+     ↘ FAILED
 ```
 
-After `PaymentAuthorized` the issuer is obligated to settle — there is never a
-reversal for you. The issuer→LP leg is not yours to see.
+`EXPIRED` and `FAILED` branch from `OPEN` — they fire while the QR window is
+still open. After `PaymentAuthorized` the issuer is obligated to settle — there
+is never a reversal for you. The issuer→LP leg is not yours to see.
 
 ## At-least-once, both directions
 

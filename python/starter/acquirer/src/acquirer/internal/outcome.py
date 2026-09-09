@@ -23,8 +23,9 @@ class Accepted(Generic[T]):
 class Rejected:
     """t-0 refused this payload and will keep refusing it.
 
-    The key is *not* consumed: correct the fields named by ``reason`` and
-    resend under the same key.
+    Correct the fields named by ``reason`` and resend under the same key.
+    Exception: a declined ``CreatePaymentIntent`` takes a fresh key under
+    the same ``payment_ref``.
     """
 
     reason: str
