@@ -112,63 +112,27 @@ jobs:
           (cd python && uv build --package t0-usdt-pay-sdk -o "${RUNNER_TEMP}/pydist")
           ls "${RUNNER_TEMP}"/pydist/t0_usdt_pay_sdk-*.whl
 
-      - name: Scaffold Java project
+      # Scaffold each starter and build+test against this tree's SDK.
+      # Structural checks (essential files, .env keypair, permissions) are
+      # covered by `go test` above — these steps prove the scaffolded project
+      # compiles and its tests pass against an unreleased SDK.
+      - name: Scaffold and test Java acquirer
         run: |
-          set -euo pipefail
-          ./usdt-pay init test-java-acquirer --lang=java --role=acquirer --no-color --dir=test-java
-          test -f test-java/build.gradle.kts
-          test -f test-java/.env
-          test -f test-java/.gitignore
-          test -f test-java/Dockerfile
-          test -f test-java/.dockerignore
-          test -x test-java/gradlew
-          grep -q 'PROVIDER_PRIVATE_KEY=0x' test-java/.env
-          grep -q test-java-acquirer test-java/settings.gradle.kts
-
-      - name: Scaffold Node project
-        run: |
-          set -euo pipefail
-          ./usdt-pay init test-node-issuer --lang=node --role=issuer --no-color --dir=test-node
-          test -f test-node/package.json
-          test -f test-node/.env
-          test -f test-node/.gitignore
-          test -f test-node/Dockerfile
-          test -f test-node/.dockerignore
-          grep -q 'PROVIDER_PRIVATE_KEY=0x' test-node/.env
-
-      - name: Verify Java scaffold builds and tests against this tree's SDK
-        working-directory: test-java
-        run: |
-          ./gradlew test --no-daemon -q \
+          ./usdt-pay init test-java --lang=java --role=acquirer --no-color --dir=test-java
+          (cd test-java && ./gradlew test --no-daemon -q \
             --init-script "${RUNNER_TEMP}/mavenlocal.init.gradle" \
             -Dmaven.repo.local="${RUNNER_TEMP}/m2" \
-            -PusdtPaySdkVersion=0.0.0-local
+            -PusdtPaySdkVersion=0.0.0-local)
 
-      - name: Verify Node scaffold builds and tests
-        working-directory: test-node
+      - name: Scaffold and test Node issuer
         run: |
-          npm install --silent --no-save --package-lock=false --no-audit --no-fund "${RUNNER_TEMP}"/t-0-usdt-pay-sdk-*.tgz
-          npm run build
-          npm test
+          ./usdt-pay init test-node --lang=node --role=issuer --no-color --dir=test-node
+          (cd test-node && npm install --silent --no-save --package-lock=false --no-audit --no-fund "${RUNNER_TEMP}"/t-0-usdt-pay-sdk-*.tgz && npm run build && npm test)
 
-      - name: Scaffold Python project
+      - name: Scaffold and test Python acquirer
         run: |
-          set -euo pipefail
-          ./usdt-pay init test-python-acquirer --lang=python --role=acquirer --no-color --dir=test-python
-          test -f test-python/pyproject.toml
-          test -f test-python/.env
-          test -f test-python/.gitignore
-          test -f test-python/Dockerfile
-          test -f test-python/.dockerignore
-          test -f test-python/src/acquirer/main.py
-          grep -q 'PROVIDER_PRIVATE_KEY=0x' test-python/.env
-
-      - name: Verify Python scaffold builds and tests against this tree's SDK
-        working-directory: test-python
-        run: |
-          uv add --no-sync "${RUNNER_TEMP}"/pydist/t0_usdt_pay_sdk-*.whl
-          uv sync
-          uv run pytest
+          ./usdt-pay init test-python --lang=python --role=acquirer --no-color --dir=test-python
+          (cd test-python && uv add --no-sync "${RUNNER_TEMP}"/pydist/t0_usdt_pay_sdk-*.whl && uv sync && uv run pytest)
 
   cli-windows:
     name: Build & Test (Windows)
