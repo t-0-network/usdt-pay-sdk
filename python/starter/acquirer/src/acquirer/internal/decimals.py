@@ -26,7 +26,7 @@ def decimal_from_string(value: str) -> common_pb2.Decimal:
     Raises ``ValueError`` if the value carries more precision or more magnitude
     than the contract can hold.
     """
-    if not _PLAIN_DECIMAL.match(value):
+    if not _PLAIN_DECIMAL.fullmatch(value):
         raise ValueError(f"'{value}' is not a plain decimal number")
 
     parts = value.split(".")

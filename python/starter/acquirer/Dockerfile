@@ -11,7 +11,7 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --no-dev --frozen --no-install-project
 
 COPY . .
-RUN uv sync --no-dev --frozen
+RUN uv sync --no-dev --frozen --no-editable
 
 FROM python:3.13-slim
 
