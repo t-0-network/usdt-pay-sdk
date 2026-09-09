@@ -80,7 +80,7 @@ jobs:
           done
           [ "$ERRORS" -eq 0 ] || exit 1
 
-  # --- Build gate: the build/test core of ci-java.yaml / ci-node.yaml / ci-go.yaml / ci-python.yaml / ci-cli.yaml, minus `npm audit`. Deliberate — post-tag, an
+  # --- Build gate: the build/test core of ci-java.yaml / ci-node.yaml / ci-python.yaml / ci-cli.yaml, minus `npm audit`. Deliberate — post-tag, an
   # advisory published in the minutes between tag and publish would strand a tagged
   # release that cannot be re-cut without a dependency bump. Pre-tag it still blocks. ---
   build-java:
@@ -208,7 +208,7 @@ jobs:
 
   publish-node-sdk:
     name: Publish Node SDK
-    needs: [preflight, build-java, build-node, build-go, build-python, build-cli]
+    needs: [preflight, build-java, build-node, build-python, build-cli]
     # npm rejects --provenance from self-hosted runners.
     runs-on: ubuntu-latest
     permissions:
@@ -284,7 +284,7 @@ jobs:
 
   publish-java:
     name: Publish Java
-    needs: [preflight, build-java, build-node, build-go, build-python, build-cli]
+    needs: [preflight, build-java, build-node, build-python, build-cli]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -335,7 +335,7 @@ jobs:
 
   publish-python-sdk:
     name: Publish Python SDK
-    needs: [preflight, build-java, build-node, build-go, build-python]
+    needs: [preflight, build-java, build-node, build-python]
     runs-on: ubuntu-latest
     environment: pypi-sdk
     permissions:
@@ -382,7 +382,7 @@ jobs:
 
   publish-cli:
     name: Publish CLI
-    needs: [preflight, build-java, build-node, build-go, build-python, build-cli, publish-python-sdk]
+    needs: [preflight, build-java, build-node, build-python, build-cli, publish-python-sdk]
     runs-on: ubuntu-latest
     steps:
       - name: Generate GitHub App token

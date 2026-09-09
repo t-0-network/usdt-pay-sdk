@@ -265,7 +265,7 @@ In this order. The preflights enforce it, but they enforce it by failing a run.
    Verify one OIDC run before revoking any token-based publish rights.
 
 4. **Create the `pypi-sdk` GitHub environment** and configure a **pending** trusted publisher on
-   PyPI under the `t0-network` org:
+   PyPI under the owning account (`stepan-romankov`):
 
    | Field | Value |
    |---|---|

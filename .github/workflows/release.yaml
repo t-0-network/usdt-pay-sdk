@@ -155,7 +155,7 @@ jobs:
 
   release:
     name: Create Release
-    needs: [build-java, build-node, build-go, build-python, build-cli]
+    needs: [build-java, build-node, build-python, build-cli]
     runs-on: ubuntu-latest
     # A dispatch against a feature branch must not be able to tag.
     if: github.ref == 'refs/heads/master'
