@@ -251,24 +251,30 @@ func printCompletion(opts ScaffoldOpts, kp KeyPair) {
 	}
 
 	step++
-	switch opts.Lang {
-	case "go":
-		fmt.Printf("  %d. Run the application:\n", step)
-		fmt.Printf("     %s\n", color(blue, "go run ./cmd"))
-	case "node":
-		fmt.Printf("  %d. Install dependencies and run:\n", step)
-		fmt.Printf("     %s\n", color(blue, "npm install && npm run dev"))
-	case "python":
-		fmt.Printf("  %d. Install dependencies and run:\n", step)
-		fmt.Printf("     %s\n", color(blue, "uv sync && uv run python -m provider.main"))
-	case "java":
-		fmt.Printf("  %d. Run the application:\n", step)
-		fmt.Printf("     %s\n", color(blue, "./gradlew run"))
-	case "csharp":
-		fmt.Printf("  %d. Run the application:\n", step)
-		fmt.Printf("     %s\n", color(blue, "dotnet run"))
-	}
+	rs := lookupRunStep(opts.Lang, opts.Role)
+	fmt.Printf("  %d. %s\n", step, rs.Label)
+	fmt.Printf("     %s\n", color(blue, rs.Command))
 	fmt.Println()
+}
+
+var defaultRunSteps = map[string]RunStep{
+	"go":     {Label: "Run the application:", Command: "go run ./cmd"},
+	"node":   {Label: "Install dependencies and run:", Command: "npm install && npm run dev"},
+	"python": {Label: "Install dependencies and run:", Command: "uv sync && uv run python -m provider.main"},
+	"java":   {Label: "Run the application:", Command: "./gradlew run"},
+	"csharp": {Label: "Run the application:", Command: "dotnet run"},
+}
+
+func lookupRunStep(lang, role string) RunStep {
+	if role != "" {
+		if rs, ok := Config.RunSteps[lang+"/"+role]; ok {
+			return rs
+		}
+	}
+	if rs, ok := Config.RunSteps[lang]; ok {
+		return rs
+	}
+	return defaultRunSteps[lang]
 }
 
 func printUsage() {

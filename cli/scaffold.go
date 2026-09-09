@@ -38,7 +38,19 @@ type CLIConfig struct {
 	// what the user must do before the project works, e.g. a value to fill
 	// in .env.
 	NextSteps []string
+	// RunSteps overrides the built-in per-language run command in
+	// printCompletion. Lookup order: "lang/role" → "lang" → built-in default.
+	// Label is printed verbatim as the numbered line (include the trailing
+	// colon); Command is the highlighted line below it. Nil keeps the
+	// built-in per-language command.
+	RunSteps     map[string]RunStep
 	PostScaffold func(ScaffoldOpts) error
+}
+
+// RunStep is a product-specific run instruction printed by printCompletion.
+type RunStep struct {
+	Label   string
+	Command string
 }
 
 type ScaffoldOpts struct {
