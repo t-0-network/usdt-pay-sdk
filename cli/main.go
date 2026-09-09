@@ -183,16 +183,6 @@ func run(opts ScaffoldOpts) error {
 	}
 	fmt.Printf("%s Template files extracted\n", color(green, "[OK]"))
 
-	// Product overlay: files written over the template output
-	if Config.OverlayFS != nil {
-		fmt.Printf("%s Applying product overlay...\n", color(blue, "[INFO]"))
-		if err := applyOverlay(Config.OverlayFS, opts); err != nil {
-			cleanup()
-			return fmt.Errorf("applying overlay: %w", err)
-		}
-		fmt.Printf("%s Overlay applied\n", color(green, "[OK]"))
-	}
-
 	// Product-specific post-scaffold hook
 	if Config.PostScaffold != nil {
 		if err := Config.PostScaffold(opts); err != nil {
