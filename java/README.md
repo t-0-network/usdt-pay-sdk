@@ -2,24 +2,6 @@
 
 Java SDK and starter for the **t-0 QR payment flow**.
 
-## SDK
-
-[`network.t-0:usdt-pay-sdk-java`](https://central.sonatype.com/artifact/network.t-0/usdt-pay-sdk-java)
-on Maven Central — see [sdk/](sdk/) for Gradle and Maven dependency snippets.
-
-Create a client, make a call:
-
-```java
-var t0 = BlockingNetworkClient.create(endpoint, signer,
-        channel -> AcquirerServiceGrpc.newBlockingStub(channel)
-                .withInterceptors(new CallDeadline(Duration.ofSeconds(10))));
-
-var response = t0.stub().createPaymentIntent(request);
-```
-
-Compiled for Java 17, consumable on 17+. See [sdk/](sdk/) for client patterns:
-blocking and non-blocking stubs, `CallDeadline`, V2 checked exceptions.
-
 ## Starter
 
 Scaffold with the [CLI](../cli/README.md):
@@ -41,6 +23,24 @@ cd my-acquirer
 ```
 
 Then follow your project's README.
+
+## SDK
+
+[`network.t-0:usdt-pay-sdk-java`](https://central.sonatype.com/artifact/network.t-0/usdt-pay-sdk-java)
+on Maven Central — see [sdk/](sdk/) for Gradle and Maven dependency snippets.
+
+Create a client, make a call:
+
+```java
+var t0 = BlockingNetworkClient.create(endpoint, signer,
+        channel -> AcquirerServiceGrpc.newBlockingStub(channel)
+                .withInterceptors(new CallDeadline(Duration.ofSeconds(10))));
+
+var response = t0.stub().createPaymentIntent(request);
+```
+
+Compiled for Java 17, consumable on 17+. See [sdk/](sdk/) for client patterns:
+blocking and non-blocking stubs, `CallDeadline`, V2 checked exceptions.
 
 ### Java 21
 
