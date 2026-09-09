@@ -18,7 +18,6 @@ After scaffolding:
 
 ```bash
 cd my-issuer
-# add NETWORK_PUBLIC_KEY to .env — your t-0 onboarding contact gives you this
 npm install && npm run dev
 ```
 
