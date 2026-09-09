@@ -1,33 +1,93 @@
+# ci-batch: group non-crypto deps into one weekly PR per batch.
+#
+# How it works: multi-ecosystem-groups.ci-batch owns one PR that combines
+# github-actions + npm + gradle + uv bumps. Each ecosystem entry joins it via
+# `multi-ecosystem-group: ci-batch` and lists allowed patterns explicitly.
+#
+# A dependency NOT in any `patterns` list shows up as a solo PR — add it here
+# when triaged. Crypto / signing-path libs (@noble/*) stay solo on purpose
+# (Tier-3 review policy).
+#
+# gomod (/cli) is deliberately absent: cli/go.mod and cli/go.sum are among the
+# eight files the provider-sdk sync overwrites (see CLAUDE.md "The CLI sync"),
+# so any Dependabot bump there is reverted by the next sync PR. Its only dep
+# (decred/secp256k1) is crypto and would be solo anyway. Upstream owns it.
 version: 2
+
+multi-ecosystem-groups:
+  ci-batch:
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    labels: ["dependencies"]
+    commit-message:
+      prefix: "chore(deps)"
+
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
-    schedule:
-      interval: "weekly"
+    multi-ecosystem-group: "ci-batch"
+    patterns: ["*"]
+    cooldown:
+      default-days: 3
 
   - package-ecosystem: "npm"
     directory: "/node"
-    schedule:
-      interval: "weekly"
-    groups:
-      connectrpc:
-        patterns:
-          - "@connectrpc/*"
-      bufbuild:
-        patterns:
-          - "@bufbuild/*"
-
-  - package-ecosystem: "gomod"
-    directory: "/cli"
-    schedule:
-      interval: "weekly"
+    multi-ecosystem-group: "ci-batch"
+    cooldown:
+      default-days: 3
+    ignore:
+      - dependency-name: "@t-0/provider-sdk"                       # pinned exact, bump deliberately
+      - dependency-name: "@t-0/usdt-pay-sdk"                       # starter, release-owned
+    patterns:
+      - "@bufbuild/*"
+      - "@connectrpc/*"
+      - "@types/*"
+      - "typescript"
+      - "tsx"
+      - "dotenv"
 
   - package-ecosystem: "gradle"
     directory: "/java"
-    schedule:
-      interval: "weekly"
+    multi-ecosystem-group: "ci-batch"
+    cooldown:
+      default-days: 3
+    ignore:
+      - dependency-name: "network.t-0:provider-sdk-java"           # gradle.properties, not a floating range
+      - dependency-name: "network.t-0:usdt-pay-sdk-java"           # starter, release-owned
+    patterns:
+      - "com.gradleup.*"
+      - "build.buf*"
+      - "org.gradle.toolchains.*"
+      - "gradle-wrapper"
+      - "io.grpc:*"
+      - "org.slf4j:*"
+      - "ch.qos.logback:*"
+      - "io.github.cdimascio:*"
+      - "javax.annotation:*"
+      - "org.junit.*"
 
   - package-ecosystem: "uv"
     directory: "/python"
-    schedule:
-      interval: "weekly"
+    multi-ecosystem-group: "ci-batch"
+    cooldown:
+      default-days: 3
+    ignore:
+      - dependency-name: "t0-provider-sdk"                         # pinned ==
+      - dependency-name: "t0-usdt-pay-sdk"                         # starter, release-owned
+    patterns:
+      - "connectrpc"
+      - "protobuf"
+      - "protovalidate"
+      - "protoc-gen-*"
+      - "pytest"
+      - "pytest-*"
+      - "ruff"
+      - "mypy"
+      - "uvicorn"
+      - "waitress"
+      - "gunicorn"
+      - "python-dotenv"
+      - "hatchling"
