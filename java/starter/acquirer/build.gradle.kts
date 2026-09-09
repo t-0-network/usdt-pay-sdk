@@ -46,7 +46,7 @@ dependencies {
     // own — without this bridge its records ignore logback.xml and print in raw JUL
     // format. Pinned to the slf4j-api version logback-classic resolves: the bridge and
     // the API are one release train, and a split between them fails at runtime.
-    implementation("org.slf4j:jul-to-slf4j:2.0.18")
+    implementation("org.slf4j:jul-to-slf4j:2.0.19")
 
     // javax.annotation for generated gRPC code
     compileOnly("javax.annotation:javax.annotation-api:1.3.2")
