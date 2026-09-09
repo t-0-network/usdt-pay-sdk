@@ -814,7 +814,7 @@ export type SettlementInitiatedRequest = Message<"tzero.v1.pay.acquirer.Settleme
   local?: LocalAmount | undefined;
 
   /**
-   * * t-0's id for the Acquirer this settlement is addressed to; the receiver must reject the callback unless it equals its own id. 
+   * * t-0's id for the Acquirer this settlement is addressed to. 
    *
    * @generated from field: uint64 acquirer_id = 70;
    */
@@ -895,7 +895,7 @@ export type SettlementCompletedRequest = Message<"tzero.v1.pay.acquirer.Settleme
   settlement?: OnChainSettlementDetails | undefined;
 
   /**
-   * * t-0's id for the Acquirer this settlement is addressed to; the receiver must reject the callback unless it equals its own participant id. 
+   * * t-0's id for the Acquirer this settlement is addressed to. 
    *
    * @generated from field: uint64 acquirer_id = 60;
    */
@@ -1109,8 +1109,9 @@ export const AcquirerService: GenService<{
 /**
  * *
  * Acquirer-implemented callbacks t-0 pushes: authorization, settlement
- * progress, expiry, and payment failure. Each is delivered at least once; the
- * Acquirer dedupes on the t-0-minted id it carries.
+ * progress, expiry, and payment failure. Each is delivered to the Acquirer's
+ * registered callback URL at least once; the Acquirer dedupes on the t-0-minted
+ * id it carries.
  *
  * @generated from service tzero.v1.pay.acquirer.AcquirerCallbackService
  */
