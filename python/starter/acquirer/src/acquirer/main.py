@@ -1,4 +1,4 @@
-"""Acquirer starter for the t-0 QR payment flow.
+"""Acquirer starter for the t-0 USDt pay flow.
 
 Work through the numbered TODOs in order; the README explains each phase.
 """

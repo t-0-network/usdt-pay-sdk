@@ -9,7 +9,7 @@ import { ConfigurationError, loadConfig } from "./config.js";
 import { issuerCallbackHandler } from "./handler.js";
 
 /**
- * Issuer starter for the t-0 QR payment flow.
+ * Issuer starter for the t-0 USDt pay flow.
  *
  * Work through the numbered TODOs in order; the README explains each phase. The
  * issuer API reference documents every field:

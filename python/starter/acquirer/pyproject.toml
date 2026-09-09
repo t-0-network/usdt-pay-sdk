@@ -2,7 +2,7 @@
 name = "my-provider"
 version = "0.1.0"
 requires-python = ">=3.13"
-description = "Acquirer integration for the t-0 QR payment flow"
+description = "Acquirer integration for the t-0 USDt pay flow"
 dependencies = [
     "t0-usdt-pay-sdk>=0.2.4",
     "uvicorn>=0.52.4",

@@ -1,7 +1,7 @@
 {
   "name": "@t-0/usdt-pay-sdk",
   "version": "0.2.4",
-  "description": "SDK for the t-0 QR payment flow (tzero.v1.pay)",
+  "description": "SDK for the t-0 USDt pay flow (tzero.v1.pay)",
   "repository": {
     "type": "git",
     "url": "git@github.com:t-0-network/usdt-pay-sdk.git"
