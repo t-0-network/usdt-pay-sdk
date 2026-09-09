@@ -33,8 +33,9 @@ service AcquirerService {
 
 /**
  * Acquirer-implemented callbacks t-0 pushes: authorization, settlement
- * progress, expiry, and payment failure. Each is delivered at least once; the
- * Acquirer dedupes on the t-0-minted id it carries.
+ * progress, expiry, and payment failure. Each is delivered to the Acquirer's
+ * registered callback URL at least once; the Acquirer dedupes on the t-0-minted
+ * id it carries.
  */
 service AcquirerCallbackService {
   /** Tells the merchant the payment is approved; from here the Issuer is obligated to settle. */
@@ -434,7 +435,7 @@ message SettlementInitiatedRequest {
   /** Fiat amount and currency of the bank-rails transfer the LP reported; SettlementReceived must confirm exactly this figure. */
   LocalAmount local = 100 [(buf.validate.field).required = true];
 
-  /** t-0's id for the Acquirer this settlement is addressed to; the receiver must reject the callback unless it equals its own id. */
+  /** t-0's id for the Acquirer this settlement is addressed to. */
   uint64 acquirer_id = 70 [(buf.validate.field).uint64.gt = 0];
 
   /** Moment t-0 accepted the LP's fiat-settlement report. */
@@ -471,7 +472,7 @@ message SettlementCompletedRequest {
   /** The on-chain USDt transfer that reached the Acquirer's registered wallet. */
   tzero.v1.pay.OnChainSettlementDetails settlement = 50 [(buf.validate.field).required = true];
 
-  /** t-0's id for the Acquirer this settlement is addressed to; the receiver must reject the callback unless it equals its own participant id. */
+  /** t-0's id for the Acquirer this settlement is addressed to. */
   uint64 acquirer_id = 60 [(buf.validate.field).uint64.gt = 0];
 }
 
