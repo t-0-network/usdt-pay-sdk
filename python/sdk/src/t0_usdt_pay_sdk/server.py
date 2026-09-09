@@ -29,6 +29,8 @@ def create_asgi_app(
     logger: logging.Logger | None = None,
 ) -> ASGIApp:
     """Create an ASGI app for receiving t-0 callbacks with signature verification."""
+    if not network_public_key or not network_public_key.strip():
+        raise ValueError("network_public_key is required — an empty key disables signature verification")
     return _new_asgi_app(network_public_key, *build_handlers, logger=logger, version=__version__)
 
 
@@ -38,6 +40,8 @@ def create_wsgi_app(
     logger: logging.Logger | None = None,
 ) -> WSGIApp:
     """Create a WSGI app for receiving t-0 callbacks with signature verification."""
+    if not network_public_key or not network_public_key.strip():
+        raise ValueError("network_public_key is required — an empty key disables signature verification")
     return _new_wsgi_app(network_public_key, *build_handlers, logger=logger, version=__version__)
 
 

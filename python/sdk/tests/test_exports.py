@@ -50,3 +50,13 @@ def test_create_client_sync_rejects_empty_endpoint():
 
     with pytest.raises(ValueError, match="endpoint is required"):
         t0_usdt_pay_sdk.create_client_sync("  ", "0x" + "ab" * 32, AcquirerServiceClientSync)
+
+
+def test_create_asgi_app_rejects_empty_key():
+    with pytest.raises(ValueError, match="network_public_key is required"):
+        t0_usdt_pay_sdk.create_asgi_app("")
+
+
+def test_create_wsgi_app_rejects_empty_key():
+    with pytest.raises(ValueError, match="network_public_key is required"):
+        t0_usdt_pay_sdk.create_wsgi_app("")
