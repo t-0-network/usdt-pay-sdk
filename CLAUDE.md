@@ -32,9 +32,9 @@ cd java && ./gradlew build --no-daemon
 cd cli && go generate ./... && go build ./... && go test ./...
 ```
 
-CI (`ci-java.yaml`, `ci-node.yaml`, `ci-go.yaml`) runs exactly these builds; if they pass locally the tree is
-releasable. `ci-scaffold.yaml` additionally scaffolds every starter with the built CLI and runs
-each scaffold's tests against the SDKs built from the tree (`docs/CLI.md`).
+CI (`ci-java.yaml`, `ci-node.yaml`, `ci-cli.yaml`) runs exactly these builds; if they pass locally the tree is
+releasable. `ci-cli.yaml` additionally scaffolds every starter with the built CLI and runs each
+scaffold's tests against the SDKs built from the tree, on Linux and Windows (`docs/CLI.md`).
 
 ## The proto sync
 
@@ -65,7 +65,7 @@ synced from upstream and overwritten by every sync PR — `main.go`, `scaffold.g
 Everything else under `cli/` is repo-owned. A green sync PR proves only that
 `cli/` compiles; `go test ./...` in `cli/` is what proves the scaffolder still
 works. How the pieces fit — embedded starters, the tests, what
-`ci-scaffold.yaml` verifies, adding a starter: `docs/CLI.md`.
+`ci-cli.yaml` verifies, adding a starter: `docs/CLI.md`.
 
 ## Starter READMEs — no repo-checkout instructions
 

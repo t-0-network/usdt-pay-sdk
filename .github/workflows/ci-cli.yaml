@@ -1,0 +1,174 @@
+name: CI / Unified CLI
+
+# Proves that the CLI builds, its tests pass, and `usdt-pay init` produces a
+# working standalone project for every starter: scaffolds each embedded
+# lang/role with the built binary, checks essential files, then builds and runs
+# each scaffold's own tests against the SDKs built from this tree. SDK and
+# proto changes are inputs of this workflow too, not only the starters and the
+# CLI.
+on:
+  push:
+    branches: [master]
+    paths:
+      - "cli/**"
+      - "java/**"
+      - "node/**"
+      - "proto/**"
+      - ".github/workflows/ci-cli.yaml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "cli/**"
+      - "java/**"
+      - "node/**"
+      - "proto/**"
+      - ".github/workflows/ci-cli.yaml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cli:
+    name: Build & Scaffold Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          show-progress: false
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: cli/go.mod
+          cache-dependency-path: cli/go.sum
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: node/package-lock.json
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: true
+
+      - name: Sync templates (go generate)
+        working-directory: cli
+        run: go generate ./...
+
+      - name: Build CLI
+        working-directory: cli
+        run: go build -ldflags "-X main.Version=dev" -o ../usdt-pay .
+
+      - name: Run tests
+        working-directory: cli
+        run: go test -v ./...
+
+      # A scaffolded project pins the *published* SDK, which lags this tree between a
+      # proto sync and the next release — so the starter is built against the SDK in
+      # this tree instead: Java from an isolated mavenLocal under a version that is
+      # not published anywhere, Node from a packed tarball. No registry dependency for
+      # the SDK, so this runs on every event, release commits included.
+      - name: Pack Node SDK for scaffold test
+        working-directory: node
+        run: |
+          npm ci --silent
+          npm run build -w sdk --silent
+          npm pack -w sdk --silent --pack-destination "${RUNNER_TEMP}"
+          ls "${RUNNER_TEMP}"/t-0-usdt-pay-sdk-*.tgz
+
+      - name: Publish this tree's Java SDK locally
+        run: |
+          set -euo pipefail
+          (cd java && ./gradlew :sdk:publishToMavenLocal --no-daemon -q -Pversion=0.0.0-local -Dmaven.repo.local="${RUNNER_TEMP}/m2")
+          test -d "${RUNNER_TEMP}/m2/network/t-0/usdt-pay-sdk-java/0.0.0-local"
+          printf 'allprojects { repositories { mavenLocal() } }\n' > "${RUNNER_TEMP}/mavenlocal.init.gradle"
+
+      - name: Scaffold Java project
+        run: |
+          set -euo pipefail
+          ./usdt-pay init test-java-acquirer --lang=java --role=acquirer --no-color --dir=test-java
+          test -f test-java/build.gradle.kts
+          test -f test-java/.env
+          test -f test-java/.gitignore
+          test -f test-java/Dockerfile
+          test -f test-java/.dockerignore
+          test -x test-java/gradlew
+          grep -q 'PROVIDER_PRIVATE_KEY=0x' test-java/.env
+          grep -q test-java-acquirer test-java/settings.gradle.kts
+
+      - name: Scaffold Node project
+        run: |
+          set -euo pipefail
+          ./usdt-pay init test-node-issuer --lang=node --role=issuer --no-color --dir=test-node
+          test -f test-node/package.json
+          test -f test-node/.env
+          test -f test-node/.gitignore
+          test -f test-node/Dockerfile
+          test -f test-node/.dockerignore
+          grep -q 'PROVIDER_PRIVATE_KEY=0x' test-node/.env
+
+      - name: Verify Java scaffold builds and tests against this tree's SDK
+        working-directory: test-java
+        run: |
+          ./gradlew test --no-daemon -q \
+            --init-script "${RUNNER_TEMP}/mavenlocal.init.gradle" \
+            -Dmaven.repo.local="${RUNNER_TEMP}/m2" \
+            -PusdtPaySdkVersion=0.0.0-local
+
+      - name: Verify Node scaffold builds and tests
+        working-directory: test-node
+        run: |
+          npm install --silent --no-save --package-lock=false --no-audit --no-fund "${RUNNER_TEMP}"/t-0-usdt-pay-sdk-*.tgz
+          npm run build
+          npm test
+
+  cli-windows:
+    name: Build & Test (Windows)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          show-progress: false
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: cli/go.mod
+          cache-dependency-path: cli/go.sum
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Sync templates (go generate)
+        working-directory: cli
+        run: go generate ./...
+
+      - name: Build CLI
+        working-directory: cli
+        run: go build -ldflags "-X main.Version=dev" -o ../usdt-pay.exe .
+
+      - name: Run tests
+        working-directory: cli
+        run: go test -v ./...
+
+      - name: Scaffold Node project
+        shell: pwsh
+        run: |
+          ./usdt-pay.exe init test-node-issuer --lang=node --role=issuer --no-color --dir=test-node
+          if (!(Test-Path test-node/package.json)) { exit 1 }
+          if (!(Test-Path test-node/.env)) { exit 1 }
+          if (!(Test-Path test-node/.gitignore)) { exit 1 }
