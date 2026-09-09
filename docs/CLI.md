@@ -291,6 +291,7 @@ var Config = CLIConfig{
 ```
 
 `NextSteps` — one printed line each, between `cd <dir>` and the per-language run command.
+`RunSteps` — `map[string]RunStep` overriding the built-in per-language run command. Lookup order: `<lang>/<role>` → `<lang>` → built-in default. `Label` is printed verbatim as the numbered line (include the trailing colon); `Command` is the highlighted line below it. Nil or empty keeps the built-in per-language command.
 `PostScaffold func(ScaffoldOpts) error` exists for post-extraction hooks and is unused here.
 
 **A sync PR** that is green on `go build` proves that `cli/` still compiles. After one, in
