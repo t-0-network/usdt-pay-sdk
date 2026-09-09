@@ -55,9 +55,10 @@ class AcquirerCallbacksSync:
         ctx: RequestContext,  # type: ignore[type-arg]
     ) -> acquirer_pb2.SettlementCompletedResponse:
         logger.info(
-            "SettlementCompleted: settlement=%d intents=%s",
+            "SettlementCompleted: settlement=%d intents=%s amount=%s USDt",
             request.settlement_id,
             list(request.settled_payment_intent_ids),
+            decimal_to_string(request.settlement_amount) if request.HasField("settlement_amount") else "?",
         )
         # TODO: record idempotently under settlement_id. Mark the listed intents
         #   as SETTLED — this is terminal in USDt settlement mode.

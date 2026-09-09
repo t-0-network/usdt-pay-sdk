@@ -356,8 +356,6 @@ jobs:
         uses: astral-sh/setup-uv@v6
 
       - name: Verify version matches tag
-        env:
-          VERSION: ${{ GITHUB_REF#refs/tags/v }}
         run: |
           VERSION="${GITHUB_REF#refs/tags/v}"
           ERRORS=0
