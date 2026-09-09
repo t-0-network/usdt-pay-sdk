@@ -1,6 +1,6 @@
 # usdt-pay-sdk
 
-SDKs and starter projects for the **t-0 QR payment flow** — the protocol under
+SDKs and starter projects for the **t-0 USDt pay flow** — the protocol under
 `proto/tzero/v1/pay/`.
 
 ## Which role are you?

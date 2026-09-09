@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
- * Acquirer starter for the t-0 QR payment flow.
+ * Acquirer starter for the t-0 USDt pay flow.
  *
  * <p>Work through the numbered TODOs in order; the README explains each phase.
  * The RPC names ({@code GetPaymentQuote}, {@code CreatePaymentIntent}, …) match the

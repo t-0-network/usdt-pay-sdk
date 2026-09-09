@@ -1,6 +1,6 @@
-# Acquirer — t-0 QR payment flow
+# Acquirer — t-0 USDt pay flow
 
-This project integrates you as the **acquirer** in the t-0 QR payment flow: you
+This project integrates you as the **acquirer** in the t-0 USDt pay flow: you
 price the sale, open the payment intent, show the QR, and learn when it settles.
 
 ## Prerequisites

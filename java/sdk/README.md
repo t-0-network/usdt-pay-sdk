@@ -1,6 +1,6 @@
 # usdt-pay-sdk-java
 
-Java SDK for the **t-0 QR payment flow** — generated gRPC stubs for all three
+Java SDK for the **t-0 USDt pay flow** — generated gRPC stubs for all three
 roles, over a transport that signs what you send and verifies what arrives.
 
 Start from a scaffolded project rather than from here —

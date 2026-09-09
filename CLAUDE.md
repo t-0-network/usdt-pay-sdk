@@ -1,6 +1,6 @@
 # usdt-pay-sdk
 
-SDKs for the t-0 QR payment flow (`tzero.v1.pay`), in Java, Node and Python. The
+SDKs for the t-0 USDt pay flow (`tzero.v1.pay`), in Java, Node and Python. The
 contract lives in `proto/` and is snapshot-synced from `t-0-network/backend` —
 protos are not authored here.
 

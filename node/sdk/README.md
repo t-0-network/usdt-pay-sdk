@@ -1,6 +1,6 @@
 # @t-0/usdt-pay-sdk
 
-TypeScript SDK for the **t-0 QR payment flow** — the contract under
+TypeScript SDK for the **t-0 USDt pay flow** — the contract under
 `proto/tzero/v1/pay/`. Generated Connect clients and servers for all three roles,
 over a transport that signs what you send and verifies what arrives.
 

@@ -1,6 +1,6 @@
 # Python
 
-Python SDK and starter for the **t-0 QR payment flow**.
+Python SDK and starter for the **t-0 USDt pay flow**.
 
 ## Starter
 

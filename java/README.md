@@ -1,6 +1,6 @@
 # Java
 
-Java SDK and starter for the **t-0 QR payment flow**.
+Java SDK and starter for the **t-0 USDt pay flow**.
 
 ## Starter
 
