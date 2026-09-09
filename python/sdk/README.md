@@ -110,8 +110,8 @@ from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer import acquirer_pb2
 ```
 
 The bare `from tzero.v1.pay.acquirer import acquirer_pb2` also works (via `sys.path`)
-but produces a **different module object**, so mixing the two paths in one program
-creates two copies of every message class and `isinstance` checks break.
+but produces a different module object. Use the `t0_usdt_pay_sdk.api` path
+consistently.
 
 ## The public key t-0 knows you by
 

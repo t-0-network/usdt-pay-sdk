@@ -105,9 +105,9 @@ OPEN → AUTHORIZED → SETTLED
      ↘ FAILED
 ```
 
-`EXPIRED` and `FAILED` branch from `OPEN` — they fire while the QR window is
-still open. After `PaymentAuthorized` the issuer is obligated to settle — there
-is never a reversal for you. The issuer→LP leg is not yours to see.
+`EXPIRED` and `FAILED` branch from `OPEN` — `EXPIRED` fires when the QR window
+has elapsed, `FAILED` fires while it is still open. After `PaymentAuthorized`
+the issuer is obligated to settle — there is never a reversal for you.
 
 ## At-least-once, both directions
 
