@@ -2,6 +2,28 @@
 
 Python SDK and starter for the **t-0 QR payment flow**.
 
+## Starter
+
+Python 3.13 or newer. Scaffold with the [CLI](../cli/README.md):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/t-0-network/usdt-pay-sdk/master/cli/install.sh | sh -s -- init --lang=python --role=acquirer my-acquirer
+```
+
+| Role | Template |
+|---|---|
+| `acquirer` | [starter/acquirer/](starter/acquirer/) |
+
+After scaffolding:
+
+```bash
+cd my-acquirer
+# add NETWORK_PUBLIC_KEY to .env — your t-0 onboarding contact gives you this
+uv sync && uv run python -m acquirer.main
+```
+
+Then follow your project's README.
+
 ## SDK
 
 ```bash
@@ -43,25 +65,3 @@ app = create_wsgi_app(
 ```
 
 See [sdk/](sdk/) for `create_client`, `create_asgi_app`, `create_wsgi_app` and `crypto` in full.
-
-## Starter
-
-Python 3.13 or newer. Scaffold with the [CLI](../cli/README.md):
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/t-0-network/usdt-pay-sdk/master/cli/install.sh | sh -s -- init --lang=python --role=acquirer my-acquirer
-```
-
-| Role | Template |
-|---|---|
-| `acquirer` | [starter/acquirer/](starter/acquirer/) |
-
-After scaffolding:
-
-```bash
-cd my-acquirer
-# add NETWORK_PUBLIC_KEY to .env — your t-0 onboarding contact gives you this
-uv sync && uv run python -m acquirer.main
-```
-
-Then follow your project's README.

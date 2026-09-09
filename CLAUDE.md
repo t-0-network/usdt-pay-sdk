@@ -69,6 +69,12 @@ Everything else under `cli/` is repo-owned. A green sync PR proves only that
 works. How the pieces fit — embedded starters, the tests, what
 `ci-cli.yaml` verifies, adding a starter: `docs/CLI.md`.
 
+## README section order
+
+In each language README (`java/README.md`, `node/README.md`, `python/README.md`),
+the **Starter** section must come before the **SDK** section. Developers start
+with the starter, not the SDK directly.
+
 ## Starter READMEs — no repo-checkout instructions
 
 The CLI (`usdt-pay init`) is the only documented way to create a project. No
