@@ -293,10 +293,10 @@ func TestRun_WritesFreshPrivateKey(t *testing.T) {
 				if v := example["PROVIDER_PRIVATE_KEY"]; v != "" {
 					t.Errorf(".env.example PROVIDER_PRIVATE_KEY = %q, want empty placeholder", v)
 				}
-				// NETWORK_PUBLIC_KEY is the onboarding contact's to give; the
-				// scaffolder must leave it for the user to fill in.
-				if v, ok := env["NETWORK_PUBLIC_KEY"]; !ok || v != "" {
-					t.Errorf("NETWORK_PUBLIC_KEY = %q (present=%v), want present and empty", v, ok)
+				// NETWORK_PUBLIC_KEY must be present; the sandbox key is pre-filled
+				// in .env.example so developers can run immediately.
+				if _, ok := env["NETWORK_PUBLIC_KEY"]; !ok {
+					t.Error("NETWORK_PUBLIC_KEY missing from .env")
 				}
 
 				if runtime.GOOS != "windows" {
