@@ -142,8 +142,8 @@ replacement for `my-provider` throughout the template; its PascalCase form repla
 | no project name | `project name is required` followed by `Usage: usdt-pay init <project-name> --lang=<language>` | 2 |
 | name sanitizes to nothing (`@@@`) | `invalid project name — use only lowercase letters, numbers, hyphens, underscores` | 1 |
 | first character after any leading `-`/`_` is a digit, or there is none (`3rd-provider`, `_3abc`, `___`) | `project name must start with a letter (got "3rd-provider")` | 1 |
-| no `--lang` | `--lang is required (options: java, node)` | 2 |
-| unknown `--lang` (`go`) | `unknown language "go" (options: java, node)` | 1 |
+| no `--lang` | `--lang is required (options: java, node, python)` | 2 |
+| unknown `--lang` (`go`) | `unknown language "go" (options: java, node, python)` | 1 |
 | no `--role` | `--role is required` | 2 |
 | target directory exists and is non-empty | `directory "<path>" already exists and is non-empty` | 1 |
 | `--role` with no starter for the language (`--lang=java --role=issuer`) | `scaffolding: template not found for lang=java role=issuer (available roles: acquirer)` — after the banner and the first two `[INFO]` lines, because the role is resolved during extraction | 1 |

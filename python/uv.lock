@@ -681,7 +681,7 @@ dependencies = [
 requires-dist = [
     { name = "connectrpc", specifier = ">=0.11.1" },
     { name = "protobuf", specifier = ">=7.34.1" },
-    { name = "protovalidate", specifier = ">=1.1" },
+    { name = "protovalidate", specifier = ">=2.0" },
     { name = "t0-provider-sdk", specifier = "==1.1.41" },
 ]
 
