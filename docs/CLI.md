@@ -315,7 +315,7 @@ The tests are what tell you the product still works. If `CLIConfig` gained or lo
 into `cli/internal/embed/<lang>/<role>/`, skipping `node_modules`, `dist`, `build`, `.gradle`,
 `.env` and every `.env.*` except `.env.example`. `scaffold.go` embeds that directory with
 `//go:embed all:internal/embed`. The directory is generated and ignored
-(`cli/internal/embed/.gitignore`), so every build — local, `ci-go.yaml`, `ci-scaffold.yaml`,
+(`cli/internal/embed/.gitignore`), so every build — local, `ci-cli.yaml`,
 `publish-cli` — runs `go generate` first, and the binary ships the starters of the commit it was
 built from. A starter edited in the tree reaches the CLI on the next `go generate`.
 
@@ -378,7 +378,7 @@ tests.
 Docker from the starter directory builds against the published SDK (not the workspace).
 
 Whole-workspace builds are the three commands in `CLAUDE.md`, "Build and test" — the same ones
-`ci-java.yaml`, `ci-node.yaml` and `ci-go.yaml` run.
+`ci-java.yaml`, `ci-node.yaml` and `ci-cli.yaml` run.
 
 ## Maintainers — tests and CI
 
@@ -399,42 +399,36 @@ Whole-workspace builds are the three commands in `CLAUDE.md`, "Build and test" �
   language in `Config.Languages` has a non-empty embed directory) and the name helpers
   (`sanitizeProjectName`, `toPascalCase`).
 - **`cli/keygen_test.go`** — synced from provider-sdk; the keypair generator.
-- **`.github/workflows/ci-go.yaml`** — `go generate ./...`, `go build ./...`, `go test ./...` in
-  `cli/`: the tests above, run in CI. Triggered by `cli/**`.
-- **`.github/workflows/ci-scaffold.yaml`** — triggered by `cli/**`, `java/**`, `node/**` and
-  `proto/**`, because the starters and SDKs it builds are all inputs. One job:
-  1. `go generate ./...`, then `go build -ldflags "-X main.Version=dev" -o ../usdt-pay .` in
-     `cli/`.
-  2. For every `cli/internal/embed/<lang>/<role>/`: `./usdt-pay init "test-<lang>-<role>"
-     --lang=<lang> --role=<role> --no-color --dir=scaffold-<lang>-<role>`; requires
-     `.gitignore`, a `PROVIDER_PRIVATE_KEY=0x` line in `.env`, `Dockerfile` and `.dockerignore`.
-     Needs no registry, so it runs on every event.
-  3. Publishes this tree's SDKs locally: Java through `./gradlew :sdk:publishToMavenLocal
-     -Pversion=0.0.0-local -Dmaven.repo.local="${RUNNER_TEMP}/m2"` plus an init script adding
-     `mavenLocal()`; Node through `npm ci`, `npm run build -w sdk` and `npm pack -w sdk`.
-  4. Builds and runs each scaffold's own tests against those: Java with `./gradlew test
-     --init-script ... -Dmaven.repo.local=... -PusdtPaySdkVersion=0.0.0-local`, Node with
-     `npm install --no-save --package-lock=false <tarball> && npm run build && npm test`. A
-     language without a case fails the loop with
-     `no build-and-test case for lang=<lang> — add one to this step`.
+- **`.github/workflows/ci-cli.yaml`** — triggered by `cli/**`, `java/**`, `node/**` and
+  `proto/**`, because the starters and SDKs it builds are all inputs. Two jobs:
+
+  **Build & Scaffold Test** (Linux): generates, builds and unit-tests the CLI (`go test -v`),
+  then scaffolds each starter with explicit steps — Java acquirer and Node issuer — checking
+  essential files (`build.gradle.kts`/`package.json`, `.env`, `.gitignore`, `Dockerfile`,
+  `.dockerignore`, `gradlew` executable). Publishes this tree's SDKs locally (Java through
+  `publishToMavenLocal -Pversion=0.0.0-local`, Node through `npm pack -w sdk`) and builds and
+  runs each scaffold's own tests against them.
 
   It builds against the SDK in the tree rather than the published one because a scaffolded
   project pins the published SDK, and between a proto sync and the next release the starters use
   SDK changes that reach the registry only at that release. The released CLI always embeds a
   starter that matches the SDK released with it, so the tree is the right thing to prove.
 
+  **Build & Test (Windows)**: generates, builds and unit-tests the CLI, then scaffolds the Node
+  starter and checks its essential files.
+
 ## Maintainers — adding a starter or a language
 
 1. The starter itself under `java/starter/<role>/` or `node/starter/<role>/`, wired into
-   `cli/generate.go` as `<lang>/<role>=<lang>/starter/<role>`. Its `.env.example` needs an active
-   `PROVIDER_PRIVATE_KEY=` line; the scaffolder records the public key under it by itself. Use
-   `my-provider` as the project name in `settings.gradle.kts` / `package.json`; the scaffolder
-   replaces it.
+   `cli/generate.go` as `<lang>/<role>=<lang>/starter/<role>`, and a scaffold + verify step pair
+   in `ci-cli.yaml` for it. Its `.env.example` needs an active `PROVIDER_PRIVATE_KEY=` line; the
+   scaffolder records the public key under it by itself. Use `my-provider` as the project name in
+   `settings.gradle.kts` / `package.json`; the scaffolder replaces it.
 2. `Dockerfile` and `.dockerignore` in the starter directory, written for standalone build
    context (`.`). The SDK must come from a registry inside Docker, not from the workspace.
 3. A new language: add it to `Languages` in `config.go`, its entry files to `entryFiles` in
-   `starters_test.go` (`requireEntryFiles` fails a language that is not listed), a build-and-test
-   case to the loop in `ci-scaffold.yaml`, and the per-language run step in `printCompletion` —
+   `starters_test.go` (`requireEntryFiles` fails a language that is not listed), a scaffold +
+   verify step pair to `ci-cli.yaml`, and the per-language run step in `printCompletion` —
    that one lives in the synced `main.go`, so it goes through provider-sdk. Everything else in
    `starters_test.go` picks the language up from the tree.
 4. The version sites and publish jobs in `docs/RELEASE_AND_PUBLISH.md`, "Starters" and "Adding

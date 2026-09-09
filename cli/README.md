@@ -86,6 +86,6 @@ comment line under it), and give the new public key to your t-0 onboarding conta
 to any of them goes to provider-sdk first; everything else under `cli/` is repo-owned.
 `go generate ./...` copies the starters into `internal/embed/` at build time, which is how the
 binary ships the starters of the commit it was built from. `go test ./...` instantiates every
-starter and checks the keypair, the `.env`, Dockerfile and `.dockerignore` of each. `ci-scaffold.yaml`
+starter and checks the keypair, the `.env`, Dockerfile and `.dockerignore` of each. `ci-cli.yaml`
 additionally builds and tests every scaffold against the SDK built from the tree. Which file does
 what, and adding a starter or a language: [`docs/CLI.md`](../docs/CLI.md).

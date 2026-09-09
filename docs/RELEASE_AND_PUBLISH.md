@@ -64,8 +64,9 @@ build. Deliberately not a `+` range, because an SDK bump is the consumer's decis
 
 Dispatch input `bump` — `patch` (default) / `minor` / `major`.
 
-1. **Build gate** — `build-java`, `build-node` and `build-go`, the same three jobs as `ci-java.yaml` / `ci-node.yaml` / `ci-go.yaml` including
-   `npm audit --omit=dev --audit-level=high`. A red tree cannot be released.
+1. **Build gate** — `build-java`, `build-node` and `build-cli`, the build/test core of
+   `ci-java.yaml` / `ci-node.yaml` / `ci-cli.yaml` including `npm audit --omit=dev --audit-level=high`.
+   A red tree cannot be released.
 2. **`release` job**, guarded by `if: github.ref == 'refs/heads/master'` so a dispatch against a
    feature branch cannot tag.
    1. Mint a GitHub App token (`vars.CI_APP_CLIENT_ID` + `secrets.CI_APP_PRIVATE_KEY`, scoped to
@@ -111,19 +112,19 @@ Dispatch input `bump` — `patch` (default) / `minor` / `major`.
 
 Fires on `v[0-9]+.[0-9]+.[0-9]+`.
 
-**Build gate** — `build-java` + `build-node` again, **minus `npm audit`**. Deliberate: pre-tag a
-fresh advisory should block the release; post-tag it must not, or an advisory published in the
-minutes between tag and publish strands a tagged release that cannot be re-cut without a
+**Build gate** — `build-java` + `build-node` + `build-cli` again, **minus `npm audit`**. Deliberate:
+pre-tag a fresh advisory should block the release; post-tag it must not, or an advisory published
+in the minutes between tag and publish strands a tagged release that cannot be re-cut without a
 dependency bump.
 
 ```
-    preflight            build-java            build-node
-         \                    |                    /
-          \-------------------+-------------------/
-                              |
-                   /----------+----------\
-                  /           |           \
-        publish-node-sdk  publish-java  publish-cli
+    preflight      build-java      build-node      build-cli
+         \              |              |              /
+          \-------------+--------------+-------------/
+                                |
+                   /------------+------------\
+                  /             |             \
+        publish-node-sdk   publish-java   publish-cli
 ```
 
 Nothing publishes until everything builds and the shared **`preflight`** job passes.
