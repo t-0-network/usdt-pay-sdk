@@ -180,11 +180,8 @@ In order, with the line the CLI prints for each step:
    copy embedded in the binary. `my-provider` and `MyProvider` are replaced in file names and text
    files; `.jar`, `.png`, `.zip` and the other binary extensions are copied raw. `gradlew` and
    `*.sh` are written `0755`, everything else `0666` before umask (`0644` under the usual `022`).
-2. `[INFO] Applying product overlay...` — `cli/overlay/<lang>/<role>/` is copied over the
-   extracted files verbatim: a `Dockerfile` and a `.dockerignore` written for a standalone
-   project (see "Maintainers — the overlay").
-3. `[INFO] Generating secp256k1 keypair...` — a fresh key for this project.
-4. `[INFO] Creating .env file...` — `.env` is `.env.example` with the first active
+2. `[INFO] Generating secp256k1 keypair...` — a fresh key for this project.
+3. `[INFO] Creating .env file...` — `.env` is `.env.example` with the first active
    `PROVIDER_PRIVATE_KEY=` line filled in and a comment recording the public key inserted right
    under it:
 
@@ -272,9 +269,7 @@ Everything else under `cli/` is repo-owned:
 
 | File | Purpose |
 |---|---|
-| `config.go` | the product's `CLIConfig`: `ProductName`, `Command`, `Description`, `RoleRequired`, `DefaultRole`, `Languages`, `NextSteps`, `OverlayFS` |
-| `overlay.go` | one `//go:embed all:overlay` — the overlay files as an `embed.FS` |
-| `overlay/<lang>/<role>/` | the standalone `Dockerfile` and `.dockerignore` for each starter |
+| `config.go` | the product's `CLIConfig`: `ProductName`, `Command`, `Description`, `RoleRequired`, `DefaultRole`, `Languages`, `NextSteps` |
 | `generate.go` | the `go generate` directive that embeds the starters |
 | `internal/embed/.gitignore` | keeps the generated embed tree out of the repo |
 | `starters_test.go`, `scaffold_test.go` | this product's tests |
@@ -292,14 +287,11 @@ var Config = CLIConfig{
 	DefaultRole:  "",
 	Languages:    []string{"java", "node"},
 	NextSteps:    []string{"Add NETWORK_PUBLIC_KEY to .env — your t-0 onboarding contact gives you this"},
-	OverlayFS:    overlayFiles,
 }
 ```
 
-Three fields are the seams for product behavior. `OverlayFS` — when set, the synced scaffolder
-copies it over the extracted template itself, verbatim, right after extraction. `NextSteps` — one
-printed line each, between `cd <dir>` and the per-language run command. `PostScaffold
-func(ScaffoldOpts) error` — the hook for anything beyond copying files, run after the overlay.
+`NextSteps` — one printed line each, between `cd <dir>` and the per-language run command.
+`PostScaffold func(ScaffoldOpts) error` exists for post-extraction hooks and is unused here.
 
 **A sync PR** that is green on `go build` proves that `cli/` still compiles. After one, in
 `cli/`:
@@ -309,8 +301,7 @@ go generate ./... && go build ./... && go test ./...
 ```
 
 The tests are what tell you the product still works. If `CLIConfig` gained or lost a field,
-`config.go` is where to follow. If `starters_test.go` fails on the overlay checks, the sync
-changed how `OverlayFS` is applied; that is an upstream conversation, not a local patch.
+`config.go` is where to follow.
 
 ## Maintainers — embedding the starters
 
@@ -328,31 +319,16 @@ into `cli/internal/embed/<lang>/<role>/`, skipping `node_modules`, `dist`, `buil
 `publish-cli` — runs `go generate` first, and the binary ships the starters of the commit it was
 built from. A starter edited in the tree reaches the CLI on the next `go generate`.
 
-## Maintainers — the overlay
+## Maintainers — Dockerfiles and .dockerignore
 
-A starter is a live project inside this repo. The overlay replaces one of its files and adds
-another:
+Each starter carries its own `Dockerfile` and `.dockerignore`, written for a standalone project
+(build context is `.`). These files ship to scaffolded projects as-is — no overlay, no
+rewriting. `TestStarters_HaveDockerfiles` in `starters_test.go` verifies that every starter has
+both, and the scaffolded output is checked in `TestRun_InstantiatesEveryStarter`.
 
-- `Dockerfile` — replaced. The in-repo one builds with the workspace as its context and compiles
-  the SDK from source; the overlay one builds with the project directory as its context and
-  resolves the SDK from a registry (Maven Central for Java, the npm registry for Node).
-- `.dockerignore` — added; the starters carry none. It keeps `.env`, and with it the private key,
-  out of the image build context.
-
-`cli/overlay/<lang>/<role>/` holds the standalone versions:
-
-```
-cli/overlay/java/acquirer/Dockerfile
-cli/overlay/java/acquirer/.dockerignore
-cli/overlay/node/issuer/Dockerfile
-cli/overlay/node/issuer/.dockerignore
-```
-
-They are copied over the extracted template byte for byte — the placeholder and file-name
-transforms of the template step are skipped — so what is in that directory is exactly what a
-user gets. Every starter must have an overlay with `Dockerfile` and `.dockerignore`;
-`TestOverlay_EveryStarterHasOne` in `starters_test.go` fails otherwise, and `ci-scaffold.yaml`
-`cmp`s every overlay file against the scaffold.
+Inside Docker the SDK comes from a registry (Maven Central / npm), not from the workspace, because
+the Gradle `isSubproject` check and the Node `package.json` both resolve to the published SDK when
+the project name is not the monorepo's.
 
 ## Maintainers — working on a starter in the tree
 
@@ -383,14 +359,8 @@ Tests:
 (cd ../.. && ./gradlew :starter:acquirer:test)
 ```
 
-Docker — the build context is the repository root, because `java/sdk/src/main/proto` is a
-symlink into `proto/` and a narrower context cannot resolve it:
-
-```bash
-cd ../../..                 # repository root
-docker build -f java/starter/acquirer/Dockerfile -t usdt-pay-acquirer .
-docker run -p 8080:8080 --env-file java/starter/acquirer/.env usdt-pay-acquirer
-```
+Docker from the starter directory builds against the published SDK (not the workspace) — the
+same image a scaffolded user would get.
 
 ### Node — `node/starter/issuer/`
 
@@ -405,13 +375,7 @@ npm start
 `npm run dev` runs the same thing under `tsx watch` while you are editing; `npm test` runs the
 tests.
 
-Docker — the build context is `node/`, because the starter compiles against the SDK next to it:
-
-```bash
-cd ../..                    # node/
-docker build -f starter/issuer/Dockerfile -t usdt-pay-issuer .
-docker run -p 8080:8080 --env-file starter/issuer/.env usdt-pay-issuer
-```
+Docker from the starter directory builds against the published SDK (not the workspace).
 
 Whole-workspace builds are the three commands in `CLAUDE.md`, "Build and test" — the same ones
 `ci-java.yaml`, `ci-node.yaml` and `ci-go.yaml` run.
@@ -421,11 +385,10 @@ Whole-workspace builds are the three commands in `CLAUDE.md`, "Build and test" �
 - **`cli/starters_test.go`** — derives its targets from the tree: the embedded starters must be
   exactly the `<lang>/starter/<role>/` directories, and `Config.Languages` must list exactly the
   languages that have one, so a new starter is covered without editing the test and an unwired
-  one fails it. `TestConfig_OverlayWired` requires `Config.OverlayFS`;
-  `TestOverlay_EveryStarterHasOne` requires `Dockerfile` and `.dockerignore` under
-  `overlay/<lang>/<role>/`. `TestRun_InstantiatesEveryStarter` runs the CLI end to end for each:
+  one fails it. `TestStarters_HaveDockerfiles` requires `Dockerfile` and `.dockerignore` in each
+  starter directory. `TestRun_InstantiatesEveryStarter` runs the CLI end to end for each:
   - `.gitignore` and the language's entry files are there, `dot-gitignore` is not;
-  - every overlay file lands byte for byte.
+  - `Dockerfile` and `.dockerignore` are present.
 
   `TestRun_WritesFreshPrivateKey` instantiates each starter twice: `.env` holds a fresh key —
   `0x` + 64 hex, a valid secp256k1 scalar, unique across instantiations — and the public key
@@ -444,9 +407,8 @@ Whole-workspace builds are the three commands in `CLAUDE.md`, "Build and test" �
      `cli/`.
   2. For every `cli/internal/embed/<lang>/<role>/`: `./usdt-pay init "test-<lang>-<role>"
      --lang=<lang> --role=<role> --no-color --dir=scaffold-<lang>-<role>`; requires
-     `.gitignore`, a `PROVIDER_PRIVATE_KEY=0x` line in `.env`, a `cli/overlay/<lang>/<role>/`
-     directory, and `cmp`s every file in it against the scaffold. Needs no registry, so a bot
-     sync that drops the overlay seam fails here on every event.
+     `.gitignore`, a `PROVIDER_PRIVATE_KEY=0x` line in `.env`, `Dockerfile` and `.dockerignore`.
+     Needs no registry, so it runs on every event.
   3. Publishes this tree's SDKs locally: Java through `./gradlew :sdk:publishToMavenLocal
      -Pversion=0.0.0-local -Dmaven.repo.local="${RUNNER_TEMP}/m2"` plus an init script adding
      `mavenLocal()`; Node through `npm ci`, `npm run build -w sdk` and `npm pack -w sdk`.
@@ -468,8 +430,8 @@ Whole-workspace builds are the three commands in `CLAUDE.md`, "Build and test" �
    `PROVIDER_PRIVATE_KEY=` line; the scaffolder records the public key under it by itself. Use
    `my-provider` as the project name in `settings.gradle.kts` / `package.json`; the scaffolder
    replaces it.
-2. `cli/overlay/<lang>/<role>/` with `Dockerfile` and `.dockerignore` that build the project
-   standalone, against the published SDK.
+2. `Dockerfile` and `.dockerignore` in the starter directory, written for standalone build
+   context (`.`). The SDK must come from a registry inside Docker, not from the workspace.
 3. A new language: add it to `Languages` in `config.go`, its entry files to `entryFiles` in
    `starters_test.go` (`requireEntryFiles` fails a language that is not listed), a build-and-test
    case to the loop in `ci-scaffold.yaml`, and the per-language run step in `printCompletion` —

@@ -6,7 +6,6 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -108,14 +107,6 @@ func requireEntryFiles(t *testing.T, lang, projectDir string) {
 	}
 }
 
-func overlayRootFor(lang, role string) string {
-	root := path.Join("overlay", lang)
-	if role != "" {
-		root = path.Join(root, role)
-	}
-	return root
-}
-
 // captureStdout runs fn with os.Stdout redirected and returns what it printed.
 // run() reports the generated public key to the user on stdout; the tests
 // check that report against the key actually written to .env.
@@ -185,19 +176,13 @@ func instantiate(t *testing.T, lang, role string) (string, string) {
 	return projectDir, out
 }
 
-func TestConfig_OverlayWired(t *testing.T) {
-	if Config.OverlayFS == nil {
-		t.Fatal("Config.OverlayFS is nil — scaffolded projects would ship the monorepo Dockerfile")
-	}
-}
-
-func TestOverlay_EveryStarterHasOne(t *testing.T) {
+func TestStarters_HaveDockerfiles(t *testing.T) {
 	for _, tgt := range starterTargets(t) {
 		lang, role := tgt[0], tgt[1]
-		root := overlayRootFor(lang, role)
+		starterDir := filepath.Join("..", lang, "starter", role)
 		for _, name := range []string{"Dockerfile", ".dockerignore"} {
-			if _, err := fs.Stat(overlayFiles, path.Join(root, name)); err != nil {
-				t.Errorf("%s/%s: cli/%s/%s missing — the in-repo one cannot ship standalone", lang, role, root, name)
+			if _, err := os.Stat(filepath.Join(starterDir, name)); err != nil {
+				t.Errorf("%s/%s: %s missing from the starter — a scaffolded project needs it", lang, role, name)
 			}
 		}
 	}
@@ -221,28 +206,10 @@ func TestRun_InstantiatesEveryStarter(t *testing.T) {
 			}
 			requireEntryFiles(t, lang, projectDir)
 
-			root := overlayRootFor(lang, role)
-			err := fs.WalkDir(overlayFiles, root, func(src string, d fs.DirEntry, err error) error {
-				if err != nil || d.IsDir() {
-					return err
+			for _, name := range []string{"Dockerfile", ".dockerignore"} {
+				if _, err := os.Stat(filepath.Join(projectDir, name)); err != nil {
+					t.Errorf("%s missing from the scaffolded project: %v", name, err)
 				}
-				rel := strings.TrimPrefix(src, root+"/")
-				want, err := fs.ReadFile(overlayFiles, src)
-				if err != nil {
-					return err
-				}
-				got, err := os.ReadFile(filepath.Join(projectDir, filepath.FromSlash(rel)))
-				if err != nil {
-					t.Errorf("overlay file %s not in output: %v", rel, err)
-					return nil
-				}
-				if !bytes.Equal(got, want) {
-					t.Errorf("output %s differs from cli/%s/%s — overlay not applied", rel, root, rel)
-				}
-				return nil
-			})
-			if err != nil {
-				t.Fatalf("walking cli/%s: %v", root, err)
 			}
 		})
 	}

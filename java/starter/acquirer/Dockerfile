@@ -1,20 +1,18 @@
-# Build context is the repository root, because java/sdk/src/main/proto is a
-# symlink into proto/ — a narrower context would not resolve it:
+# Build context is this project directory:
 #
-#   docker build -f java/starter/acquirer/Dockerfile -t usdt-pay-acquirer .
+#   docker build -t usdt-pay-acquirer .
 #
 FROM eclipse-temurin:21-jdk-noble AS build
 
 WORKDIR /src
 COPY . .
 
-WORKDIR /src/java
-RUN ./gradlew :starter:acquirer:installDist --no-daemon
+RUN ./gradlew installDist --no-daemon
 
 FROM eclipse-temurin:21-jre-noble
 
 WORKDIR /app
-COPY --from=build /src/java/starter/acquirer/build/install/acquirer/ ./
+COPY --from=build /src/build/install/acquirer/ ./
 
 EXPOSE 8080
 

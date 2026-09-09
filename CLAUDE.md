@@ -64,8 +64,19 @@ synced from upstream and overwritten by every sync PR — `main.go`, `scaffold.g
 `internal/sync/main.go` — so a bug in them is fixed in provider-sdk first.
 Everything else under `cli/` is repo-owned. A green sync PR proves only that
 `cli/` compiles; `go test ./...` in `cli/` is what proves the scaffolder still
-works. How the pieces fit — embedded starters, `cli/overlay/`, the tests, what
+works. How the pieces fit — embedded starters, the tests, what
 `ci-scaffold.yaml` verifies, adding a starter: `docs/CLI.md`.
+
+## Starter READMEs — no repo-checkout instructions
+
+The CLI (`usdt-pay init`) is the only documented way to create a project. No
+user-facing README or doc may describe or imply running a starter from a repo
+checkout — no `cp .env.example`, no workspace-relative builds (`cd ../..`), no
+Docker with the repository as context, no "if you cloned the repo" conditionals.
+The starter READMEs (`java/starter/acquirer/README.md`,
+`node/starter/issuer/README.md`) are embedded verbatim by the CLI and must be
+written exclusively for a scaffolded standalone project. Maintainer-only
+workspace commands belong in `docs/CLI.md`, nowhere else.
 
 ## Signatures
 
