@@ -4,7 +4,7 @@ version = "0.1.0"
 requires-python = ">=3.13"
 description = "Acquirer integration for the t-0 QR payment flow"
 dependencies = [
-    "t0-usdt-pay-sdk>=0.2.3",
+    "t0-usdt-pay-sdk>=0.2.4",
     "uvicorn>=0.52.4",
     "python-dotenv>=1.1.0",
 ]
