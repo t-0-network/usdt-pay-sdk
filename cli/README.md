@@ -45,6 +45,7 @@ usdt-pay init --lang=<language> --role=<role> <project-name>
 |---|---|---|
 | `java` | `acquirer` | [`java/starter/acquirer/`](../java/starter/acquirer/) |
 | `node` | `issuer` | [`node/starter/issuer/`](../node/starter/issuer/) |
+| `python` | `acquirer` | [`python/starter/acquirer/`](../python/starter/acquirer/) |
 
 Optional flags, before or after the project name:
 

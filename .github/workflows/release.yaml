@@ -113,9 +113,49 @@ jobs:
         working-directory: cli
         run: go test ./...
 
+  build-python:
+    name: Build Python
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          show-progress: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: python/uv.lock
+
+      - name: Install
+        working-directory: python
+        run: uv sync --all-packages
+
+      - name: Build SDK
+        working-directory: python
+        run: uv build --package t0-usdt-pay-sdk
+
+      - name: Test
+        working-directory: python
+        run: uv run pytest -v
+
+      - name: Lint
+        working-directory: python
+        run: uv run ruff check .
+
+      - name: Format check
+        working-directory: python
+        run: uv run ruff format --check .
+
   release:
     name: Create Release
-    needs: [build-java, build-node, build-cli]
+    needs: [build-java, build-node, build-go, build-python, build-cli]
     runs-on: ubuntu-latest
     # A dispatch against a feature branch must not be able to tag.
     if: github.ref == 'refs/heads/master'
@@ -139,12 +179,20 @@ jobs:
           # Tags are the input to the version calculation below.
           fetch-depth: 0
 
-      # This job rewrites node/package-lock.json, so it must not run on whatever npm
-      # the runner image happens to ship — that would commit lockfile format churn.
+      # This job rewrites node/package-lock.json and python/uv.lock, so it must not
+      # run on whatever npm/uv the runner image happens to ship.
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
           node-version: "22"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
 
       # The same bootstrap gate publish.yaml's preflight carries, but ahead of the tag.
       # A trusted publisher can only be attached to a package that already exists, so
@@ -238,6 +286,16 @@ jobs:
           sed -i "s/^usdtPaySdkVersion=.*/usdtPaySdkVersion=${VERSION}/" java/starter/acquirer/gradle.properties
           sed -i "s/SDK_VERSION = \".*\"/SDK_VERSION = \"${VERSION}\"/" java/sdk/src/main/java/network/t0/pay/server/Version.java
 
+      - name: Update Python versions
+        working-directory: python
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          sed -i "s/^version = \".*\"/version = \"${VERSION}\"/" sdk/pyproject.toml
+          sed -i "s/__version__ = \".*\"/__version__ = \"${VERSION}\"/" sdk/src/t0_usdt_pay_sdk/_version.py
+          sed -i "s/\"t0-usdt-pay-sdk>=.*\"/\"t0-usdt-pay-sdk>=${VERSION}\"/" starter/acquirer/pyproject.toml
+          uv lock
+
       - name: Validate updated files
         env:
           VERSION: ${{ steps.version.outputs.version }}
@@ -270,6 +328,18 @@ jobs:
             "$(node -p "require('./node/package-lock.json').packages['starter/issuer'].dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
           check "node/sdk/src/version.ts SDK_VERSION" \
             "$(grep -oP '(?<=SDK_VERSION = \")[^\"]+' node/sdk/src/version.ts)" "$VERSION"
+
+          check "python/sdk/pyproject.toml .version" \
+            "$(grep -oP '(?<=^version = \")[^\"]+' python/sdk/pyproject.toml)" "$VERSION"
+          check "python/sdk _version.py __version__" \
+            "$(grep -oP '(?<=__version__ = \")[^\"]+' python/sdk/src/t0_usdt_pay_sdk/_version.py)" "$VERSION"
+          check "python/starter/acquirer SDK pin" \
+            "$(grep -oP '(?<=t0-usdt-pay-sdk>=)[^\"]+' python/starter/acquirer/pyproject.toml)" "$VERSION"
+
+          (cd python && uv lock --check) || {
+            echo "::error::python/uv.lock is out of date — uv lock did not run or was not committed"
+            ERRORS=$((ERRORS + 1))
+          }
 
           if [ "$ERRORS" -gt 0 ]; then
             echo "::error::$ERRORS version validation(s) failed — nothing pushed"

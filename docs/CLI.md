@@ -12,7 +12,7 @@ headed "Maintainers", is how the pieces fit and what to do when they change.
 |---|---|
 | Binary | `usdt-pay` (`usdt-pay.exe` on Windows) |
 | Commands | `init`, `keygen`, `version`, `help` |
-| Languages and roles | `java`/`acquirer`, `node`/`issuer` |
+| Languages and roles | `java`/`acquirer`, `node`/`issuer`, `python`/`acquirer` |
 | Releases | assets `usdt-pay-<os>-<arch>[.exe]` on the GitHub Release `vX.Y.Z`, uploaded by `publish-cli` in `publish.yaml` |
 | Installers | `cli/install.sh` (macOS, Linux) and `cli/install.ps1` (Windows) download the latest release |
 | Source | `cli/` — eight files synced from provider-sdk, the rest repo-owned (see "Maintainers — ownership and sync") |
@@ -99,7 +99,7 @@ Commands:
   keygen                         Generate a new secp256k1 keypair
   version                        Show version
 
-Languages: java, node
+Languages: java, node, python
 
 Init options (before or after the project name):
   --lang string        Language/ecosystem (required)
@@ -120,8 +120,8 @@ or `--flag value`. `init --help` prints Go's flag summary in single-dash form; t
 
 | Flag | Default | Accepted values |
 |---|---|---|
-| `--lang` | required | `java`, `node` — the directories under `cli/internal/embed/` |
-| `--role` | required | a role that exists for the language: `acquirer` for `java`, `issuer` for `node` |
+| `--lang` | required | `java`, `node`, `python` — the directories under `cli/internal/embed/` |
+| `--role` | required | a role that exists for the language: `acquirer` for `java` and `python`, `issuer` for `node` |
 | `--dir` | `<project-name>` under the current directory | any path, used verbatim; it may exist if it is empty |
 | `--no-color` | off | plain `[INFO]`/`[OK]`/`[ERROR]` prefixes and box drawing without ANSI color. An `init` flag: `usdt-pay --no-color init ...` is `unknown command "--no-color"` |
 | `--version` | | prints `usdt-pay init <version>` and exits 0 |
@@ -226,6 +226,7 @@ Step 2 is `NextSteps` in `cli/config.go`. Step 3 is per language:
 |---|---|
 | `java` | `Run the application:` / `./gradlew run` |
 | `node` | `Install dependencies and run:` / `npm install && npm run dev` |
+| `python`/`acquirer` | `Install dependencies and run:` / `uv sync && uv run python -m acquirer.main` (via `RunSteps`) |
 
 The tree the Java scaffold leaves behind, for orientation (the Node one has `package.json`,
 `tsconfig.json`, `tsconfig.test.json`, `src/`, `test/` in place of the Gradle files):
@@ -242,6 +243,7 @@ src/main/java/network/t0/pay/acquirer/   src/main/resources/   src/test/java/
 |---|---|---|---|---|---|
 | `java` / `acquirer` | `java/starter/acquirer/` | Acquirer callback server and client: prices the sale, opens the intent, learns when it settles. Gradle, Java 21 toolchain, SDK `network.t-0:usdt-pay-sdk-java` from Maven Central, pinned by `usdtPaySdkVersion` in `gradle.properties` | `build.gradle.kts`, `settings.gradle.kts`, `gradlew`, `src/main/java/network/t0/pay/acquirer/Main.java` | `./gradlew run` | `./gradlew test` |
 | `node` / `issuer` | `node/starter/issuer/` | Issuer callback server and client: reserves deposit addresses, reports the customer's USDt, settles on-chain. npm, Node 22, SDK `@t-0/usdt-pay-sdk` from the npm registry | `package.json`, `tsconfig.json`, `src/index.ts` | `npm install && npm run dev` | `npm test` |
+| `python` / `acquirer` | `python/starter/acquirer/` | Acquirer callback server and client: prices the sale, opens the intent, learns when it settles. uv, Python 3.13, SDK `t0-usdt-pay-sdk` from PyPI | `pyproject.toml`, `src/acquirer/main.py` | `uv sync && uv run python -m acquirer.main` | `uv run pytest` |
 
 Each scaffold ships its README — the integration guide for the role.
 
@@ -269,7 +271,7 @@ Everything else under `cli/` is repo-owned:
 
 | File | Purpose |
 |---|---|
-| `config.go` | the product's `CLIConfig`: `ProductName`, `Command`, `Description`, `RoleRequired`, `DefaultRole`, `Languages`, `NextSteps` |
+| `config.go` | the product's `CLIConfig`: `ProductName`, `Command`, `Description`, `RoleRequired`, `DefaultRole`, `Languages`, `NextSteps`, `RunSteps` |
 | `generate.go` | the `go generate` directive that embeds the starters |
 | `internal/embed/.gitignore` | keeps the generated embed tree out of the repo |
 | `starters_test.go`, `scaffold_test.go` | this product's tests |
@@ -285,8 +287,14 @@ var Config = CLIConfig{
 	Description:  "a new usdt-pay project (acquirer or issuer)",
 	RoleRequired: true,
 	DefaultRole:  "",
-	Languages:    []string{"java", "node"},
+	Languages:    []string{"java", "node", "python"},
 	NextSteps:    []string{"Add NETWORK_PUBLIC_KEY to .env — your t-0 onboarding contact gives you this"},
+	RunSteps: map[string]RunStep{
+		"python/acquirer": {
+			Label:   "Install dependencies and run:",
+			Command: "uv sync && uv run python -m acquirer.main",
+		},
+	},
 }
 ```
 
@@ -378,8 +386,20 @@ tests.
 
 Docker from the starter directory builds against the published SDK (not the workspace).
 
-Whole-workspace builds are the three commands in `CLAUDE.md`, "Build and test" — the same ones
-`ci-java.yaml`, `ci-node.yaml` and `ci-cli.yaml` run.
+### Python — `python/starter/acquirer/`
+
+```bash
+# Install and test from python/ — the starter resolves the local SDK workspace member.
+(cd ../.. && uv sync --all-packages && uv run pytest)
+
+# Run from here: .env is read from the working directory.
+uv run python -m acquirer.main
+```
+
+Docker from the starter directory builds against the published SDK (not the workspace).
+
+Whole-workspace builds are the four commands in `CLAUDE.md`, "Build and test" — the same ones
+`ci-java.yaml`, `ci-node.yaml`, `ci-python.yaml` and `ci-cli.yaml` run.
 
 ## Maintainers — tests and CI
 
@@ -429,9 +449,11 @@ Whole-workspace builds are the three commands in `CLAUDE.md`, "Build and test" �
    context (`.`). The SDK must come from a registry inside Docker, not from the workspace.
 3. A new language: add it to `Languages` in `config.go`, its entry files to `entryFiles` in
    `starters_test.go` (`requireEntryFiles` fails a language that is not listed), a scaffold +
-   verify step pair to `ci-cli.yaml`, and the per-language run step in `printCompletion` —
-   that one lives in the synced `main.go`, so it goes through provider-sdk. Everything else in
-   `starters_test.go` picks the language up from the tree.
+   verify step pair to `ci-cli.yaml`, and the per-language run step. If the default per-language
+   switch in `printCompletion` (synced `main.go`) already has the right command, nothing more is
+   needed; otherwise add a `RunSteps` entry in `config.go` keyed by `"lang/role"` — that overrides
+   the built-in switch without touching synced code. Everything else in `starters_test.go` picks
+   the language up from the tree.
 4. The version sites and publish jobs in `docs/RELEASE_AND_PUBLISH.md`, "Starters" and "Adding
    an ecosystem".
 5. `README.md` at the repo root, `cli/README.md` and the "Starters" table above.

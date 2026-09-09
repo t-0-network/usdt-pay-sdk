@@ -78,8 +78,9 @@ func starterTargets(t *testing.T) [][2]string {
 // entryFiles are what a scaffolded project of each language must contain for
 // "it compiles" in CI to mean anything: an empty tree compiles too.
 var entryFiles = map[string][]string{
-	"java": {"build.gradle.kts", "settings.gradle.kts", "gradlew", "src/main/java"},
-	"node": {"package.json", "tsconfig.json", "src/index.ts"},
+	"java":   {"build.gradle.kts", "settings.gradle.kts", "gradlew", "src/main/java"},
+	"node":   {"package.json", "tsconfig.json", "src/index.ts"},
+	"python": {"pyproject.toml", "src/acquirer/main.py"},
 }
 
 func requireEntryFiles(t *testing.T, lang, projectDir string) {

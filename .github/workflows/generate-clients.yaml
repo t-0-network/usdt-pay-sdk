@@ -37,18 +37,34 @@ jobs:
       - name: Setup buf
         uses: bufbuild/buf-setup-action@v1
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install Python dev deps
+        run: uv sync --project python --all-packages
+
       # No npm install: buf.gen.yaml uses a remote plugin and buf.yaml a remote dep,
       # both resolved over the network. Java needs nothing — its protos are a symlink
       # to the same tree and ./gradlew build regenerates every time.
+      # Python needs a local protoc-gen-connectrpc (installed above via uv).
       # --clean wipes the plugin output directory first. buf otherwise appends, so a
       # proto renamed or deleted upstream would leave its stale generated module in
       # src/gen — exactly how the flat *_pb.ts survived the move to per-role packages.
-      - name: Generate clients
+      - name: Generate Node clients
         working-directory: node/sdk
+        run: buf generate --clean
+
+      - name: Generate Python clients
+        working-directory: python/sdk
         run: buf generate --clean
 
       - name: Commit generated files
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "Auto-generate gRPC clients"
-          file_pattern: "node/sdk/src/gen/**"
+          file_pattern: "node/sdk/src/gen/** python/sdk/src/t0_usdt_pay_sdk/api/**"

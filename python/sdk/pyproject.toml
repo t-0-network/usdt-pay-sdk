@@ -1,0 +1,30 @@
+[project]
+name = "t0-usdt-pay-sdk"
+version = "0.2.2"
+requires-python = ">=3.13"
+description = "T-0 Network USDt Pay SDK for Python"
+license = "MIT"
+authors = [
+    { name = "T-0 Network" },
+]
+dependencies = [
+    "t0-provider-sdk==1.1.41",
+    "connectrpc>=0.11.1",
+    "protobuf>=7.34.1",
+    "protovalidate>=1.1",
+]
+
+[project.urls]
+Repository = "https://github.com/t-0-network/usdt-pay-sdk"
+Homepage = "https://github.com/t-0-network/usdt-pay-sdk"
+Organization = "https://pypi.org/org/t0-network/"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/t0_usdt_pay_sdk"]
+
+[tool.hatch.build.targets.sdist]
+exclude = ["proto", "buf.yaml", "buf.gen.yaml", "buf.lock"]

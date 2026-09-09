@@ -1,19 +1,18 @@
 # usdt-pay-sdk
 
-SDKs for the t-0 QR payment flow (`tzero.v1.pay`), in Java and Node today. The
+SDKs for the t-0 QR payment flow (`tzero.v1.pay`), in Java, Node and Python. The
 contract lives in `proto/` and is snapshot-synced from `t-0-network/backend` —
 protos are not authored here.
 
 ## Layout
 
 ```
-proto/tzero/v1/pay/      the contract: common.proto + validate.proto in package
-                         tzero.v1.pay; acquirer/, issuer/, lp/ as per-role packages
-java/                    Gradle build: sdk, starter/acquirer
-node/                    npm workspace: sdk, starter/issuer
+proto/tzero/v1/pay/      the contract (common, validate, acquirer/, issuer/, lp/)
+java/                    Gradle: sdk, starter/acquirer — see java/CLAUDE.md
+node/                    npm workspace: sdk, starter/issuer — see node/CLAUDE.md
+python/                  uv workspace: sdk, starter/acquirer — see python/CLAUDE.md
 cli/                     unified scaffolder (Go) — `usdt-pay init`; docs/CLI.md
-docs/RELEASE_AND_PUBLISH.md   the release process — read before touching versions,
-                              tags, or the publish workflows
+docs/RELEASE_AND_PUBLISH.md   the release process
 ```
 
 Java stubs are generated at build time (`bufGenerate`, not committed). Node stubs
@@ -28,11 +27,14 @@ cd node && npm install && npm run build && npm run typecheck && npm test
 # Java — wrapper only, never a local gradle
 cd java && ./gradlew build --no-daemon
 
+# Python — uv workspace from python/
+cd python && uv sync --all-packages && uv run pytest -v
+
 # CLI — generate embeds the starters; the tests instantiate every one of them
 cd cli && go generate ./... && go build ./... && go test ./...
 ```
 
-CI (`ci-java.yaml`, `ci-node.yaml`, `ci-cli.yaml`) runs exactly these builds; if they pass locally the tree is
+CI (`ci-java.yaml`, `ci-node.yaml`, `ci-python.yaml`, `ci-cli.yaml`) runs exactly these builds; if they pass locally the tree is
 releasable. `ci-cli.yaml` additionally scaffolds every starter with the built CLI and runs each
 scaffold's tests against the SDKs built from the tree, on Linux and Windows (`docs/CLI.md`).
 
@@ -71,34 +73,24 @@ works. How the pieces fit — embedded starters, the tests, what
 
 The CLI (`usdt-pay init`) is the only documented way to create a project. No
 user-facing README or doc may describe or imply running a starter from a repo
-checkout — no `cp .env.example`, no workspace-relative builds (`cd ../..`), no
-Docker with the repository as context, no "if you cloned the repo" conditionals.
-The starter READMEs (`java/starter/acquirer/README.md`,
-`node/starter/issuer/README.md`) are embedded verbatim by the CLI and must be
+checkout. The starter READMEs are embedded verbatim by the CLI and must be
 written exclusively for a scaffolded standalone project. Maintainer-only
 workspace commands belong in `docs/CLI.md`, nowhere else.
 
 ## Signatures
 
-Same scheme as provider-sdk: Keccak256 over the raw request bytes plus a 64-bit
-little-endian timestamp, secp256k1-signed, carried in `X-Signature` /
-`X-Public-Key` / `X-Signature-Timestamp`. Verification must see the exact wire
-bytes — protobuf encoding is not canonical, so anything that re-serializes or
-decompresses the body breaks it. The transport in `@t-0/provider-sdk` (pinned
-exact in `node/sdk/package.json`; bump deliberately, not as drive-by) does this
-for both directions; `@t-0/usdt-pay-sdk/crypto` exposes it for standalone
-integrations.
+Keccak256 over the raw request bytes plus a 64-bit LE timestamp, secp256k1-signed,
+carried in `X-Signature` / `X-Public-Key` / `X-Signature-Timestamp`. Verification
+must see the exact wire bytes — protobuf encoding is not canonical. The transport
+in each ecosystem's provider-sdk (pinned exact; bump deliberately, not as drive-by)
+handles both directions.
 
 ## Releasing
 
 `docs/RELEASE_AND_PUBLISH.md` is the process. The two rules that are never bent:
 
-- **Never `git tag vX.Y.Z` and never trigger `publish.yaml` by hand.** A release
-  is `gh workflow run release.yaml -f bump=… --ref master`, and the tag it pushes
-  fires the publish. Both registries are immutable; there is no undo.
-- **A failed publish is recovered with "Re-run failed jobs" on that run** — a
-  re-dispatch of `release.yaml` would mint the next version and strand the tag.
+- **Never `git tag vX.Y.Z` and never trigger `publish.yaml` by hand.**
+- **A failed publish is recovered with "Re-run failed jobs" on that run.**
 
 Version sites (all moved together by `release.yaml`, validated twice) are listed
-in the doc. Adding an ecosystem? The doc's "Adding an ecosystem" section is the
-checklist.
+in the doc.
