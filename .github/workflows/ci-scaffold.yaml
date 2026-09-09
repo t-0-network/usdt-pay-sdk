@@ -1,8 +1,8 @@
 name: CI / Scaffold
 
 # Proves that `usdt-pay init` produces a working standalone project for every
-# starter: scaffolds each embedded lang/role with the built binary, checks the
-# overlay landed, then builds and runs each scaffold's own tests against the SDKs
+# starter: scaffolds each embedded lang/role with the built binary, checks
+# essential files, then builds and runs each scaffold's own tests against the SDKs
 # built from this tree. SDK and proto changes are inputs of this workflow too,
 # not only the starters and the CLI.
 on:
@@ -52,10 +52,10 @@ jobs:
         run: go build -ldflags "-X main.Version=dev" -o ../usdt-pay .
 
       # Every embedded lang/role (cli/internal/embed/<lang>/<role>, produced by
-      # go generate): scaffold it with the built binary and require every file of
-      # cli/overlay/<lang>/<role> to land byte for byte. Needs no registry, so it
-      # runs on every event — a bot sync that drops the overlay seam fails here.
-      - name: Scaffold every starter and verify the overlay landed
+      # go generate): scaffold it with the built binary and verify the essential
+      # files (Dockerfile, .dockerignore, .gitignore, .env) are present. Needs no
+      # registry, so it runs on every event.
+      - name: Scaffold every starter and verify essential files
         run: |
           set -euo pipefail
           for dir in cli/internal/embed/*/*/; do
@@ -65,10 +65,8 @@ jobs:
             ./usdt-pay init "test-${lang}-${role}" --lang="$lang" --role="$role" --no-color --dir="$out"
             test -f "$out/.gitignore"
             grep -q 'PROVIDER_PRIVATE_KEY=0x' "$out/.env"
-            test -d "cli/overlay/${lang}/${role}" || { echo "::error::no cli/overlay/${lang}/${role} — the in-repo Dockerfile cannot ship standalone"; exit 1; }
-            (cd "cli/overlay/${lang}/${role}" && find . -type f) | sed 's|^\./||' | while read -r f; do
-              cmp "cli/overlay/${lang}/${role}/${f}" "${out}/${f}"
-            done
+            test -f "$out/Dockerfile" || { echo "::error::${lang}/${role}: Dockerfile missing from scaffolded project"; exit 1; }
+            test -f "$out/.dockerignore" || { echo "::error::${lang}/${role}: .dockerignore missing from scaffolded project"; exit 1; }
             echo "ok: ${lang}/${role}"
           done
 

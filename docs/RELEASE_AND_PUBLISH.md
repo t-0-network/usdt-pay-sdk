@@ -49,9 +49,8 @@ build time via `go generate`.
 | Node | `node/starter/issuer/` | issuer |
 
 Adding a role is adding a directory under the appropriate `starter/` and wiring it into
-`cli/generate.go`. `cli/overlay/<lang>/<role>/` holds files that cannot ship verbatim — currently
-the Dockerfiles, whose in-repo form takes the workspace as its build context while a scaffolded
-project resolves the SDK from a registry. How they are applied and tested: [`CLI.md`](CLI.md).
+`cli/generate.go`. Each starter carries its own standalone `Dockerfile` and `.dockerignore` —
+inside Docker the SDK resolves from a registry, not from the workspace. Details: [`CLI.md`](CLI.md).
 
 **Not a version site:** `java/starter/acquirer/build.gradle.kts`'s `version = "0.1.0-SNAPSHOT"`.
 That is the *scaffolded project's own* version — the file ships as a template and is never
