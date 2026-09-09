@@ -2,7 +2,6 @@ package main
 
 import (
 	"embed"
-	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -39,11 +38,6 @@ type CLIConfig struct {
 	// what the user must do before the project works, e.g. a value to fill
 	// in .env.
 	NextSteps []string
-	// OverlayFS, when set, holds product files written over the scaffolded
-	// output after template extraction. Layout: overlay/<lang>[/<role>]/...
-	// Files are copied verbatim (no placeholder or filename transforms).
-	// Products typically set this to an embed.FS of their overlay/ directory.
-	OverlayFS    fs.FS
 	PostScaffold func(ScaffoldOpts) error
 }
 
@@ -135,45 +129,6 @@ func scaffold(opts ScaffoldOpts) error {
 		content = processPlaceholders(content, opts, pascalName)
 
 		return writeFileWithMode(destPath, []byte(content), src)
-	})
-}
-
-// applyOverlay writes every file under overlay/<lang>[/<role>] in overlayFS
-// over the scaffolded project, verbatim. A missing overlay root is not an
-// error: most lang/role combinations have no overlay.
-func applyOverlay(overlayFS fs.FS, opts ScaffoldOpts) error {
-	overlayRoot := path.Join("overlay", opts.Lang)
-	if opts.Role != "" {
-		overlayRoot = path.Join(overlayRoot, opts.Role)
-	}
-
-	if _, err := fs.ReadDir(overlayFS, overlayRoot); err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return nil
-		}
-		return fmt.Errorf("reading overlay %s: %w", overlayRoot, err)
-	}
-
-	return fs.WalkDir(overlayFS, overlayRoot, func(src string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			return nil
-		}
-
-		rel := strings.TrimPrefix(src, overlayRoot+"/")
-
-		data, err := fs.ReadFile(overlayFS, src)
-		if err != nil {
-			return fmt.Errorf("reading overlay file %s: %w", src, err)
-		}
-
-		destPath := filepath.Join(opts.ProjectDir, filepath.FromSlash(rel))
-		if err := os.MkdirAll(filepath.Dir(destPath), 0777); err != nil {
-			return err
-		}
-		return writeFileWithMode(destPath, data, src)
 	})
 }
 
