@@ -668,7 +668,7 @@ wheels = [
 
 [[package]]
 name = "t0-usdt-pay-sdk"
-version = "0.2.4"
+version = "0.2.5"
 source = { editable = "sdk" }
 dependencies = [
     { name = "connectrpc" },
