@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"os"
 	"testing"
 )
 
@@ -70,5 +72,38 @@ func TestSanitizeProjectName(t *testing.T) {
 				t.Errorf("sanitizeProjectName(%q) = %q, want %q", tt.input, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestRun_PostScaffoldErrorKeepsExistingDir(t *testing.T) {
+	hookErr := errors.New("post-scaffold hook failed")
+	prev := Config.PostScaffold
+	Config.PostScaffold = func(ScaffoldOpts) error { return hookErr }
+	t.Cleanup(func() { Config.PostScaffold = prev })
+
+	lang := Config.Languages[0]
+	opts := ScaffoldOpts{
+		Lang:        lang,
+		ProjectName: "test-project",
+		ProjectDir:  t.TempDir(),
+		Version:     "dev",
+	}
+	if Config.RoleRequired {
+		roles, err := listRoles(lang)
+		if err != nil || len(roles) == 0 {
+			t.Fatalf("listRoles(%s): %v (roles=%v)", lang, err, roles)
+		}
+		opts.Role = roles[0]
+	}
+	if lang == "go" {
+		opts.ModulePath = "github.com/test/test-project"
+	}
+
+	err := run(opts)
+	if !errors.Is(err, hookErr) {
+		t.Fatalf("run() error = %v, want wrapping %v", err, hookErr)
+	}
+	if _, statErr := os.Stat(opts.ProjectDir); statErr != nil {
+		t.Fatalf("pre-existing project dir was removed on hook error: %v", statErr)
 	}
 }
