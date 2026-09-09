@@ -1,6 +1,6 @@
 [project]
 name = "t0-usdt-pay-sdk"
-version = "0.2.2"
+version = "0.2.3"
 requires-python = ">=3.13"
 description = "T-0 Network USDt Pay SDK for Python"
 license = "MIT"
