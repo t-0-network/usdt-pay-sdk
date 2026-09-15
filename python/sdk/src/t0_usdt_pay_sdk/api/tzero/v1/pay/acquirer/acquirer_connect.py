@@ -397,8 +397,9 @@ class AcquirerCallbackService(Protocol):
     """
     *
     Acquirer-implemented callbacks t-0 pushes: authorization, settlement
-    progress, expiry, and payment failure. Each is delivered at least once; the
-    Acquirer dedupes on the t-0-minted id it carries.
+    progress, expiry, and payment failure. Each is delivered to the Acquirer's
+    registered callback URL at least once; the Acquirer dedupes on the t-0-minted
+    id it carries.
     """
     async def payment_authorized(self, request: PaymentAuthorizedRequest, ctx: RequestContext[PaymentAuthorizedRequest, PaymentAuthorizedResponse], /) -> PaymentAuthorizedResponse:
         """
@@ -511,8 +512,9 @@ class AcquirerCallbackServiceClient(ConnectClient):
     """
     *
     Acquirer-implemented callbacks t-0 pushes: authorization, settlement
-    progress, expiry, and payment failure. Each is delivered at least once; the
-    Acquirer dedupes on the t-0-minted id it carries.
+    progress, expiry, and payment failure. Each is delivered to the Acquirer's
+    registered callback URL at least once; the Acquirer dedupes on the t-0-minted
+    id it carries.
     """
     def __init__(
         self,
@@ -657,8 +659,9 @@ class AcquirerCallbackServiceSync(Protocol):
     """
     *
     Acquirer-implemented callbacks t-0 pushes: authorization, settlement
-    progress, expiry, and payment failure. Each is delivered at least once; the
-    Acquirer dedupes on the t-0-minted id it carries.
+    progress, expiry, and payment failure. Each is delivered to the Acquirer's
+    registered callback URL at least once; the Acquirer dedupes on the t-0-minted
+    id it carries.
     """
     def payment_authorized(self, request: PaymentAuthorizedRequest, ctx: RequestContext[PaymentAuthorizedRequest, PaymentAuthorizedResponse], /) -> PaymentAuthorizedResponse:
         """
@@ -769,8 +772,9 @@ class AcquirerCallbackServiceClientSync(ConnectClientSync):
     """
     *
     Acquirer-implemented callbacks t-0 pushes: authorization, settlement
-    progress, expiry, and payment failure. Each is delivered at least once; the
-    Acquirer dedupes on the t-0-minted id it carries.
+    progress, expiry, and payment failure. Each is delivered to the Acquirer's
+    registered callback URL at least once; the Acquirer dedupes on the t-0-minted
+    id it carries.
     """
     def __init__(
         self,
