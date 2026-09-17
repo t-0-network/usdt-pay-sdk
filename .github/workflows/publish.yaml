@@ -252,20 +252,7 @@ jobs:
               ERRORS=$((ERRORS + 1))
             fi
           }
-          check "node/sdk/package.json .version" \
-            "$(node -p "require('./node/sdk/package.json').version")" "$VERSION"
-          check "package-lock.json packages.sdk.version" \
-            "$(node -p "require('./node/package-lock.json').packages['sdk'].version")" "$VERSION"
-          for STARTER in issuer lp; do
-            check "node/starter/$STARTER/package.json .version" \
-              "$(node -p "require('./node/starter/$STARTER/package.json').version")" "$VERSION"
-            check "node/starter/$STARTER/package.json SDK pin" \
-              "$(node -p "require('./node/starter/$STARTER/package.json').dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
-            check "package-lock.json starter/$STARTER .version" \
-              "$(node -p "require('./node/package-lock.json').packages['starter/$STARTER'].version")" "$VERSION"
-            check "package-lock.json starter/$STARTER SDK pin" \
-              "$(node -p "require('./node/package-lock.json').packages['starter/$STARTER'].dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
-          done
+          source .github/scripts/check-node-versions.sh
           [ "$ERRORS" -eq 0 ] || exit 1
           echo "Node version sites match tag v$VERSION"
 
