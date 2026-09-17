@@ -334,10 +334,11 @@ export const SettlementSentResponse_AcceptedSchema: GenMessage<SettlementSentRes
 
 /**
  * *
- * The settlement is not recorded. ON_CHAIN_UNCONFIRMED clears on its own and
- * the report is resubmitted under the same settlement_ref once the transaction
- * confirms; the other reasons open a manual reconciliation with t-0, and the
- * corrected report follows from it.
+ * The report is not accepted. For a first-time ref the settlement is not recorded;
+ * for a CONFLICT on an already-accepted ref the original settlement stands.
+ * ON_CHAIN_UNCONFIRMED clears on its own and the report is resubmitted under the
+ * same settlement_ref once the transaction confirms; the other reasons open a manual
+ * reconciliation with t-0, and the corrected report follows from it.
  *
  * @generated from message tzero.v1.pay.issuer.SettlementSentResponse.Rejected
  */
@@ -395,7 +396,9 @@ export enum SettlementSentResponse_Rejected_Reason {
   INTENT_NOT_SETTLEABLE = 40,
 
   /**
-   * This on-chain transfer is already recorded under a different settlement_ref.
+   * Either this on-chain transfer is already recorded under a different settlement_ref,
+   * or this settlement_ref is already recorded with different identity fields. The stored
+   * settlement stands; a genuinely different transfer needs a different ref.
    *
    * @generated from enum value: REASON_SETTLEMENT_REF_CONFLICT = 50;
    */
