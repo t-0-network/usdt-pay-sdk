@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 # Validates all Node version sites against $VERSION.
 # Expects: VERSION and ERRORS set, check() defined by the caller.
-# Used by both release.yaml and publish.yaml — one place to update
-# when a starter is added.
+# Used by both release.yaml and publish.yaml.
 
-NODE_STARTERS="issuer lp"
+NODE_STARTERS=$(ls node/starter/)
 
 check "node/sdk/package.json .version" \
   "$(node -p "require('./node/sdk/package.json').version")" "$VERSION"
