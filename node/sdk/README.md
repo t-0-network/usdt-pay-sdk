@@ -4,8 +4,7 @@ TypeScript SDK for the **t-0 USDt pay flow** — the contract under
 `proto/tzero/v1/pay/`. Generated Connect clients and servers for all three roles,
 over a transport that signs what you send and verifies what arrives.
 
-Start from a scaffolded project rather than from here: `usdt-pay init --lang=node --role=issuer <project-name>`
-or `--role=lp` for the LP role
+Start from a scaffolded project rather than from here: `usdt-pay init --lang=node --role=issuer` or `--role=lp`
 (install and every flag: [`cli/README.md`](https://github.com/t-0-network/usdt-pay-sdk/blob/master/cli/README.md)).
 The project's README is the integration guide:
 [issuer](https://github.com/t-0-network/usdt-pay-sdk/blob/master/node/starter/issuer/README.md) ·

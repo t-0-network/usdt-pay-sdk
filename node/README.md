@@ -20,7 +20,7 @@ The LP starter scaffolds with `--role=lp`: `usdt-pay init --lang=node --role=lp 
 After scaffolding:
 
 ```bash
-cd my-issuer
+cd <your-project>
 npm install && npm run dev
 ```
 
