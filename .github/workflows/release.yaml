@@ -267,13 +267,16 @@ jobs:
           # while the starter still pins ^OLD, the workspace links no longer satisfy
           # those pins, and npm goes to the registry — where @t-0/usdt-pay-sdk@^OLD
           # may not exist. That 404s after every package.json was already rewritten.
+          STARTER_WS=""
+          for d in starter/*/; do STARTER_WS="$STARTER_WS -w ${d%/}"; done
           npm version "$VERSION" --no-git-tag-version --allow-same-version --no-workspaces-update \
-            -w sdk -w starter/issuer -w starter/lp
+            -w sdk $STARTER_WS
 
           # Before the lockfile regen below, so the lockfile is built against the
           # already-corrected pins rather than the stale ones.
-          npm pkg set "dependencies.@t-0/usdt-pay-sdk=^$VERSION" -w starter/issuer
-          npm pkg set "dependencies.@t-0/usdt-pay-sdk=^$VERSION" -w starter/lp
+          for d in starter/*/; do
+            npm pkg set "dependencies.@t-0/usdt-pay-sdk=^$VERSION" -w "${d%/}"
+          done
 
           npm install --package-lock-only
 

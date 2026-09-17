@@ -45,16 +45,9 @@ any site disagrees.
 
 ## Starters
 
-Starters are live, tested projects under `java/starter/`, `node/starter/` and `python/starter/`.
-They are **not published as packages** — the unified CLI in `cli/` (`usdt-pay init`) embeds them
-as templates at build time via `go generate`.
-
-| Platform | Starter source | Role |
-|---|---|---|
-| Java | `java/starter/acquirer/` | acquirer |
-| Node | `node/starter/issuer/` | issuer |
-| Node | `node/starter/lp/` | lp |
-| Python | `python/starter/acquirer/` | acquirer |
+Starters are live, tested projects under `java/starter/`, `node/starter/` and `python/starter/` —
+each `<lang>/starter/<role>/` directory is one starter. They are **not published as packages** — the
+unified CLI in `cli/` (`usdt-pay init`) embeds them as templates at build time via `go generate`.
 
 Adding a role is adding a directory under the appropriate `starter/` and wiring it into
 `cli/generate.go`. Each starter carries its own standalone `Dockerfile` and `.dockerignore` —

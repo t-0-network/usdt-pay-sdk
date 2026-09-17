@@ -4,8 +4,7 @@
   "description": "npm workspace holding the pay SDK and the per-role starters",
   "workspaces": [
     "sdk",
-    "starter/issuer",
-    "starter/lp"
+    "starter/*"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
