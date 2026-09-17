@@ -18,8 +18,9 @@ This README says what to build — for what every field and decline code means, 
 
 `usdt-pay init` ([usdt-pay-sdk](https://github.com/t-0-network/usdt-pay-sdk))
 created this project and wrote `.env` with a fresh `PROVIDER_PRIVATE_KEY`; the
-matching public key is on the comment line under it. Fill in `NETWORK_PUBLIC_KEY`
-with the key your t-0 onboarding contact gives you, then install and run:
+matching public key is on the comment line under it. `NETWORK_PUBLIC_KEY` is
+pre-filled with the sandbox key; your t-0 onboarding contact gives you the
+production key. Install and run:
 
 ```bash
 npm install && npm run dev

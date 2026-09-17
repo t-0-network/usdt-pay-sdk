@@ -28,13 +28,7 @@ export function startQuotePublisher(
 
     publishQuotes(t0, [
       { quoteRef, localCurrency: QUOTE_CURRENCY, fxRate: QUOTE_FX_RATE, expiresAt },
-    ]).then((outcome) => {
-      if (outcome.kind === "rejected") {
-        console.warn(`PublishQuote rejected: ${outcome.reason}`);
-      } else if (outcome.kind === "unknown") {
-        console.warn(`PublishQuote unknown: ${outcome.detail}`);
-      }
-    }).catch((e: unknown) => {
+    ]).catch((e: unknown) => {
       console.error("PublishQuote tick failed", e);
     });
   };

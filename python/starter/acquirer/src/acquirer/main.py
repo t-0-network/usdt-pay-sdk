@@ -23,7 +23,7 @@ from acquirer.handler import AcquirerCallbacks
 from acquirer.internal.create_payment_intent import create_payment_intent
 from acquirer.internal.decimals import decimal_from_string, decimal_to_string
 from acquirer.internal.get_payment_quote import get_payment_quote
-from acquirer.internal.outcome import Accepted
+from acquirer.internal.outcome import Accepted, Rejected, Unknown
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -47,9 +47,9 @@ async def run_demo_sale(t0: AcquirerServiceClient) -> None:
             decimal_to_string(quoted.value.fx_rate),
             quoted.value.expires_at.ToDatetime().isoformat(),
         )
-    elif quoted.should_retry:
+    elif isinstance(quoted, Unknown):
         logger.warning("GetPaymentQuote unanswered — safe to retry")
-    else:
+    elif isinstance(quoted, Rejected):
         logger.warning("GetPaymentQuote rejected: %s", quoted.reason)
 
     if not isinstance(quoted, Accepted):
@@ -70,9 +70,9 @@ async def run_demo_sale(t0: AcquirerServiceClient) -> None:
         )
         for opt in intent.value.usdt_on_chain.deposit_options:
             logger.info("  deposit option: %s", opt.payment_uri)
-    elif intent.should_retry:
+    elif isinstance(intent, Unknown):
         logger.warning("CreatePaymentIntent unanswered — retry the same idempotency_key")
-    else:
+    elif isinstance(intent, Rejected):
         logger.warning("CreatePaymentIntent rejected: %s", intent.reason)
 
 
