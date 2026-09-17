@@ -13,6 +13,9 @@ curl -fsSL https://raw.githubusercontent.com/t-0-network/usdt-pay-sdk/master/cli
 | Role | Template |
 |---|---|
 | `issuer` | [starter/issuer/](starter/issuer/) |
+| `lp` | [starter/lp/](starter/lp/) |
+
+The LP starter scaffolds with `--role=lp`: `usdt-pay init --lang=node --role=lp my-lp`.
 
 After scaffolding:
 

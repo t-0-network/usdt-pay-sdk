@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import type { AddressInfo } from "node:net";
 import { after, test } from "node:test";
+import { create } from "@bufbuild/protobuf";
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import {
-  CreatePaymentInstructionsResponse_Failure_Reason,
+  Blockchain,
+  DecimalSchema,
   createClient,
   createServer,
   IssuerCallbackService,
@@ -39,20 +41,39 @@ const request = {
   expiresAt: timestampFromDate(new Date(Date.now() + 120_000)),
 };
 
-/**
- * The shipped handler declines, on purpose: whatever addresses it returns are rendered
- * as a payable QR and a customer sends real USDt to them. This test is what keeps that
- * true — if it starts failing because someone wired the success branch up with example
- * addresses, that is the bug it exists to catch.
- */
-test("CreatePaymentInstructions declines until the addresses are yours", async () => {
+test("CreatePaymentInstructions answers with the example deposit options", async () => {
   const response = await t0.createPaymentInstructions(request);
 
-  assert.equal(response.result.case, "failure");
+  assert.equal(response.result.case, "success");
+  if (response.result.case !== "success") return;
+
+  const options = response.result.value.depositOptions;
+  assert.equal(options.length, 2);
+
+  const chains = options.map((o) => o.chain);
+  assert.deepEqual(chains, [Blockchain.ETH, Blockchain.BSC]);
+
+  for (const opt of options) {
+    assert.ok(opt.depositAddress, "depositAddress must not be empty");
+    assert.ok(opt.paymentUri, "paymentUri must not be empty");
+    assert.ok(opt.tokenContract, "tokenContract must not be empty");
+  }
+
   assert.equal(
-    response.result.case === "failure" ? response.result.value.reason : undefined,
-    CreatePaymentInstructionsResponse_Failure_Reason.ISSUER_UNAVAILABLE,
+    response.result.value.expiresAt?.seconds,
+    request.expiresAt.seconds,
   );
+});
+
+test("trailing-zero amount representation passes through", async () => {
+  const response = await t0.createPaymentInstructions({
+    ...request,
+    amountUsdt: create(DecimalSchema, { unscaled: 100_000_000n, exponent: -7 }),
+  });
+
+  assert.equal(response.result.case, "success");
+  if (response.result.case !== "success") return;
+  assert.equal(response.result.value.depositOptions.length, 2);
 });
 
 test("a call signed by anyone but t-0 never reaches the handler", async () => {

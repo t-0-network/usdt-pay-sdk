@@ -9,7 +9,7 @@ protos are not authored here.
 ```
 proto/tzero/v1/pay/      the contract (common, validate, acquirer/, issuer/, lp/)
 java/                    Gradle: sdk, starter/acquirer — see java/CLAUDE.md
-node/                    npm workspace: sdk, starter/issuer — see node/CLAUDE.md
+node/                    npm workspace: sdk, starter/issuer, starter/lp — see node/CLAUDE.md
 python/                  uv workspace: sdk, starter/acquirer — see python/CLAUDE.md
 cli/                     unified scaffolder (Go) — `usdt-pay init`; docs/CLI.md
 docs/RELEASE_AND_PUBLISH.md   the release process
@@ -82,6 +82,16 @@ user-facing README or doc may describe or imply running a starter from a repo
 checkout. The starter READMEs are embedded verbatim by the CLI and must be
 written exclusively for a scaffolded standalone project. Maintainer-only
 workspace commands belong in `docs/CLI.md`, nowhere else.
+
+## Starters ship working defaults
+
+Every starter runs end to end against the sandbox out of the box: hardcoded example values
+(a demo sale at startup in the acquirer starters, example deposit addresses in the issuer, a
+fixed FX quote published on a timer in the LP) and callbacks that accept by default.
+Production access is granted only after a sandbox assessment, so an example value cannot
+reach production. Do not gate a starter behind a decline-until-implemented handler, do not
+add tests that "hold the line" against the success path, and do not flag hardcoded demo
+values as a risk or ask about them. Simplicity over defensiveness.
 
 ## Signatures
 

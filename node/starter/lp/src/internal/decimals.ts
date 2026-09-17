@@ -11,8 +11,8 @@ import { type Decimal, DecimalSchema } from "@t-0/usdt-pay-sdk";
  *
  * The cheapest correct thing you can do with an inbound amount is *not convert it* —
  * pass the `Decimal` t-0 sent you through untouched. For the outbound
- * `PaymentReceived` call, build the `Decimal` from your chain reader's string output
- * with `decimalFromString`, never from an intermediate floating-point step.
+ * `FiatSettlementSent` call, build the `Decimal` from your bank statement's string
+ * output with `decimalFromString`, never from an intermediate floating-point step.
  */
 
 /** The contract constrains exponent to this range; anything else is rejected on the wire. */
@@ -88,6 +88,8 @@ export function decimalToString(value: Decimal): string {
 export function decimalToUnits(value: Decimal, decimals: number): bigint {
   const shift = value.exponent + decimals;
   if (shift < 0) {
+    // The exponent is more negative than the target decimals. If the surplus
+    // digits are all zeros (exact rescale) the conversion is still lossless.
     const divisor = 10n ** BigInt(-shift);
     if (value.unscaled % divisor === 0n) {
       return value.unscaled / divisor;

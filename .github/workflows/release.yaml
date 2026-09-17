@@ -268,11 +268,12 @@ jobs:
           # those pins, and npm goes to the registry — where @t-0/usdt-pay-sdk@^OLD
           # may not exist. That 404s after every package.json was already rewritten.
           npm version "$VERSION" --no-git-tag-version --allow-same-version --no-workspaces-update \
-            -w sdk -w starter/issuer
+            -w sdk -w starter/issuer -w starter/lp
 
           # Before the lockfile regen below, so the lockfile is built against the
           # already-corrected pins rather than the stale ones.
           npm pkg set "dependencies.@t-0/usdt-pay-sdk=^$VERSION" -w starter/issuer
+          npm pkg set "dependencies.@t-0/usdt-pay-sdk=^$VERSION" -w starter/lp
 
           npm install --package-lock-only
 
@@ -320,12 +321,20 @@ jobs:
             "$(node -p "require('./node/starter/issuer/package.json').version")" "$VERSION"
           check "node/starter/issuer/package.json SDK pin" \
             "$(node -p "require('./node/starter/issuer/package.json').dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
+          check "node/starter/lp/package.json .version" \
+            "$(node -p "require('./node/starter/lp/package.json').version")" "$VERSION"
+          check "node/starter/lp/package.json SDK pin" \
+            "$(node -p "require('./node/starter/lp/package.json').dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
           check "package-lock.json packages.sdk.version" \
             "$(node -p "require('./node/package-lock.json').packages['sdk'].version")" "$VERSION"
           check "package-lock.json packages['starter/issuer'].version" \
             "$(node -p "require('./node/package-lock.json').packages['starter/issuer'].version")" "$VERSION"
-          check "package-lock.json starter SDK pin" \
+          check "package-lock.json packages['starter/issuer'] SDK pin" \
             "$(node -p "require('./node/package-lock.json').packages['starter/issuer'].dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
+          check "package-lock.json packages['starter/lp'].version" \
+            "$(node -p "require('./node/package-lock.json').packages['starter/lp'].version")" "$VERSION"
+          check "package-lock.json packages['starter/lp'] SDK pin" \
+            "$(node -p "require('./node/package-lock.json').packages['starter/lp'].dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
           check "node/sdk/src/version.ts SDK_VERSION" \
             "$(grep -oP '(?<=SDK_VERSION = \")[^\"]+' node/sdk/src/version.ts)" "$VERSION"
 

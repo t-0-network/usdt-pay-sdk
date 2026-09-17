@@ -1,0 +1,12 @@
+# The build context is this project directory, and it holds the .env with the private
+# key generated for you. `COPY . .` would put it in a layer; the Dockerfile says the
+# image carries no .env, and this is what makes that true.
+#
+# `.env.*` covers .env.local and friends, and takes .env.example with it — the image
+# reads its configuration from the environment, so it needs neither.
+.env
+.env.*
+node_modules/
+dist/
+.git/
+.DS_Store

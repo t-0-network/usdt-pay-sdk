@@ -27,8 +27,8 @@ npm install && npm run dev
 
 It prints your public key and starts the callback server under `tsx watch`,
 restarting as you edit. Nothing else happens until t-0 calls
-`CreatePaymentInstructions` — and until you implement that handler it declines,
-so nobody can pay against addresses that are not yours.
+`CreatePaymentInstructions` — which the shipped handler answers with example
+ETH and BSC deposit addresses so the flow runs end to end against the sandbox.
 
 `npm run build && npm start` runs the compiled build; `npm test` runs the tests.
 
@@ -78,17 +78,10 @@ Implement `createPaymentInstructions` in `src/handler.ts`.
    `failure` variant (`ADDRESS_POOL_EMPTY`, `AMOUNT_OUT_OF_RANGE`,
    `ISSUER_UNAVAILABLE`) rather than throwing.
 
-**As shipped, this handler declines every `CreatePaymentInstructions` call with `ISSUER_UNAVAILABLE`.** That is
-deliberate. Whatever addresses it returns are rendered by the POS as a payable QR and
-a customer sends real USDt to them, so a starter answering with example addresses
-would hand customer money to an address you do not own. A decline costs one sale; a
-wrong address is irreversible. `test/callback_server.test.ts` holds that line — it
-fails the moment the success branch goes live with someone else's addresses.
-
-The response you should return sits directly below the decline, commented out, with
-the TRON/Ethereum/BSC options already shaped. Put your own deposit addresses in,
-delete the decline, and the QR flow works. The three USDt contract constants in there
-are real and stay as they are — it is the deposit addresses that must become yours.
+The shipped handler returns two example deposit options (ETH and BSC); TRON is
+commented out until it goes live. The USDt contract constants are real and stay
+as they are — Step 2.3 is swapping the two address constants for addresses from
+your own pool.
 
 ### Phase 3 — report what you see on-chain
 
@@ -189,7 +182,7 @@ src/
     ├── outcome.ts              # accepted / rejected / unknown
     └── decimals.ts             # unscaled × 10^exponent ↔ decimal string
 test/
-├── callback_server.test.ts     # CreatePaymentInstructions declines; a call t-0 did not sign never lands
+├── callback_server.test.ts     # CreatePaymentInstructions answers with deposit options; a call t-0 did not sign never lands
 ├── decimals.test.ts
 ├── outcome.test.ts
 └── settlement_sent.test.ts     # all three outcomes against a fake t-0

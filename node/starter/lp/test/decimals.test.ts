@@ -50,13 +50,13 @@ test("converts to chain units exactly", () => {
   assert.equal(decimalToUnits(wire(10n, 8), 6), 1_000_000_000_000_000n);
 });
 
-test("rescales exactly when trailing zeros allow it", () => {
-  // 10.0000000 as unscaled=100_000_000, exponent=-7 — the contract allows exponents
-  // down to -8, and this is exactly 10_000_000 at 6 decimals.
-  assert.equal(decimalToUnits(wire(100_000_000n, -7), 6), 10_000_000n);
-});
-
 test("refuses to round a customer's money away", () => {
   // 7 decimal places into a 6-decimal chain unit: that last digit is money.
   assert.throws(() => decimalToUnits(decimalFromString("0.1234567"), 6), RangeError);
+});
+
+test("exact rescale when trailing digits are zeros", () => {
+  // 10.0000000 is unscaled=100_000_000n, exponent=-7. At 6 decimals the shift
+  // is -1, but the surplus digit is a zero so the rescale is exact.
+  assert.equal(decimalToUnits(wire(100_000_000n, -7), 6), 10_000_000n);
 });

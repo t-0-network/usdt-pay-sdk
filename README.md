@@ -12,7 +12,7 @@ Pick yours and go straight to its SDK.
 |---|---|---|
 | **Acquirer** | Own the merchant. Price the sale, open the intent, show the QR, learn when it settles. | [Java](java/) · [Python](python/) |
 | **Issuer** | Reserve deposit addresses, watch the chain for the customer's USDt, settle on-chain. | [Node](node/) |
-| **Liquidity Provider** | Price USDt↔local fiat, take the per-sale obligation, settle fiat over bank rails. | [API reference](https://usdt-pay-docs.t-0.network/docs/integration-guidance/api-reference/pay_lp/) |
+| **Liquidity Provider** | Price USDt↔local fiat, take the per-sale obligation, settle fiat over bank rails. | [Node](node/) · [API reference](https://usdt-pay-docs.t-0.network/docs/integration-guidance/api-reference/pay_lp/) |
 
 Not sure which you are? The acquirer talks to the POS, the issuer talks to the
 blockchain, the LP talks to a bank. t-0 sits in the middle and no two of you ever
@@ -26,7 +26,7 @@ onboarding.
 ## Quick start
 
 Scaffold a project with one command — this is the Java acquirer; the Node issuer
-is `--lang=node --role=issuer`, the Python acquirer is `--lang=python --role=acquirer`:
+is `--lang=node --role=issuer`, the Node LP is `--lang=node --role=lp`, the Python acquirer is `--lang=python --role=acquirer`:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/t-0-network/usdt-pay-sdk/master/cli/install.sh | sh -s -- init --lang=java --role=acquirer my-acquirer
@@ -47,6 +47,7 @@ Then follow your project's README; [java/](java/), [node/](node/) and
   `createHandler` for mounting into an existing server, and
   `@t-0/usdt-pay-sdk/crypto` for verifying requests in any HTTP stack
 - [`node/starter/issuer/`](node/starter/issuer/) — issuer integration guide
+- [`node/starter/lp/`](node/starter/lp/) — LP integration guide
 - [`python/`](python/) — SDK install, starter
 - [`python/sdk/`](python/sdk/) — `create_client`, `create_asgi_app` / `create_wsgi_app`,
   and `crypto` for verifying requests in any ASGI/WSGI stack

@@ -245,9 +245,35 @@ jobs:
       - name: Verify version matches tag
         run: |
           VERSION="${GITHUB_REF#refs/tags/v}"
-          PKG=$(node -p "require('./node/sdk/package.json').version")
-          [ "$PKG" = "$VERSION" ] || { echo "::error::node/sdk/package.json has $PKG, tag is v$VERSION"; exit 1; }
-          echo "node/sdk/package.json version $PKG matches tag v$VERSION"
+          ERRORS=0
+          check() {
+            if [ "$2" != "$3" ]; then
+              echo "::error::$1 mismatch: expected $3, got $2"
+              ERRORS=$((ERRORS + 1))
+            fi
+          }
+          check "node/sdk/package.json .version" \
+            "$(node -p "require('./node/sdk/package.json').version")" "$VERSION"
+          check "node/starter/issuer/package.json .version" \
+            "$(node -p "require('./node/starter/issuer/package.json').version")" "$VERSION"
+          check "node/starter/issuer/package.json SDK pin" \
+            "$(node -p "require('./node/starter/issuer/package.json').dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
+          check "node/starter/lp/package.json .version" \
+            "$(node -p "require('./node/starter/lp/package.json').version")" "$VERSION"
+          check "node/starter/lp/package.json SDK pin" \
+            "$(node -p "require('./node/starter/lp/package.json').dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
+          check "package-lock.json packages.sdk.version" \
+            "$(node -p "require('./node/package-lock.json').packages['sdk'].version")" "$VERSION"
+          check "package-lock.json packages['starter/issuer'].version" \
+            "$(node -p "require('./node/package-lock.json').packages['starter/issuer'].version")" "$VERSION"
+          check "package-lock.json packages['starter/issuer'] SDK pin" \
+            "$(node -p "require('./node/package-lock.json').packages['starter/issuer'].dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
+          check "package-lock.json packages['starter/lp'].version" \
+            "$(node -p "require('./node/package-lock.json').packages['starter/lp'].version")" "$VERSION"
+          check "package-lock.json packages['starter/lp'] SDK pin" \
+            "$(node -p "require('./node/package-lock.json').packages['starter/lp'].dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
+          [ "$ERRORS" -eq 0 ] || exit 1
+          echo "Node version sites match tag v$VERSION"
 
       # The lockfile lives at the workspace root, not in sdk/.
       - name: Install
@@ -261,7 +287,7 @@ jobs:
           npm run typecheck -w sdk
 
       # Explicit so no future refactor can point this at the private workspace root or
-      # at the issuer starter. npm refuses "private": true anyway, but the assert
+      # at a starter. npm refuses "private": true anyway, but the assert
       # is what makes it reviewable.
       - name: Verify the package about to be published
         working-directory: node/sdk
