@@ -126,8 +126,8 @@ jobs:
 
       - name: Scaffold and test Node issuer
         run: |
-          ./usdt-pay init test-node --lang=node --role=issuer --no-color --dir=test-node
-          (cd test-node && npm install --silent --no-save --package-lock=false --no-audit --no-fund "${RUNNER_TEMP}"/t-0-usdt-pay-sdk-*.tgz && npm run build && npm test)
+          ./usdt-pay init test-node-issuer --lang=node --role=issuer --no-color --dir=test-node-issuer
+          (cd test-node-issuer && npm install --silent --no-save --package-lock=false --no-audit --no-fund "${RUNNER_TEMP}"/t-0-usdt-pay-sdk-*.tgz && npm run build && npm test)
 
       - name: Scaffold and test Node lp
         run: |
@@ -174,10 +174,10 @@ jobs:
       - name: Scaffold Node projects
         shell: pwsh
         run: |
-          ./usdt-pay.exe init test-node-issuer --lang=node --role=issuer --no-color --dir=test-node
-          if (!(Test-Path test-node/package.json)) { exit 1 }
-          if (!(Test-Path test-node/.env)) { exit 1 }
-          if (!(Test-Path test-node/.gitignore)) { exit 1 }
+          ./usdt-pay.exe init test-node-issuer --lang=node --role=issuer --no-color --dir=test-node-issuer
+          if (!(Test-Path test-node-issuer/package.json)) { exit 1 }
+          if (!(Test-Path test-node-issuer/.env)) { exit 1 }
+          if (!(Test-Path test-node-issuer/.gitignore)) { exit 1 }
           ./usdt-pay.exe init test-node-lp --lang=node --role=lp --no-color --dir=test-node-lp
           if (!(Test-Path test-node-lp/package.json)) { exit 1 }
           if (!(Test-Path test-node-lp/.env)) { exit 1 }
