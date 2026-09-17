@@ -31,11 +31,8 @@ any site disagrees.
 | `java/sdk/src/main/java/network/t0/pay/server/Version.java` | `SDK_VERSION` |
 | `node/sdk/src/version.ts` | `SDK_VERSION` |
 | `node/sdk/package.json` | `.version` |
-| `node/starter/issuer/package.json` | `.version` |
-| `node/starter/issuer/package.json` | `.dependencies["@t-0/usdt-pay-sdk"]` = `^X.Y.Z` |
-| `node/starter/lp/package.json` | `.version` |
-| `node/starter/lp/package.json` | `.dependencies["@t-0/usdt-pay-sdk"]` = `^X.Y.Z` |
-| `node/package-lock.json` | the `sdk`, `starter/issuer` and `starter/lp` entries — three `.version`s and both starter SDK pins |
+| each `node/starter/*/package.json` | `.version` and `.dependencies["@t-0/usdt-pay-sdk"]` = `^X.Y.Z` |
+| `node/package-lock.json` | the `sdk` and every `starter/*` entry — `.version` and SDK pin each |
 | `python/sdk/pyproject.toml` | `version = "X.Y.Z"` |
 | `python/sdk/src/t0_usdt_pay_sdk/_version.py` | `__version__` |
 | `python/starter/acquirer/pyproject.toml` | `t0-usdt-pay-sdk>=X.Y.Z` dependency |
@@ -85,7 +82,7 @@ Dispatch input `bump` — `patch` (default) / `minor` / `major`.
       `java/gradle.properties` verbatim, so that version must be a plain `X.Y.Z` — a `-SNAPSHOT`
       suffix would tag something `publish.yaml`'s tag filter does not match, and the publish would
       never fire.
-   4. **Bump.** Node via `npm version … --no-workspaces-update -w sdk -w starter/issuer -w starter/lp`,
+   4. **Bump.** Node via `npm version … --no-workspaces-update -w sdk -w starter/*`,
       then `npm pkg set` for each starter's SDK pin, then `npm install --package-lock-only`. Java via
       `sed` on `gradle.properties` and `Version.java`. Nothing hand-edits the lockfile.
    5. **Validate** every site in the table above, lockfile entries included. Any mismatch fails

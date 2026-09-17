@@ -9,7 +9,7 @@ protos are not authored here.
 ```
 proto/tzero/v1/pay/      the contract (common, validate, acquirer/, issuer/, lp/)
 java/                    Gradle: sdk, starter/acquirer — see java/CLAUDE.md
-node/                    npm workspace: sdk, starter/issuer, starter/lp — see node/CLAUDE.md
+node/                    npm workspace: sdk, starter/* — see node/CLAUDE.md
 python/                  uv workspace: sdk, starter/acquirer — see python/CLAUDE.md
 cli/                     unified scaffolder (Go) — `usdt-pay init`; docs/CLI.md
 docs/RELEASE_AND_PUBLISH.md   the release process
