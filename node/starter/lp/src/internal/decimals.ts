@@ -88,8 +88,7 @@ export function decimalToString(value: Decimal): string {
 export function decimalToUnits(value: Decimal, decimals: number): bigint {
   const shift = value.exponent + decimals;
   if (shift < 0) {
-    // The exponent is more negative than the target decimals. If the surplus
-    // digits are all zeros (exact rescale) the conversion is still lossless.
+    // Exact rescale: surplus digits are zeros.
     const divisor = 10n ** BigInt(-shift);
     if (value.unscaled % divisor === 0n) {
       return value.unscaled / divisor;

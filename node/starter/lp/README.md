@@ -49,7 +49,7 @@ and tells you the key exchange is still pending.
    (it is also recorded as a comment in `.env`, right under the private key).
 2. **1.2** Send that public key to your t-0 onboarding contact, together with the
    base URL where this service listens. Onboarding runs through your t-0 contact,
-   and the same exchange is where `NETWORK_PUBLIC_KEY` comes back to you.
+   and the same exchange is where the production `NETWORK_PUBLIC_KEY` comes back to you.
    `ExecuteQuote` is synchronous and on the critical path: if t-0
    cannot reach that URL, no execution can be delivered.
 
