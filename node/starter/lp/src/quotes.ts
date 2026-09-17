@@ -11,11 +11,7 @@ const QUOTE_FX_RATE = decimalFromString("4000.00");
 const QUOTE_VALIDITY_MS = 5 * 60_000;
 const REFRESH_MS = 60_000;
 
-/**
- * Publishes a fixed demo quote on a timer so the sandbox flow runs end to end.
- *
- * Returns a stop function that clears the interval.
- */
+/** Publishes a fixed demo quote on a timer so the sandbox flow runs end to end. */
 export function startQuotePublisher(
   t0: Client<typeof LpService>,
   options?: { refreshMs?: number },
