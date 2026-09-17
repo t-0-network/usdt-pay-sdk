@@ -317,24 +317,18 @@ jobs:
             "$(grep -oP '(?<=SDK_VERSION = \")[^\"]+' java/sdk/src/main/java/network/t0/pay/server/Version.java)" "$VERSION"
           check "node/sdk/package.json .version" \
             "$(node -p "require('./node/sdk/package.json').version")" "$VERSION"
-          check "node/starter/issuer/package.json .version" \
-            "$(node -p "require('./node/starter/issuer/package.json').version")" "$VERSION"
-          check "node/starter/issuer/package.json SDK pin" \
-            "$(node -p "require('./node/starter/issuer/package.json').dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
-          check "node/starter/lp/package.json .version" \
-            "$(node -p "require('./node/starter/lp/package.json').version")" "$VERSION"
-          check "node/starter/lp/package.json SDK pin" \
-            "$(node -p "require('./node/starter/lp/package.json').dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
           check "package-lock.json packages.sdk.version" \
             "$(node -p "require('./node/package-lock.json').packages['sdk'].version")" "$VERSION"
-          check "package-lock.json packages['starter/issuer'].version" \
-            "$(node -p "require('./node/package-lock.json').packages['starter/issuer'].version")" "$VERSION"
-          check "package-lock.json packages['starter/issuer'] SDK pin" \
-            "$(node -p "require('./node/package-lock.json').packages['starter/issuer'].dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
-          check "package-lock.json packages['starter/lp'].version" \
-            "$(node -p "require('./node/package-lock.json').packages['starter/lp'].version")" "$VERSION"
-          check "package-lock.json packages['starter/lp'] SDK pin" \
-            "$(node -p "require('./node/package-lock.json').packages['starter/lp'].dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
+          for STARTER in issuer lp; do
+            check "node/starter/$STARTER/package.json .version" \
+              "$(node -p "require('./node/starter/$STARTER/package.json').version")" "$VERSION"
+            check "node/starter/$STARTER/package.json SDK pin" \
+              "$(node -p "require('./node/starter/$STARTER/package.json').dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
+            check "package-lock.json starter/$STARTER .version" \
+              "$(node -p "require('./node/package-lock.json').packages['starter/$STARTER'].version")" "$VERSION"
+            check "package-lock.json starter/$STARTER SDK pin" \
+              "$(node -p "require('./node/package-lock.json').packages['starter/$STARTER'].dependencies['@t-0/usdt-pay-sdk']")" "^$VERSION"
+          done
           check "node/sdk/src/version.ts SDK_VERSION" \
             "$(grep -oP '(?<=SDK_VERSION = \")[^\"]+' node/sdk/src/version.ts)" "$VERSION"
 
