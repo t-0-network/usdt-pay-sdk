@@ -8,9 +8,11 @@ from __future__ import annotations
 import asyncio
 import logging
 import sys
+from uuid import uuid4
 
 import uvicorn
 from t0_usdt_pay_sdk import create_asgi_app, create_client, handler
+from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer import acquirer_pb2
 from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer.acquirer_connect import (
     AcquirerCallbackServiceASGIApplication,
     AcquirerServiceClient,
@@ -18,9 +20,60 @@ from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer.acquirer_connect import (
 
 from acquirer.config import ConfigurationError, load_config
 from acquirer.handler import AcquirerCallbacks
+from acquirer.internal.create_payment_intent import create_payment_intent
+from acquirer.internal.decimals import decimal_from_string, decimal_to_string
+from acquirer.internal.get_payment_quote import get_payment_quote
+from acquirer.internal.outcome import Accepted, Rejected, Unknown
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
+
+
+async def run_demo_sale(t0: AcquirerServiceClient) -> None:
+    # TODO: Step 2.1 — replace the demo sale with a real one from your POS.
+    # One sale is one currency, one amount and one payment_ref: quote and intent
+    # must describe the same sale or you price one thing and charge another.
+    local_currency = "COP"
+    local_amount = "100000"
+    payment_ref = str(uuid4())
+    idempotency_key = str(uuid4())
+
+    quoted = await get_payment_quote(t0, local_currency=local_currency, local_amount=local_amount)
+
+    if isinstance(quoted, Accepted):
+        logger.info(
+            "GetPaymentQuote accepted: quote_id=%s fx_rate=%s expires_at=%s",
+            quoted.value.quote_id,
+            decimal_to_string(quoted.value.fx_rate),
+            quoted.value.expires_at.ToDatetime().isoformat(),
+        )
+    elif isinstance(quoted, Unknown):
+        logger.warning("GetPaymentQuote unanswered — safe to retry")
+    elif isinstance(quoted, Rejected):
+        logger.warning("GetPaymentQuote rejected: %s", quoted.reason)
+
+    if not isinstance(quoted, Accepted):
+        return
+
+    intent = await create_payment_intent(
+        t0,
+        payment_ref=payment_ref,
+        idempotency_key=idempotency_key,
+        amount=acquirer_pb2.LocalAmount(value=decimal_from_string(local_amount), currency=local_currency),
+        quote_id=quoted.value.quote_id,
+    )
+
+    if isinstance(intent, Accepted):
+        logger.info(
+            "CreatePaymentIntent accepted: payment_intent_id=%s",
+            intent.value.payment_intent_id,
+        )
+        for opt in intent.value.usdt_on_chain.deposit_options:
+            logger.info("  deposit option: %s", opt.payment_uri)
+    elif isinstance(intent, Unknown):
+        logger.warning("CreatePaymentIntent unanswered — retry the same idempotency_key")
+    elif isinstance(intent, Rejected):
+        logger.warning("CreatePaymentIntent rejected: %s", intent.reason)
 
 
 async def main() -> None:
@@ -48,25 +101,25 @@ async def main() -> None:
     logger.info("Callback server listening on port %d", config.port)
 
     # ──────────────────────────────────────────────────────────────────
-    # Phase 2 -- open a payment.
+    # Phase 2 — price a sale, then open an intent for it.
     #
-    # Nothing runs at startup: every outbound call is driven by the sale,
-    # not by a timer.
-    #
-    # TODO 2.1 (fiat): get_payment_quote(t0, ...) -> quote_id, settlement_amount,
-    #          fx_rate, expires_at.
-    # TODO 2.2: create_payment_intent(t0, ...) -> payment_intent_id, expires_at,
-    #           settlement_amount, deposit options, settlement mode.
-    # TODO 2.3: hand each payment_uri to the POS unchanged; show until expires_at.
-    #
-    # Phase 3 -- the callbacks: at-least-once, dedupe on the key each
+    # The demo runs before the server starts because uvicorn's serve()
+    # blocks. Nothing depends on the acquirer's callback server being
+    # up when CreatePaymentIntent is sent (t-0 calls the issuer inline,
+    # not the acquirer).
+    # ──────────────────────────────────────────────────────────────────
+
+    await run_demo_sale(t0)
+
+    # TODO: Step 2.3 — deploy this service and give the t-0 team its base URL,
+    #       so the Phase 3 callbacks can reach you.
+
+    # Phase 3 — the callbacks: at-least-once, dedupe on the key each
     # callback carries. Already wired above; add your business logic
     # where each handler's TODO says.
     #
-    # Phase 4 (fiat only) -- confirm receipt with settlement_received.
+    # Phase 4 (fiat only) — confirm receipt with settlement_received.
     # Nothing runs on a timer: the bank statement drives this.
-    # ──────────────────────────────────────────────────────────────────
-    _ = t0  # used by your sale flow
 
     await server.serve()
 

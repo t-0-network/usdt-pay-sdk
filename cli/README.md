@@ -1,6 +1,6 @@
 # usdt-pay
 
-`usdt-pay` is the scaffolder: `usdt-pay init` creates a standalone acquirer or issuer project from
+`usdt-pay` is the scaffolder: `usdt-pay init` creates a standalone acquirer, issuer or LP project from
 the starters in this repo, with a fresh keypair and a ready `.env`.
 
 ## Install
@@ -45,6 +45,7 @@ usdt-pay init --lang=<language> --role=<role> <project-name>
 |---|---|---|
 | `java` | `acquirer` | [`java/starter/acquirer/`](../java/starter/acquirer/) |
 | `node` | `issuer` | [`node/starter/issuer/`](../node/starter/issuer/) |
+| `node` | `lp` | [`node/starter/lp/`](../node/starter/lp/) |
 | `python` | `acquirer` | [`python/starter/acquirer/`](../python/starter/acquirer/) |
 
 Optional flags, before or after the project name:
@@ -62,7 +63,8 @@ Optional flags, before or after the project name:
   published SDK.
 - `.env` with a freshly generated secp256k1 private key in `PROVIDER_PRIVATE_KEY`, its public key
   recorded on the comment line under it, mode `0600`.
-- `NETWORK_PUBLIC_KEY=` left empty in `.env` — your t-0 onboarding contact gives you the value.
+- `NETWORK_PUBLIC_KEY` pre-filled with the sandbox key in `.env`; production comes from your t-0
+  onboarding contact.
 - The public key to share with t-0 and the next steps, printed at the end: `cd` into the
   project, fill in `NETWORK_PUBLIC_KEY`, run it.
 

@@ -3,7 +3,7 @@ package main
 var Config = CLIConfig{
 	ProductName:  "usdt-pay",
 	Command:      "usdt-pay init",
-	Description:  "a new usdt-pay project (acquirer or issuer)",
+	Description:  "a new usdt-pay project (acquirer, issuer or lp)",
 	RoleRequired: true,
 	DefaultRole:  "",
 	Languages:    []string{"java", "node", "python"},

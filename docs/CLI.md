@@ -12,7 +12,7 @@ headed "Maintainers", is how the pieces fit and what to do when they change.
 |---|---|
 | Binary | `usdt-pay` (`usdt-pay.exe` on Windows) |
 | Commands | `init`, `keygen`, `version`, `help` |
-| Languages and roles | `java`/`acquirer`, `node`/`issuer`, `python`/`acquirer` |
+| Languages and roles | `java`/`acquirer`, `node`/`issuer`, `node`/`lp`, `python`/`acquirer` |
 | Releases | assets `usdt-pay-<os>-<arch>[.exe]` on the GitHub Release `vX.Y.Z`, uploaded by `publish-cli` in `publish.yaml` |
 | Installers | `cli/install.sh` (macOS, Linux) and `cli/install.ps1` (Windows) download the latest release |
 | Source | `cli/` — eight files synced from provider-sdk, the rest repo-owned (see "Maintainers — ownership and sync") |
@@ -95,7 +95,7 @@ usdt-pay version   # prints "usdt-pay <version>"
 Usage: usdt-pay <command> [options]
 
 Commands:
-  init [options] <project-name>  Initialize a new usdt-pay project (acquirer or issuer)
+  init [options] <project-name>  Initialize a new usdt-pay project (acquirer, issuer or lp)
   keygen                         Generate a new secp256k1 keypair
   version                        Show version
 
@@ -121,7 +121,7 @@ or `--flag value`. `init --help` prints Go's flag summary in single-dash form; t
 | Flag | Default | Accepted values |
 |---|---|---|
 | `--lang` | required | `java`, `node`, `python` — the directories under `cli/internal/embed/` |
-| `--role` | required | a role that exists for the language: `acquirer` for `java` and `python`, `issuer` for `node` |
+| `--role` | required | a role that exists for the language: `acquirer` for `java` and `python`, `issuer` or `lp` for `node` |
 | `--dir` | `<project-name>` under the current directory | any path, used verbatim; it may exist if it is empty |
 | `--no-color` | off | plain `[INFO]`/`[OK]`/`[ERROR]` prefixes and box drawing without ANSI color. An `init` flag: `usdt-pay --no-color init ...` is `unknown command "--no-color"` |
 | `--version` | | prints `usdt-pay init <version>` and exits 0 |
@@ -132,7 +132,8 @@ outside `a-z`, `0-9`, `-`, `_` is dropped: `My Issuer!` becomes `my-issuer`. Aft
 The sanitized name is the default directory, the value of
 `rootProject.name` in `settings.gradle.kts` (Java) or `"name"` in `package.json` (Node), and the
 replacement for `my-provider` throughout the template; its PascalCase form replaces
-`MyProvider`.
+`MyProvider`. The Node LP starter uses `my-provider-lp` as its package name, so a scaffolded
+project's `package.json` carries the name `<name>-lp` (e.g. `acme-lp` for `usdt-pay init acme --role=lp`).
 
 **Validation** runs in this order and stops at the first failure. Messages go to stderr with an
 `[ERROR]` prefix:
@@ -190,8 +191,8 @@ In order, with the line the CLI prints for each step:
    # Public key for the line above (share it with t-0): 0x04<128 hex>
    ```
 
-   `.env` is written with mode `0600`. `NETWORK_PUBLIC_KEY=` stays empty for you to fill in.
-   `.env.example` stays in the project as it was, with `PROVIDER_PRIVATE_KEY=` empty.
+   `.env` is written with mode `0600`. `NETWORK_PUBLIC_KEY` is pre-filled with the sandbox key
+   from `.env.example`. `.env.example` stays in the project as it was, with `PROVIDER_PRIVATE_KEY=` empty.
 
 Then the completion output. Java, `--no-color`, `<project-dir>` standing for the absolute path of
 the new project, `<dir>` for the `--dir` value exactly as given (the project name when `--dir` is
@@ -243,6 +244,7 @@ src/main/java/network/t0/pay/acquirer/   src/main/resources/   src/test/java/
 |---|---|---|---|---|---|
 | `java` / `acquirer` | `java/starter/acquirer/` | Acquirer callback server and client: prices the sale, opens the intent, learns when it settles. Gradle, Java 21 toolchain, SDK `network.t-0:usdt-pay-sdk-java` from Maven Central, pinned by `usdtPaySdkVersion` in `gradle.properties` | `build.gradle.kts`, `settings.gradle.kts`, `gradlew`, `src/main/java/network/t0/pay/acquirer/Main.java` | `./gradlew run` | `./gradlew test` |
 | `node` / `issuer` | `node/starter/issuer/` | Issuer callback server and client: reserves deposit addresses, reports the customer's USDt, settles on-chain. npm, Node 22, SDK `@t-0/usdt-pay-sdk` from the npm registry | `package.json`, `tsconfig.json`, `src/index.ts` | `npm install && npm run dev` | `npm test` |
+| `node` / `lp` | `node/starter/lp/` | LP callback server and client: publishes standing quotes, accepts executions, reports fiat settlements. npm, Node 22, SDK `@t-0/usdt-pay-sdk` from the npm registry | `package.json`, `tsconfig.json`, `src/index.ts` | `npm install && npm run dev` | `npm test` |
 | `python` / `acquirer` | `python/starter/acquirer/` | Acquirer callback server and client: prices the sale, opens the intent, learns when it settles. uv, Python 3.13, SDK `t0-usdt-pay-sdk` from PyPI | `pyproject.toml`, `src/acquirer/main.py` | `uv sync && uv run python -m acquirer.main` | `uv run pytest` |
 
 Each scaffold ships its README — the integration guide for the role.
@@ -284,7 +286,7 @@ The synced code knows this product only through `CLIConfig`:
 var Config = CLIConfig{
 	ProductName:  "usdt-pay",
 	Command:      "usdt-pay init",
-	Description:  "a new usdt-pay project (acquirer or issuer)",
+	Description:  "a new usdt-pay project (acquirer, issuer or lp)",
 	RoleRequired: true,
 	DefaultRole:  "",
 	Languages:    []string{"java", "node", "python"},
@@ -317,7 +319,7 @@ The tests are what tell you the product still works. If `CLIConfig` gained or lo
 `cli/generate.go` is one directive:
 
 ```go
-//go:generate go run ./internal/sync java/acquirer=java/starter/acquirer node/issuer=node/starter/issuer
+//go:generate go run ./internal/sync java/acquirer=java/starter/acquirer node/issuer=node/starter/issuer node/lp=node/starter/lp python/acquirer=python/starter/acquirer
 ```
 
 `go generate ./...` runs `internal/sync`, which copies each `<lang>/starter/<role>/` in the tree
@@ -347,7 +349,7 @@ here — the generated key and `.env` are what `usdt-pay init` writes into a sca
 is what it scaffolds from:
 
 ```bash
-cp .env.example .env      # then fill in PROVIDER_PRIVATE_KEY and NETWORK_PUBLIC_KEY
+cp .env.example .env      # then set PROVIDER_PRIVATE_KEY — NETWORK_PUBLIC_KEY is pre-filled with the sandbox key
 ```
 
 `usdt-pay keygen` prints a keypair for `PROVIDER_PRIVATE_KEY`.
@@ -371,7 +373,7 @@ Tests:
 Docker from the starter directory builds against the published SDK (not the workspace) — the
 same image a scaffolded user would get.
 
-### Node — `node/starter/issuer/`
+### Node — `node/starter/issuer/` and `node/starter/lp/`
 
 ```bash
 # Install and build from node/ — the starter compiles against the local sdk workspace.
@@ -382,7 +384,7 @@ npm start
 ```
 
 `npm run dev` runs the same thing under `tsx watch` while you are editing; `npm test` runs the
-tests.
+tests. Commands are identical for both starters.
 
 Docker from the starter directory builds against the published SDK (not the workspace).
 
@@ -414,37 +416,40 @@ Whole-workspace builds are the four commands in `CLAUDE.md`, "Build and test" �
   `TestRun_WritesFreshPrivateKey` instantiates each starter twice: `.env` holds a fresh key —
   `0x` + 64 hex, a valid secp256k1 scalar, unique across instantiations — and the public key
   printed to the user and the one recorded in `.env` both derive from it; `.env.example` keeps
-  its empty `PROVIDER_PRIVATE_KEY=`; `NETWORK_PUBLIC_KEY` is present and empty; `.env` is
-  `0600`.
+  its empty `PROVIDER_PRIVATE_KEY=`; `NETWORK_PUBLIC_KEY` is present (pre-filled with the
+  sandbox key); `.env` is `0600`.
 - **`cli/scaffold_test.go`** — embed path handling (`embed.FS` rejects backslash paths, every
   language in `Config.Languages` has a non-empty embed directory) and the name helpers
   (`sanitizeProjectName`, `toPascalCase`).
 - **`cli/keygen_test.go`** — synced from provider-sdk; the keypair generator.
-- **`.github/workflows/ci-cli.yaml`** — triggered by `cli/**`, `java/**`, `node/**` and
-  `proto/**`, because the starters and SDKs it builds are all inputs. Two jobs:
+- **`.github/workflows/ci-cli.yaml`** — triggered by `cli/**`, `java/**`, `node/**`,
+  `python/**` and `proto/**`, because the starters and SDKs it builds are all inputs. Two jobs:
 
   **Build & Scaffold Test** (Linux): generates, builds and unit-tests the CLI (`go test -v`),
-  then scaffolds each starter with explicit steps — Java acquirer and Node issuer — checking
-  essential files (`build.gradle.kts`/`package.json`, `.env`, `.gitignore`, `Dockerfile`,
-  `.dockerignore`, `gradlew` executable). Publishes this tree's SDKs locally (Java through
-  `publishToMavenLocal -Pversion=0.0.0-local`, Node through `npm pack -w sdk`) and builds and
-  runs each scaffold's own tests against them.
+  then scaffolds each starter with explicit steps — Java acquirer, Node issuer, Node LP and
+  Python acquirer — checking essential files (`build.gradle.kts`/`package.json`, `.env`,
+  `.gitignore`, `Dockerfile`, `.dockerignore`, `gradlew` executable). Publishes this tree's SDKs
+  locally (Java through `publishToMavenLocal -Pversion=0.0.0-local`, Node through
+  `npm pack -w sdk`) and builds and runs each scaffold's own tests against them.
 
   It builds against the SDK in the tree rather than the published one because a scaffolded
   project pins the published SDK, and between a proto sync and the next release the starters use
   SDK changes that reach the registry only at that release. The released CLI always embeds a
   starter that matches the SDK released with it, so the tree is the right thing to prove.
 
-  **Build & Test (Windows)**: generates, builds and unit-tests the CLI, then scaffolds the Node
-  starter and checks its essential files.
+  **Build & Test (Windows)**: generates, builds and unit-tests the CLI, then scaffolds both Node
+  starters and checks their essential files.
 
 ## Maintainers — adding a starter or a language
 
-1. The starter itself under `java/starter/<role>/` or `node/starter/<role>/`, wired into
-   `cli/generate.go` as `<lang>/<role>=<lang>/starter/<role>`, and a scaffold + verify step pair
-   in `ci-cli.yaml` for it. Its `.env.example` needs an active `PROVIDER_PRIVATE_KEY=` line; the
-   scaffolder records the public key under it by itself. Use `my-provider` as the project name in
-   `settings.gradle.kts` / `package.json`; the scaffolder replaces it.
+1. The starter itself under `java/starter/<role>/`, `node/starter/<role>/` or
+   `python/starter/<role>/`, wired into `cli/generate.go` as
+   `<lang>/<role>=<lang>/starter/<role>`, and a scaffold + verify step pair in `ci-cli.yaml` for
+   it. Its `.env.example` needs an active `PROVIDER_PRIVATE_KEY=` line; the scaffolder records
+   the public key under it by itself. Use `my-provider` as the project name in
+   `settings.gradle.kts` / `package.json`; the scaffolder replaces the literal `my-provider` in
+   file contents. The Node LP starter uses `my-provider-lp`, so its scaffolded package name
+   carries an `-lp` suffix.
 2. `Dockerfile` and `.dockerignore` in the starter directory, written for standalone build
    context (`.`). The SDK must come from a registry inside Docker, not from the workspace.
 3. A new language: add it to `Languages` in `config.go`, its entry files to `entryFiles` in

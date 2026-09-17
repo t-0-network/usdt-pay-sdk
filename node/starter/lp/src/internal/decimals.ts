@@ -11,8 +11,8 @@ import { type Decimal, DecimalSchema } from "@t-0/usdt-pay-sdk";
  *
  * The cheapest correct thing you can do with an inbound amount is *not convert it* —
  * pass the `Decimal` t-0 sent you through untouched. For the outbound
- * `PaymentReceived` call, build the `Decimal` from your chain reader's string output
- * with `decimalFromString`, never from an intermediate floating-point step.
+ * `FiatSettlementSent` call, build the `Decimal` from your bank statement's string
+ * output with `decimalFromString`, never from an intermediate floating-point step.
  */
 
 /** The contract constrains exponent to this range; anything else is rejected on the wire. */

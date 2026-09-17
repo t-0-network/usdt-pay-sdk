@@ -1,9 +1,8 @@
 import { create } from "@bufbuild/protobuf";
-import { timestampDate } from "@bufbuild/protobuf/wkt";
+import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
 import type { ServiceImpl } from "@connectrpc/connect";
 import {
   Blockchain,
-  CreatePaymentInstructionsResponse_Failure_Reason,
   CreatePaymentInstructionsResponseSchema,
   type Decimal,
   type IssuerCallbackService,
@@ -11,6 +10,10 @@ import {
   DepositOptionSchema,
 } from "@t-0/usdt-pay-sdk";
 import { decimalToString, decimalToUnits } from "./internal/decimals.js";
+
+// TODO: Step 2.3 — replace with addresses from your own pool
+const EXAMPLE_ETH_DEPOSIT_ADDRESS = "0x000000000000000000000000000000000000dEaD";
+const EXAMPLE_BSC_DEPOSIT_ADDRESS = "0x000000000000000000000000000000000000dEaD";
 
 /**
  * CreatePaymentInstructions — the only callback t-0 pushes to the issuer.
@@ -36,48 +39,31 @@ export const issuerCallbackHandler: ServiceImpl<typeof IssuerCallbackService> = 
     //       onboarding mapping. You will need it for SettlementSent, and resolving
     //       it yourself is what makes t-0's on-chain check a real cross-check rather
     //       than an echo of its own input.
-    // TODO: Step 2.3 — hold the reservation until request.expiresAt, then release the
-    //       addresses.
+    // TODO: Step 2.3 — swap the two example address constants above for addresses
+    //       from your own pool, and hold the reservation until request.expiresAt.
     // TODO: Step 2.4 — no free addresses, or the amount is outside your range? Answer
     //       with the failure variant (ADDRESS_POOL_EMPTY / AMOUNT_OUT_OF_RANGE /
-    //       ISSUER_UNAVAILABLE) instead of throwing — which is what the unimplemented
-    //       default below already does.
+    //       ISSUER_UNAVAILABLE) instead of throwing.
 
-    // Declines until you implement the steps above. Deliberate: whatever addresses
-    // this returns are rendered by the POS as a payable QR and the customer sends real
-    // USDt to them. A decline costs one sale; an address you do not control costs the
-    // customer their money, irreversibly.
+    const amountUsdt = request.amountUsdt!;
+    // expires_at is required on the response but the request's gt_now lacks `required`
+    const expiresAt = request.expiresAt ?? timestampFromDate(new Date(Date.now() + 2 * 60_000));
+
     return create(CreatePaymentInstructionsResponseSchema, {
       result: {
-        case: "failure",
-        value: { reason: CreatePaymentInstructionsResponse_Failure_Reason.ISSUER_UNAVAILABLE },
+        case: "success",
+        value: {
+          depositOptions: [
+            // tron("TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", yourTronDepositAddress, amountUsdt) — not live yet
+            evm(Blockchain.ETH, 1, "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+                EXAMPLE_ETH_DEPOSIT_ADDRESS, amountUsdt),
+            evm(Blockchain.BSC, 56, "0x55d398326f99059fF775485246999027B3197955",
+                EXAMPLE_BSC_DEPOSIT_ADDRESS, amountUsdt),
+          ],
+          expiresAt,
+        },
       },
     });
-
-    // TODO: Step 2.3 — delete the decline above and return this instead, once the
-    //       addresses come from your own pool. One option per chain you support for
-    //       this intent; the customer picks one. The three USDt contract constants
-    //       are real and stay as they are — it is the deposit addresses that must
-    //       become yours. TRON is not accepted until it goes live (ETH and BSC are
-    //       live at launch).
-    //
-    // const amountUsdt = request.amountUsdt!;
-    // return create(CreatePaymentInstructionsResponseSchema, {
-    //   result: {
-    //     case: "success",
-    //     value: {
-    //       depositOptions: [
-    //         tron("TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
-    //              yourTronDepositAddress, amountUsdt),
-    //         evm(Blockchain.ETH, 1, "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-    //             yourEthDepositAddress, amountUsdt),
-    //         evm(Blockchain.BSC, 56, "0x55d398326f99059fF775485246999027B3197955",
-    //             yourBscDepositAddress, amountUsdt),
-    //       ],
-    //       expiresAt: request.expiresAt,
-    //     },
-    //   },
-    // });
   },
 };
 

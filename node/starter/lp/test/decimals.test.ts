@@ -50,12 +50,12 @@ test("converts to chain units exactly", () => {
   assert.equal(decimalToUnits(wire(10n, 8), 6), 1_000_000_000_000_000n);
 });
 
-test("exact rescale when trailing digits are zeros", () => {
-  assert.equal(decimalToUnits(wire(100_000_000n, -7), 6), 10_000_000n);
-  assert.equal(decimalToUnits(wire(-100_000_000n, -7), 6), -10_000_000n);
-});
-
 test("refuses to round a customer's money away", () => {
   // 7 decimal places into a 6-decimal chain unit: that last digit is money.
   assert.throws(() => decimalToUnits(decimalFromString("0.1234567"), 6), RangeError);
+});
+
+test("exact rescale when trailing digits are zeros", () => {
+  assert.equal(decimalToUnits(wire(100_000_000n, -7), 6), 10_000_000n);
+  assert.equal(decimalToUnits(wire(-100_000_000n, -7), 6), -10_000_000n);
 });

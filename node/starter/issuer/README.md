@@ -18,8 +18,9 @@ This README says what to build — for what every field and decline code means, 
 
 `usdt-pay init` ([usdt-pay-sdk](https://github.com/t-0-network/usdt-pay-sdk))
 created this project and wrote `.env` with a fresh `PROVIDER_PRIVATE_KEY`; the
-matching public key is on the comment line under it. Fill in `NETWORK_PUBLIC_KEY`
-with the key your t-0 onboarding contact gives you, then install and run:
+matching public key is on the comment line under it. `NETWORK_PUBLIC_KEY` is
+pre-filled with the sandbox key; your t-0 onboarding contact gives you the
+production key. Install and run:
 
 ```bash
 npm install && npm run dev
@@ -27,8 +28,8 @@ npm install && npm run dev
 
 It prints your public key and starts the callback server under `tsx watch`,
 restarting as you edit. Nothing else happens until t-0 calls
-`CreatePaymentInstructions` — and until you implement that handler it declines,
-so nobody can pay against addresses that are not yours.
+`CreatePaymentInstructions` — which the shipped handler answers with example
+ETH and BSC deposit addresses so the flow runs end to end against the sandbox.
 
 `npm run build && npm start` runs the compiled build; `npm test` runs the tests.
 
@@ -54,7 +55,7 @@ an echo of its own input.
    (it is also recorded as a comment in `.env`, right under the private key).
 2. **1.2** Send that public key to your t-0 onboarding contact, together with the
    base URL where this service listens. Onboarding runs through your t-0 contact,
-   and the same exchange is where `NETWORK_PUBLIC_KEY` comes back to you.
+   and the same exchange is where the production `NETWORK_PUBLIC_KEY` comes back to you.
    `CreatePaymentInstructions` is synchronous and on the critical path: if t-0
    cannot reach that URL, no intent can be opened, so a laptop on `localhost:8080`
    needs a tunnel or a deployed host before this step means anything.
@@ -78,17 +79,10 @@ Implement `createPaymentInstructions` in `src/handler.ts`.
    `failure` variant (`ADDRESS_POOL_EMPTY`, `AMOUNT_OUT_OF_RANGE`,
    `ISSUER_UNAVAILABLE`) rather than throwing.
 
-**As shipped, this handler declines every `CreatePaymentInstructions` call with `ISSUER_UNAVAILABLE`.** That is
-deliberate. Whatever addresses it returns are rendered by the POS as a payable QR and
-a customer sends real USDt to them, so a starter answering with example addresses
-would hand customer money to an address you do not own. A decline costs one sale; a
-wrong address is irreversible. `test/callback_server.test.ts` holds that line — it
-fails the moment the success branch goes live with someone else's addresses.
-
-The response you should return sits directly below the decline, commented out, with
-the TRON/Ethereum/BSC options already shaped. Put your own deposit addresses in,
-delete the decline, and the QR flow works. The three USDt contract constants in there
-are real and stay as they are — it is the deposit addresses that must become yours.
+The shipped handler returns two example deposit options (ETH and BSC); TRON is
+commented out until it goes live. The USDt contract constants are real and stay
+as they are — Step 2.3 is swapping the two address constants for addresses from
+your own pool.
 
 ### Phase 3 — report what you see on-chain
 
@@ -189,7 +183,7 @@ src/
     ├── outcome.ts              # accepted / rejected / unknown
     └── decimals.ts             # unscaled × 10^exponent ↔ decimal string
 test/
-├── callback_server.test.ts     # CreatePaymentInstructions declines; a call t-0 did not sign never lands
+├── callback_server.test.ts     # CreatePaymentInstructions answers with deposit options; a call t-0 did not sign never lands
 ├── decimals.test.ts
 ├── outcome.test.ts
 └── settlement_sent.test.ts     # all three outcomes against a fake t-0

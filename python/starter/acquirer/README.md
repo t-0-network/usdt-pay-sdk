@@ -15,6 +15,13 @@ uv sync
 uv run python -m acquirer.main
 ```
 
+It prints your public key, runs one demo sale through `get_payment_quote` →
+`create_payment_intent`, then starts the callback server. That demo is a
+fiat-mode sale for 100 000 COP — replace it in `main.py` once the round trip
+works. The demo runs before the server starts because uvicorn's `serve()`
+blocks; nothing depends on the callback server being up when
+`CreatePaymentIntent` is sent.
+
 Sync mode (gunicorn or waitress):
 
 ```bash
@@ -63,7 +70,8 @@ reach it.
 
 ## Phase 2 — open a payment
 
-When the merchant rings up a sale:
+Replace the demo sale in `main.py` with a real one from your POS. When the
+merchant rings up a sale:
 
 1. **(fiat only)** `get_payment_quote` — indicative `settlement_amount`,
    `fx_rate`, `quote_id`, `expires_at`. The quote stands until it expires; any
@@ -72,8 +80,6 @@ When the merchant rings up a sale:
    `settlement_amount`, deposit options (one per chain), settlement mode. Hand
    each `payment_uri` to the POS unchanged and show it until `expires_at`.
 3. The customer pays from their wallet. You wait for the callbacks.
-
-Nothing outbound runs on a timer: the sale drives it.
 
 ## Phase 3 — the callbacks
 
