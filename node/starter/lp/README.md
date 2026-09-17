@@ -174,7 +174,7 @@ src/
     ├── outcome.ts              # accepted / rejected / unknown
     └── decimals.ts             # unscaled × 10^exponent ↔ decimal string
 test/
-├── callback_server.test.ts     # ExecuteQuote answers with deposit options; a call t-0 did not sign never lands
+├── callback_server.test.ts     # ExecuteQuote answers accepted; a call t-0 did not sign never lands
 ├── decimals.test.ts
 ├── outcome.test.ts
 ├── publish_quote.test.ts       # all three outcomes against a fake t-0
