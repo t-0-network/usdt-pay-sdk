@@ -56,7 +56,6 @@ test("refuses to round a customer's money away", () => {
 });
 
 test("exact rescale when trailing digits are zeros", () => {
-  // 10.0000000 is unscaled=100_000_000n, exponent=-7. At 6 decimals the shift
-  // is -1, but the surplus digit is a zero so the rescale is exact.
   assert.equal(decimalToUnits(wire(100_000_000n, -7), 6), 10_000_000n);
+  assert.equal(decimalToUnits(wire(-100_000_000n, -7), 6), -10_000_000n);
 });

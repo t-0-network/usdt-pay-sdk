@@ -51,9 +51,8 @@ test("converts to chain units exactly", () => {
 });
 
 test("rescales exactly when trailing zeros allow it", () => {
-  // 10.0000000 as unscaled=100_000_000, exponent=-7 — the contract allows exponents
-  // down to -8, and this is exactly 10_000_000 at 6 decimals.
   assert.equal(decimalToUnits(wire(100_000_000n, -7), 6), 10_000_000n);
+  assert.equal(decimalToUnits(wire(-100_000_000n, -7), 6), -10_000_000n);
 });
 
 test("refuses to round a customer's money away", () => {

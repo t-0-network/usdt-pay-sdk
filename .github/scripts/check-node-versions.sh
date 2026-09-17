@@ -3,7 +3,7 @@
 # Expects: VERSION and ERRORS set, check() defined by the caller.
 # Used by both release.yaml and publish.yaml.
 
-NODE_STARTERS=$(ls node/starter/)
+NODE_STARTERS=$(ls -1 node/starter/)
 
 check "node/sdk/package.json .version" \
   "$(node -p "require('./node/sdk/package.json').version")" "$VERSION"

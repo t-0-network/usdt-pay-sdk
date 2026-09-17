@@ -18,8 +18,9 @@ This README says what to build — for what every field and decline code means, 
 
 `usdt-pay init` ([usdt-pay-sdk](https://github.com/t-0-network/usdt-pay-sdk))
 created this project and wrote `.env` with a fresh `PROVIDER_PRIVATE_KEY`; the
-matching public key is on the comment line under it. Fill in `NETWORK_PUBLIC_KEY`
-with the key your t-0 onboarding contact gives you, then install and run:
+matching public key is on the comment line under it. `NETWORK_PUBLIC_KEY` is
+pre-filled with the sandbox key; your t-0 onboarding contact gives you the
+production key. Install and run:
 
 ```bash
 npm install && npm run dev
@@ -54,7 +55,7 @@ an echo of its own input.
    (it is also recorded as a comment in `.env`, right under the private key).
 2. **1.2** Send that public key to your t-0 onboarding contact, together with the
    base URL where this service listens. Onboarding runs through your t-0 contact,
-   and the same exchange is where `NETWORK_PUBLIC_KEY` comes back to you.
+   and the same exchange is where the production `NETWORK_PUBLIC_KEY` comes back to you.
    `CreatePaymentInstructions` is synchronous and on the critical path: if t-0
    cannot reach that URL, no intent can be opened, so a laptop on `localhost:8080`
    needs a tunnel or a deployed host before this step means anything.
