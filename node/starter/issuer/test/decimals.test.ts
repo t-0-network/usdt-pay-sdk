@@ -50,7 +50,7 @@ test("converts to chain units exactly", () => {
   assert.equal(decimalToUnits(wire(10n, 8), 6), 1_000_000_000_000_000n);
 });
 
-test("rescales exactly when trailing zeros allow it", () => {
+test("exact rescale when trailing digits are zeros", () => {
   assert.equal(decimalToUnits(wire(100_000_000n, -7), 6), 10_000_000n);
   assert.equal(decimalToUnits(wire(-100_000_000n, -7), 6), -10_000_000n);
 });

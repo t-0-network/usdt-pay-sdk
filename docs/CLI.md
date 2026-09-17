@@ -349,7 +349,7 @@ here — the generated key and `.env` are what `usdt-pay init` writes into a sca
 is what it scaffolds from:
 
 ```bash
-cp .env.example .env      # then fill in PROVIDER_PRIVATE_KEY and NETWORK_PUBLIC_KEY
+cp .env.example .env      # then set PROVIDER_PRIVATE_KEY — NETWORK_PUBLIC_KEY is pre-filled with the sandbox key
 ```
 
 `usdt-pay keygen` prints a keypair for `PROVIDER_PRIVATE_KEY`.
