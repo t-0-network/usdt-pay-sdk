@@ -205,8 +205,9 @@ func TestRun_InstantiatesEveryStarter(t *testing.T) {
 					t.Errorf("%s missing after run(): %v", name, err)
 				}
 			}
-			// The template ships .gitignore as dot-gitignore (a real .gitignore
-			// would be dropped by go:embed); the scaffolder renames it.
+			// Starters ship a real .gitignore (go:embed all: keeps dotfiles);
+			// dot-gitignore is the optional rename convention the scaffolder
+			// also honours — if present, it must not survive.
 			if _, err := os.Stat(filepath.Join(projectDir, "dot-gitignore")); err == nil {
 				t.Error("dot-gitignore still present — the template rename did not happen")
 			}

@@ -6,9 +6,10 @@
 // Convention: templates live at <lang>/starter/template/ relative to repo root.
 // Keys may be "lang" or "lang/role" (e.g. go/acquirer=go/starter/acquirer).
 //
-// Go templates require a go.mod at their root; the module directive is what
-// gets replaced with {{MODULE_PATH}}. Files ending in .go, go.mod, and go.sum
-// are renamed to .tmpl to prevent go:embed from treating them as source.
+// Go templates require a go.mod at their root; the module directive must be
+// parsable so the scaffolder can read it at scaffold time. Files ending in
+// .go, go.mod, and go.sum are renamed to .tmpl to prevent go:embed from
+// treating them as source.
 //
 // Other handling:
 //   - Filters out build artifacts (node_modules, dist, __pycache__, build, .venv, etc.)
@@ -20,8 +21,9 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
+
+	"github.com/t-0-network/provider-sdk/cli/internal/gomod"
 )
 
 var skipDirs = map[string]bool{
@@ -93,9 +95,10 @@ func main() {
 			continue
 		}
 
-		modPath := ""
-		if lang == "go" || strings.HasPrefix(lang, "go/") {
-			if modPath = goModulePath(srcDir); modPath == "" {
+		isGo := lang == "go" || strings.HasPrefix(lang, "go/")
+		if isGo {
+			data, _ := os.ReadFile(filepath.Join(srcDir, "go.mod"))
+			if gomod.ModulePath(data) == "" {
 				fatalf("%s: no module directive in %s/go.mod", lang, src)
 			}
 		}
@@ -107,7 +110,7 @@ func main() {
 			fatalf("creating %s: %v", destDir, err)
 		}
 
-		if err := copyTree(srcDir, destDir, modPath); err != nil {
+		if err := copyTree(srcDir, destDir, isGo); err != nil {
 			fatalf("copying %s: %v", lang, err)
 		}
 	}
@@ -115,32 +118,9 @@ func main() {
 	fmt.Println("done")
 }
 
-// goModulePath returns the module directive of <dir>/go.mod, or "" when there is none.
-func goModulePath(dir string) string {
-	data, _ := os.ReadFile(filepath.Join(dir, "go.mod"))
-	for line := range strings.Lines(string(data)) {
-		if f := strings.Fields(line); len(f) >= 2 && f[0] == "module" {
-			p := f[1]
-			if i := strings.Index(p, "//"); i >= 0 {
-				p = p[:i]
-			}
-			p = strings.Trim(p, `"`)
-			if strings.Contains(p, ".") {
-				return p
-			}
-		}
-	}
-	return ""
-}
-
-// copyTree copies srcDir to destDir. A non-empty modPath enables Go template handling:
-// .go/.mod/.sum → .tmpl rename and module-path → {{MODULE_PATH}} replacement in text files.
-func copyTree(srcDir, destDir, modPath string) error {
-	var modRe *regexp.Regexp
-	if modPath != "" {
-		modRe = regexp.MustCompile(regexp.QuoteMeta(modPath) + `([^-a-zA-Z0-9._~+]|$)`)
-	}
-
+// copyTree copies srcDir to destDir. When isGo is true, .go/.mod/.sum files are
+// renamed to .tmpl so go:embed treats them as data, not source.
+func copyTree(srcDir, destDir string, isGo bool) error {
 	return filepath.WalkDir(srcDir, func(src string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -173,7 +153,7 @@ func copyTree(srcDir, destDir, modPath string) error {
 		}
 
 		destRel := rel
-		if modPath != "" && (strings.HasSuffix(base, ".go") || base == "go.mod" || base == "go.sum") {
+		if isGo && (strings.HasSuffix(base, ".go") || base == "go.mod" || base == "go.sum") {
 			destRel += ".tmpl"
 		}
 
@@ -187,10 +167,6 @@ func copyTree(srcDir, destDir, modPath string) error {
 			return fmt.Errorf("reading %s: %w", src, err)
 		}
 
-		if modRe != nil && isTextFile(base) {
-			data = []byte(modRe.ReplaceAllString(string(data), "{{MODULE_PATH}}$1"))
-		}
-
 		info, err := d.Info()
 		if err != nil {
 			return err
@@ -202,27 +178,6 @@ func copyTree(srcDir, destDir, modPath string) error {
 
 		return os.WriteFile(destPath, data, mode)
 	})
-}
-
-func isTextFile(name string) bool {
-	textExts := map[string]bool{
-		".go": true, ".mod": true, ".sum": true, ".tmpl": true,
-		".java": true, ".kt": true, ".kts": true, ".gradle": true,
-		".ts": true, ".js": true, ".json": true, ".mjs": true, ".cjs": true,
-		".py": true, ".toml": true, ".cfg": true, ".ini": true,
-		".yaml": true, ".yml": true, ".xml": true, ".properties": true,
-		".md": true, ".txt": true, ".rst": true,
-		".sh": true, ".bat": true, ".ps1": true, ".cmd": true,
-		".cs": true, ".csproj": true, ".sln": true, ".slnx": true,
-		".env": true, ".example": true, ".template": true,
-		".html": true, ".css": true, ".scss": true,
-	}
-	ext := strings.ToLower(filepath.Ext(name))
-	if textExts[ext] {
-		return true
-	}
-	lower := strings.ToLower(name)
-	return lower == "dockerfile" || lower == "gradlew" || lower == "dot-gitignore" || lower == "dot-dockerignore" || lower == "makefile"
 }
 
 func findRepoRoot() (string, error) {

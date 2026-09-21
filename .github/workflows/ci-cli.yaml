@@ -16,6 +16,7 @@ on:
       - "node/**"
       - "python/**"
       - "proto/**"
+      - ".github/tools/sumtool/**"
       - ".github/workflows/ci-cli.yaml"
   pull_request:
     branches: [master]
@@ -26,6 +27,7 @@ on:
       - "node/**"
       - "python/**"
       - "proto/**"
+      - ".github/tools/sumtool/**"
       - ".github/workflows/ci-cli.yaml"
 
 concurrency:

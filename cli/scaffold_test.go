@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -73,6 +74,74 @@ func TestSanitizeProjectName(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestReplaceModulePath(t *testing.T) {
+	t.Run("own path replaced", func(t *testing.T) {
+		re := moduleReplacer("example.com/app")
+		got := replaceModulePath(`import "example.com/app/pkg"`, re, "github.com/acme/foo")
+		if !strings.Contains(got, `"github.com/acme/foo/pkg"`) {
+			t.Errorf("own path not replaced:\n%s", got)
+		}
+	})
+
+	t.Run("app-extra untouched", func(t *testing.T) {
+		re := moduleReplacer("example.com/app")
+		got := replaceModulePath(`import "example.com/app-extra/lib"`, re, "github.com/acme/foo")
+		if !strings.Contains(got, `"example.com/app-extra/lib"`) {
+			t.Errorf("app-extra was replaced:\n%s", got)
+		}
+	})
+
+	t.Run("app~tilde untouched", func(t *testing.T) {
+		re := moduleReplacer("example.com/app")
+		got := replaceModulePath(`import "example.com/app~tilde/x"`, re, "github.com/acme/foo")
+		if !strings.Contains(got, `"example.com/app~tilde/x"`) {
+			t.Errorf("tilde-suffixed path was replaced:\n%s", got)
+		}
+	})
+
+	t.Run("app+plus untouched", func(t *testing.T) {
+		re := moduleReplacer("example.com/app")
+		got := replaceModulePath(`import "example.com/app+plus/y"`, re, "github.com/acme/foo")
+		if !strings.Contains(got, `"example.com/app+plus/y"`) {
+			t.Errorf("plus-suffixed path was replaced:\n%s", got)
+		}
+	})
+
+	t.Run("dollar in user path survives", func(t *testing.T) {
+		re := moduleReplacer("example.com/app")
+		got := replaceModulePath("module example.com/app\n", re, "example.com/$pecial")
+		if !strings.Contains(got, "module example.com/$pecial") {
+			t.Errorf("dollar in user path was corrupted:\n%s", got)
+		}
+	})
+
+	t.Run("end of string boundary", func(t *testing.T) {
+		re := moduleReplacer("example.com/app")
+		got := replaceModulePath("module example.com/app", re, "github.com/acme/foo")
+		if got != "module github.com/acme/foo" {
+			t.Errorf("end-of-string replacement wrong:\n%s", got)
+		}
+	})
+
+	t.Run("needle containing my-provider matches after name rewrite", func(t *testing.T) {
+		// The template module path is "example.com/my-provider".
+		// After processPlaceholders with project name "foo", the file content
+		// has "example.com/foo" and the needle is also rewritten to
+		// "example.com/foo", so the replacement matches.
+		needle := processPlaceholders("example.com/my-provider",
+			ScaffoldOpts{ProjectName: "foo"}, toPascalCase("foo"))
+		re := moduleReplacer(needle)
+		content := `module example.com/foo` + "\n" + `import "example.com/foo/pkg"` + "\n"
+		got := replaceModulePath(content, re, "github.com/acme/foo-project")
+		if !strings.Contains(got, "module github.com/acme/foo-project") {
+			t.Errorf("module line not replaced:\n%s", got)
+		}
+		if !strings.Contains(got, `"github.com/acme/foo-project/pkg"`) {
+			t.Errorf("import not replaced:\n%s", got)
+		}
+	})
 }
 
 func TestRun_PostScaffoldErrorKeepsExistingDir(t *testing.T) {

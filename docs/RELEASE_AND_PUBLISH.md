@@ -38,7 +38,8 @@ any site disagrees.
 | `python/starter/acquirer/pyproject.toml` | `t0-usdt-pay-sdk>=X.Y.Z` dependency |
 | `python/uv.lock` | regenerated after the three sites above are bumped |
 | `go/sdk/version.go` | `const SDKVersion = "X.Y.Z"` |
-| `go/starter/acquirer/go.mod.tmpl` | `require .../usdt-pay-sdk/go/sdk vX.Y.Z` |
+| `go/starter/acquirer/go.mod` | `require .../usdt-pay-sdk/go/sdk vX.Y.Z` |
+| `go/starter/acquirer/go.sum` | regenerated — precomputed checksums for the SDK pin |
 
 ---
 
@@ -177,7 +178,7 @@ published.
 
 ### `publish-go`
 
-Verify `SDKVersion` matches tag and starter pin in `go.mod.tmpl`. Create and push the
+Verify `SDKVersion` matches tag and starter pin in `go.mod`. Create and push the
 `go/sdk/vX.Y.Z` module tag. Rebuild sumtool layout from the tagged tree, scaffold a project,
 run `go build -mod=readonly ./...` to verify the precomputed `go.sum` is correct.
 
@@ -355,8 +356,10 @@ in the module directory — are adapted from provider-sdk's
 "Precomputing the Go template's `go.sum`".
 
 Version sites: `go/sdk/version.go` (`SDKVersion` constant, category C) and
-`go/starter/acquirer/go.mod.tmpl` (SDK dependency pin, category B). Site A is the
-git tag `go/sdk/vX.Y.Z`, not a file edit.
+`go/starter/acquirer/go.mod` (SDK dependency pin, category B; `go.sum` is
+regenerated alongside it). The in-tree starter `go.mod` pins the current release
+so `go build` works in-tree once `publish-go` has pushed the module tag. Site A
+is the git tag `go/sdk/vX.Y.Z`, not a file edit.
 
 ### Python
 

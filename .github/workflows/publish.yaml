@@ -446,7 +446,8 @@ jobs:
           VERSION="${GITHUB_REF#refs/tags/v}"
           RUNTIME=$(grep -oP '(?<=SDKVersion = \")[^\"]+' go/sdk/version.go)
           [ "$RUNTIME" = "$VERSION" ] || { echo "::error::go/sdk/version.go has $RUNTIME, tag is v$VERSION"; exit 1; }
-          grep -q "usdt-pay-sdk/go/sdk v$VERSION" go/starter/acquirer/go.mod.tmpl || { echo "::error::go/starter/acquirer/go.mod.tmpl does not pin v$VERSION"; exit 1; }
+          PIN=$(awk '$1=="github.com/t-0-network/usdt-pay-sdk/go/sdk"{print $2}' go/starter/acquirer/go.mod)
+          [ "$PIN" = "v$VERSION" ] || { echo "::error::go/starter/acquirer/go.mod pins $PIN, want v$VERSION"; exit 1; }
           echo "Go version sites match tag v$VERSION"
 
       - name: Create and push Go module tag
@@ -466,8 +467,8 @@ jobs:
           export GONOSUMDB="github.com/t-0-network"
           GOPROXY="file://${PROXY_DIR}" go mod download "github.com/t-0-network/usdt-pay-sdk/go/sdk@v${VERSION}"
           GOPROXY="file://${PROXY_DIR},https://proxy.golang.org,direct" go build -mod=readonly ./...
-          sed 's|github.com/test/test-go|{{MODULE_PATH}}|g' go.mod | cmp - "$GITHUB_WORKSPACE/go/starter/acquirer/go.mod.tmpl"
-          cmp go.sum "$GITHUB_WORKSPACE/go/starter/acquirer/go.sum.tmpl"
+          sed 's|github.com/test/test-go|github.com/t-0-network/usdt-pay-sdk/go/starter/acquirer|g' go.mod | cmp - "$GITHUB_WORKSPACE/go/starter/acquirer/go.mod"
+          cmp go.sum "$GITHUB_WORKSPACE/go/starter/acquirer/go.sum"
 
   publish-cli:
     name: Publish CLI

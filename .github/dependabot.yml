@@ -9,7 +9,7 @@
 # (Tier-3 review policy).
 #
 # gomod (/cli) is deliberately absent: cli/go.mod and cli/go.sum are among the
-# eight files the provider-sdk sync overwrites (see CLAUDE.md "The CLI sync"),
+# files the provider-sdk sync overwrites (list in CLAUDE.md, "The CLI sync"),
 # so any Dependabot bump there is reverted by the next sync PR. Its only dep
 # (decred/secp256k1) is crypto and would be solo anyway. Upstream owns it.
 version: 2
