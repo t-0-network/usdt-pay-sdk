@@ -7,8 +7,11 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"unicode"
+
+	"github.com/t-0-network/provider-sdk/cli/internal/gomod"
 )
 
 //go:embed all:internal/embed
@@ -99,6 +102,27 @@ func scaffold(opts ScaffoldOpts) error {
 
 	pascalName := toPascalCase(opts.ProjectName)
 
+	// Go module path: read the original path from go.mod.tmpl and build a
+	// boundary-aware regex so the scaffolder replaces it with --module.
+	var modRe *regexp.Regexp
+	if opts.ModulePath != "" && (opts.Lang == "go" || strings.HasPrefix(opts.Lang, "go/")) {
+		goModPath := path.Join(templateRoot, "go.mod.tmpl")
+		goModData, err := embeddedTemplates.ReadFile(goModPath)
+		if err != nil {
+			return fmt.Errorf("go.mod.tmpl not found in embedded template for lang=%s: %w", opts.Lang, err)
+		}
+		origModule := gomod.ModulePath(goModData)
+		if origModule == "" {
+			return fmt.Errorf("no module directive in embedded go.mod.tmpl for lang=%s", opts.Lang)
+		}
+		// The template's module path may contain the placeholder project name
+		// (e.g. "example.com/my-provider"); after processPlaceholders rewrites
+		// file contents the needle must match what's in the content, so apply
+		// the same name rewrites to the needle.
+		needle := processPlaceholders(origModule, opts, pascalName)
+		modRe = moduleReplacer(needle)
+	}
+
 	return fs.WalkDir(embeddedTemplates, templateRoot, func(src string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -136,9 +160,12 @@ func scaffold(opts ScaffoldOpts) error {
 			return writeFileWithMode(destPath, data, src)
 		}
 
-		// Text files: process placeholders
+		// Text files: process placeholders, then module path
 		content := string(data)
 		content = processPlaceholders(content, opts, pascalName)
+		if modRe != nil {
+			content = replaceModulePath(content, modRe, opts.ModulePath)
+		}
 
 		return writeFileWithMode(destPath, []byte(content), src)
 	})
@@ -168,11 +195,6 @@ func processPlaceholders(content string, opts ScaffoldOpts, pascalName string) s
 	// C#: PascalCase namespace (MyProvider → <PascalName>)
 	content = strings.ReplaceAll(content, "MyProvider", pascalName)
 
-	// Go: module path replacement (injected by sync tool as {{MODULE_PATH}})
-	if opts.ModulePath != "" {
-		content = strings.ReplaceAll(content, "{{MODULE_PATH}}", opts.ModulePath)
-	}
-
 	// Java: pin the SDK artifacts to this release, select the repository
 	if opts.Lang == "java" {
 		if opts.Version != "" && opts.Version != "dev" {
@@ -188,6 +210,19 @@ func processPlaceholders(content string, opts ScaffoldOpts, pascalName string) s
 	}
 
 	return content
+}
+
+// moduleReplacer compiles a regex that matches the given module path at word
+// boundaries. The pattern prevents replacing "example.com/app" inside
+// "example.com/app-extra" or "example.com/app~tilde".
+func moduleReplacer(module string) *regexp.Regexp {
+	return regexp.MustCompile(regexp.QuoteMeta(module) + `([^-a-zA-Z0-9._~+]|$)`)
+}
+
+// replaceModulePath replaces occurrences of the original module path (matched
+// by re) with the user's chosen module path, preserving boundary characters.
+func replaceModulePath(content string, re *regexp.Regexp, modulePath string) string {
+	return re.ReplaceAllString(content, strings.ReplaceAll(modulePath, "$", "$$")+"$1")
 }
 
 var binaryExts = map[string]bool{
