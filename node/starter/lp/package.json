@@ -1,6 +1,6 @@
 {
   "name": "my-provider-lp",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "private": true,
   "description": "Starter for the t-0 USDt pay flow, LP role",
   "license": "MIT",
@@ -19,7 +19,7 @@
   "dependencies": {
     "@bufbuild/protobuf": "^2.14.1",
     "@connectrpc/connect": "^2.1.1",
-    "@t-0/usdt-pay-sdk": "^0.2.6",
+    "@t-0/usdt-pay-sdk": "^0.2.7",
     "dotenv": "^17.4.2"
   },
   "devDependencies": {
