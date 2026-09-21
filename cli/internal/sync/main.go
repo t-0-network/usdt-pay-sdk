@@ -4,12 +4,14 @@
 // Usage: go run ./internal/sync <lang1> [lang2...] [lang=path override...]
 //
 // Convention: templates live at <lang>/starter/template/ relative to repo root.
-// Override with lang=path for non-standard locations.
+// Keys may be "lang" or "lang/role" (e.g. go/acquirer=go/starter/acquirer).
 //
-// Special handling:
+// Go templates require a go.mod at their root; the module directive is what
+// gets replaced with {{MODULE_PATH}}. Files ending in .go, go.mod, and go.sum
+// are renamed to .tmpl to prevent go:embed from treating them as source.
+//
+// Other handling:
 //   - Filters out build artifacts (node_modules, dist, __pycache__, build, .venv, etc.)
-//   - Renames .go/.mod/.sum → .tmpl for Go templates (prevents go:embed compilation)
-//   - For Go templates: replaces the literal module path with {{MODULE_PATH}}
 //   - Skips .git directories, OS metadata files, and .env / .env.* except .env.example
 package main
 
@@ -18,10 +20,9 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
-
-const goTemplateModulePath = "github.com/t-0-network/provider-sdk/go/starter/template"
 
 var skipDirs = map[string]bool{
 	"node_modules":  true,
@@ -69,6 +70,15 @@ func main() {
 		}
 	}
 
+	for i, a := range langs {
+		for _, b := range langs[i+1:] {
+			ca, cb := filepath.ToSlash(filepath.Clean(a))+"/", filepath.ToSlash(filepath.Clean(b))+"/"
+			if strings.HasPrefix(ca, cb) || strings.HasPrefix(cb, ca) {
+				fatalf("overlapping keys: %s and %s would share embed directory", a, b)
+			}
+		}
+	}
+
 	for _, lang := range langs {
 		src := lang + "/starter/template"
 		if override, ok := overrides[lang]; ok {
@@ -83,6 +93,13 @@ func main() {
 			continue
 		}
 
+		modPath := ""
+		if lang == "go" || strings.HasPrefix(lang, "go/") {
+			if modPath = goModulePath(srcDir); modPath == "" {
+				fatalf("%s: no module directive in %s/go.mod", lang, src)
+			}
+		}
+
 		fmt.Printf("syncing %s: %s → %s\n", lang, src, destDir)
 
 		os.RemoveAll(destDir)
@@ -90,7 +107,7 @@ func main() {
 			fatalf("creating %s: %v", destDir, err)
 		}
 
-		if err := copyTree(srcDir, destDir, lang); err != nil {
+		if err := copyTree(srcDir, destDir, modPath); err != nil {
 			fatalf("copying %s: %v", lang, err)
 		}
 	}
@@ -98,7 +115,32 @@ func main() {
 	fmt.Println("done")
 }
 
-func copyTree(srcDir, destDir, lang string) error {
+// goModulePath returns the module directive of <dir>/go.mod, or "" when there is none.
+func goModulePath(dir string) string {
+	data, _ := os.ReadFile(filepath.Join(dir, "go.mod"))
+	for line := range strings.Lines(string(data)) {
+		if f := strings.Fields(line); len(f) >= 2 && f[0] == "module" {
+			p := f[1]
+			if i := strings.Index(p, "//"); i >= 0 {
+				p = p[:i]
+			}
+			p = strings.Trim(p, `"`)
+			if strings.Contains(p, ".") {
+				return p
+			}
+		}
+	}
+	return ""
+}
+
+// copyTree copies srcDir to destDir. A non-empty modPath enables Go template handling:
+// .go/.mod/.sum → .tmpl rename and module-path → {{MODULE_PATH}} replacement in text files.
+func copyTree(srcDir, destDir, modPath string) error {
+	var modRe *regexp.Regexp
+	if modPath != "" {
+		modRe = regexp.MustCompile(regexp.QuoteMeta(modPath) + `([^-a-zA-Z0-9._~+]|$)`)
+	}
+
 	return filepath.WalkDir(srcDir, func(src string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -131,15 +173,8 @@ func copyTree(srcDir, destDir, lang string) error {
 		}
 
 		destRel := rel
-		if lang == "go" {
-			switch {
-			case strings.HasSuffix(base, ".go"):
-				destRel = destRel + ".tmpl"
-			case base == "go.mod":
-				destRel = destRel + ".tmpl"
-			case base == "go.sum":
-				destRel = destRel + ".tmpl"
-			}
+		if modPath != "" && (strings.HasSuffix(base, ".go") || base == "go.mod" || base == "go.sum") {
+			destRel += ".tmpl"
 		}
 
 		destPath := filepath.Join(destDir, destRel)
@@ -152,10 +187,8 @@ func copyTree(srcDir, destDir, lang string) error {
 			return fmt.Errorf("reading %s: %w", src, err)
 		}
 
-		if lang == "go" && isTextFile(base) {
-			content := string(data)
-			content = strings.ReplaceAll(content, goTemplateModulePath, "{{MODULE_PATH}}")
-			data = []byte(content)
+		if modRe != nil && isTextFile(base) {
+			data = []byte(modRe.ReplaceAllString(string(data), "{{MODULE_PATH}}$1"))
 		}
 
 		info, err := d.Info()
