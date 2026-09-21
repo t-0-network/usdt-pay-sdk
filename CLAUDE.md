@@ -1,6 +1,6 @@
 # usdt-pay-sdk
 
-SDKs for the t-0 USDt pay flow (`tzero.v1.pay`), in Java, Node and Python. The
+SDKs for the t-0 USDt pay flow (`tzero.v1.pay`), in Go, Java, Node and Python. The
 contract lives in `proto/` and is snapshot-synced from `t-0-network/backend` —
 protos are not authored here.
 
@@ -8,6 +8,7 @@ protos are not authored here.
 
 ```
 proto/tzero/v1/pay/      the contract (common, validate, acquirer/, issuer/, lp/)
+go/                      Go: sdk, starter/acquirer — see go/CLAUDE.md
 java/                    Gradle: sdk, starter/acquirer — see java/CLAUDE.md
 node/                    npm workspace: sdk, starter/* — see node/CLAUDE.md
 python/                  uv workspace: sdk, starter/acquirer — see python/CLAUDE.md
@@ -15,8 +16,8 @@ cli/                     unified scaffolder (Go) — `usdt-pay init`; docs/CLI.m
 docs/RELEASE_AND_PUBLISH.md   the release process
 ```
 
-Java stubs are generated at build time (`bufGenerate`, not committed). Node stubs
-are committed under `node/sdk/src/gen/` so consumers need no `buf`.
+Java stubs are generated at build time (`bufGenerate`, not committed). Go and Node
+stubs are committed (`go/sdk/gen/`, `node/sdk/src/gen/`) so consumers need no `buf`.
 
 ## Build and test
 
@@ -30,19 +31,26 @@ cd java && ./gradlew build --no-daemon
 # Python — uv workspace from python/
 cd python && uv sync --all-packages && uv run pytest -v
 
+# Go — from go/sdk/
+cd go/sdk && go build ./... && go test -v ./...
+
 # CLI — generate embeds the starters; the tests instantiate every one of them
 cd cli && go generate ./... && go build ./... && go test ./...
 ```
 
-CI (`ci-java.yaml`, `ci-node.yaml`, `ci-python.yaml`, `ci-cli.yaml`) runs exactly these builds; if they pass locally the tree is
+CI (`ci-go.yaml`, `ci-java.yaml`, `ci-node.yaml`, `ci-python.yaml`, `ci-cli.yaml`) runs exactly these builds; if they pass locally the tree is
 releasable. `ci-cli.yaml` additionally scaffolds every starter with the built CLI and runs each
 scaffold's tests against the SDKs built from the tree, on Linux and Windows (`docs/CLI.md`).
 
 ## The proto sync
 
-A bot PR from the backend adds/updates `proto/` and regenerates `node/sdk/src/gen/`
-(`generate-clients.yaml`, `buf generate --clean` in `node/sdk`). When handling one:
+A bot PR from the backend adds/updates `proto/` and regenerates `go/sdk/gen/` and
+`node/sdk/src/gen/` (`generate-clients.yaml`, `buf generate --clean` in each).
+When handling one:
 
+- `go/sdk/proto` is a symlink into the root `proto/`. `buf.gen.yaml` uses managed
+  mode with `go_package_prefix` — the pay protos have no `go_package` option.
+  Generated stubs land in `go/sdk/gen/`.
 - `java/sdk/src/main/proto/tzero` is a symlink into the root `proto/` — Java follows
   automatically, but Java sources import generated classes by package
   (`network.t0.pay.proto.tzero.v1.pay[.<role>]`), so a message moving packages or
@@ -71,7 +79,7 @@ works. How the pieces fit — embedded starters, the tests, what
 
 ## README section order
 
-In each language README (`java/README.md`, `node/README.md`, `python/README.md`),
+In each language README (`go/README.md`, `java/README.md`, `node/README.md`, `python/README.md`),
 the **Starter** section must come before the **SDK** section. Developers start
 with the starter, not the SDK directly.
 

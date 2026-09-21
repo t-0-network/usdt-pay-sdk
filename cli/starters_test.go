@@ -78,6 +78,7 @@ func starterTargets(t *testing.T) [][2]string {
 // entryFiles are what a scaffolded project of each language must contain for
 // "it compiles" in CI to mean anything: an empty tree compiles too.
 var entryFiles = map[string][]string{
+	"go":     {"go.mod", "cmd/main.go"},
 	"java":   {"build.gradle.kts", "settings.gradle.kts", "gradlew", "src/main/java"},
 	"node":   {"package.json", "tsconfig.json", "src/index.ts"},
 	"python": {"pyproject.toml", "src/acquirer/main.py"},
@@ -163,13 +164,17 @@ func instantiate(t *testing.T, lang, role string) (string, string) {
 	t.Helper()
 	projectDir := filepath.Join(t.TempDir(), "test-project")
 	out, err := captureStdout(t, func() error {
-		return run(ScaffoldOpts{
+		opts := ScaffoldOpts{
 			Lang:        lang,
 			Role:        role,
 			ProjectName: "test-project",
 			ProjectDir:  projectDir,
 			Version:     "dev",
-		})
+		}
+		if lang == "go" {
+			opts.ModulePath = "github.com/test/test-project"
+		}
+		return run(opts)
 	})
 	if err != nil {
 		t.Fatalf("run(%s/%s): %v\n%s", lang, role, err, out)

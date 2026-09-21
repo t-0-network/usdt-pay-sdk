@@ -10,7 +10,7 @@ Pick yours and go straight to its SDK.
 
 | You are | You do | SDK |
 |---|---|---|
-| **Acquirer** | Own the merchant. Price the sale, open the intent, show the QR, learn when it settles. | [Java](java/) · [Python](python/) |
+| **Acquirer** | Own the merchant. Price the sale, open the intent, show the QR, learn when it settles. | [Go](go/) · [Java](java/) · [Python](python/) |
 | **Issuer** | Reserve deposit addresses, watch the chain for the customer's USDt, settle on-chain. | [Node](node/) |
 | **Liquidity Provider** | Price USDt↔local fiat, take the per-sale obligation, settle fiat over bank rails. | [Node](node/) · [API reference](https://usdt-pay-docs.t-0.network/docs/integration-guidance/api-reference/pay_lp/) |
 
@@ -26,7 +26,8 @@ onboarding.
 ## Quick start
 
 Scaffold a project with one command — this is the Java acquirer; the Node issuer
-is `--lang=node --role=issuer`, the Node LP is `--lang=node --role=lp`, the Python acquirer is `--lang=python --role=acquirer`:
+is `--lang=node --role=issuer`, the Node LP is `--lang=node --role=lp`, the Go acquirer
+is `--lang=go --role=acquirer`, the Python acquirer is `--lang=python --role=acquirer`:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/t-0-network/usdt-pay-sdk/master/cli/install.sh | sh -s -- init --lang=java --role=acquirer my-acquirer
@@ -52,6 +53,11 @@ Then follow your project's README; [java/](java/), [node/](node/) and
 - [`python/sdk/`](python/sdk/) — `create_client`, `create_asgi_app` / `create_wsgi_app`,
   and `crypto` for verifying requests in any ASGI/WSGI stack
 - [`python/starter/acquirer/`](python/starter/acquirer/) — acquirer integration guide
+- [`go/`](go/) — SDK install, starter
+- [`go/sdk/`](go/sdk/) — `CreateClient`, `StartServer`,
+  `NewHTTPHandler` for mounting into an existing server, and
+  `PublicKeyFromPrivateKey` for key derivation
+- [`go/starter/acquirer/`](go/starter/acquirer/) — acquirer integration guide
 - [`cli/`](cli/README.md) — the `usdt-pay init` scaffolder: install, create a project
 
 ## Before you write code

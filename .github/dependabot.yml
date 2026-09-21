@@ -69,6 +69,18 @@ updates:
       - "javax.annotation:*"
       - "org.junit.*"
 
+  - package-ecosystem: "gomod"
+    directory: "/go/sdk"
+    multi-ecosystem-group: "ci-batch"
+    cooldown:
+      default-days: 3
+    ignore:
+      - dependency-name: "github.com/t-0-network/provider-sdk/go"  # pinned exact, bump deliberately
+    patterns:
+      - "connectrpc.com/*"
+      - "google.golang.org/protobuf"
+      - "buf.build/*"
+
   - package-ecosystem: "uv"
     directory: "/python"
     multi-ecosystem-group: "ci-batch"

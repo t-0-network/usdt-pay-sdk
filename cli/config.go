@@ -6,9 +6,13 @@ var Config = CLIConfig{
 	Description:  "a new usdt-pay project (acquirer, issuer or lp)",
 	RoleRequired: true,
 	DefaultRole:  "",
-	Languages:    []string{"java", "node", "python"},
+	Languages:    []string{"go", "java", "node", "python"},
 	NextSteps:    []string{"Add NETWORK_PUBLIC_KEY to .env — your t-0 onboarding contact gives you this"},
 	RunSteps: map[string]RunStep{
+		"go/acquirer": {
+			Label:   "Run the application:",
+			Command: "go run ./cmd",
+		},
 		"python/acquirer": {
 			Label:   "Install dependencies and run:",
 			Command: "uv sync && uv run python -m acquirer.main",

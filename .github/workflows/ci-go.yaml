@@ -1,0 +1,51 @@
+name: CI / Go
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "go/**"
+      - "proto/**"
+      - ".github/tools/**"
+      - ".github/workflows/ci-go.yaml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "go/**"
+      - "proto/**"
+      - ".github/tools/**"
+      - ".github/workflows/ci-go.yaml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  go:
+    name: Go
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          show-progress: false
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: "stable"
+          cache-dependency-path: |
+            go/sdk/go.sum
+            .github/tools/sumtool/go.sum
+
+      - name: Test sumtool
+        working-directory: .github/tools/sumtool
+        run: go test -v ./...
+
+      - name: Vet
+        working-directory: go/sdk
+        run: go vet ./...
+
+      - name: Test
+        working-directory: go/sdk
+        run: go test -v ./...

@@ -11,6 +11,7 @@ on:
     branches: [master]
     paths:
       - "cli/**"
+      - "go/**"
       - "java/**"
       - "node/**"
       - "python/**"
@@ -20,6 +21,7 @@ on:
     branches: [master]
     paths:
       - "cli/**"
+      - "go/**"
       - "java/**"
       - "node/**"
       - "python/**"
@@ -139,6 +141,22 @@ jobs:
           ./usdt-pay init test-python --lang=python --role=acquirer --no-color --dir=test-python
           (cd test-python && uv add --no-sync "${RUNNER_TEMP}"/pydist/t0_usdt_pay_sdk-*.whl && uv sync && uv run pytest)
 
+      - name: Scaffold and test Go acquirer
+        run: |
+          ./usdt-pay init test-go --lang=go --role=acquirer --module=github.com/test/test-go --no-color --dir=test-go
+          test -f test-go/go.mod && test -f test-go/.env && test -f test-go/.gitignore
+          VERSION=$(grep 'usdt-pay-sdk/go/sdk v' test-go/go.mod | awk '{print $2}')
+          PROXY_DIR="${RUNNER_TEMP}/goproxy"
+          go -C .github/tools/sumtool run . "${GITHUB_WORKSPACE}/go/sdk" "${VERSION}" "${PROXY_DIR}"
+          cd test-go
+          sed -i '/usdt-pay-sdk\/go\/sdk /d' go.sum
+          export GOMODCACHE="${RUNNER_TEMP}/template-modcache"
+          export GONOSUMDB="github.com/t-0-network"
+          GOPROXY="file://${PROXY_DIR}" go mod download "github.com/t-0-network/usdt-pay-sdk/go/sdk@${VERSION}"
+          export GOPROXY="file://${PROXY_DIR},https://proxy.golang.org,direct"
+          go mod tidy
+          go build ./... && go test ./...
+
   cli-windows:
     name: Build & Test (Windows)
     runs-on: windows-latest
@@ -182,3 +200,11 @@ jobs:
           if (!(Test-Path test-node-lp/package.json)) { exit 1 }
           if (!(Test-Path test-node-lp/.env)) { exit 1 }
           if (!(Test-Path test-node-lp/.gitignore)) { exit 1 }
+
+      - name: Scaffold Go acquirer
+        shell: pwsh
+        run: |
+          ./usdt-pay.exe init test-go --lang=go --role=acquirer --module=github.com/test/test-go --no-color --dir=test-go
+          if (!(Test-Path test-go/go.mod)) { exit 1 }
+          if (!(Test-Path test-go/.env)) { exit 1 }
+          if (!(Test-Path test-go/.gitignore)) { exit 1 }
