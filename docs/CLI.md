@@ -12,7 +12,7 @@ headed "Maintainers", is how the pieces fit and what to do when they change.
 |---|---|
 | Binary | `usdt-pay` (`usdt-pay.exe` on Windows) |
 | Commands | `init`, `keygen`, `version`, `help` |
-| Languages and roles | `java`/`acquirer`, `node`/`issuer`, `node`/`lp`, `python`/`acquirer` |
+| Languages and roles | `go`/`acquirer`, `java`/`acquirer`, `node`/`issuer`, `node`/`lp`, `python`/`acquirer` |
 | Releases | assets `usdt-pay-<os>-<arch>[.exe]` on the GitHub Release `vX.Y.Z`, uploaded by `publish-cli` in `publish.yaml` |
 | Installers | `cli/install.sh` (macOS, Linux) and `cli/install.ps1` (Windows) download the latest release |
 | Source | `cli/` — eight files synced from provider-sdk, the rest repo-owned (see "Maintainers — ownership and sync") |
@@ -99,7 +99,7 @@ Commands:
   keygen                         Generate a new secp256k1 keypair
   version                        Show version
 
-Languages: java, node, python
+Languages: go, java, node, python
 
 Init options (before or after the project name):
   --lang string        Language/ecosystem (required)
@@ -120,8 +120,9 @@ or `--flag value`. `init --help` prints Go's flag summary in single-dash form; t
 
 | Flag | Default | Accepted values |
 |---|---|---|
-| `--lang` | required | `java`, `node`, `python` — the directories under `cli/internal/embed/` |
-| `--role` | required | a role that exists for the language: `acquirer` for `java` and `python`, `issuer` or `lp` for `node` |
+| `--lang` | required | `go`, `java`, `node`, `python` — the directories under `cli/internal/embed/` |
+| `--role` | required | a role that exists for the language: `acquirer` for `go`, `java` and `python`, `issuer` or `lp` for `node` |
+| `--module` | project name (Go only) | any Go module path — sets the `module` directive in `go.mod` and rewrites import paths. Meaningful only for `--lang=go`. |
 | `--dir` | `<project-name>` under the current directory | any path, used verbatim; it may exist if it is empty |
 | `--no-color` | off | plain `[INFO]`/`[OK]`/`[ERROR]` prefixes and box drawing without ANSI color. An `init` flag: `usdt-pay --no-color init ...` is `unknown command "--no-color"` |
 | `--version` | | prints `usdt-pay init <version>` and exits 0 |
@@ -143,8 +144,8 @@ project's `package.json` carries the name `<name>-lp` (e.g. `acme-lp` for `usdt-
 | no project name | `project name is required` followed by `Usage: usdt-pay init <project-name> --lang=<language>` | 2 |
 | name sanitizes to nothing (`@@@`) | `invalid project name — use only lowercase letters, numbers, hyphens, underscores` | 1 |
 | first character after any leading `-`/`_` is a digit, or there is none (`3rd-provider`, `_3abc`, `___`) | `project name must start with a letter (got "3rd-provider")` | 1 |
-| no `--lang` | `--lang is required (options: java, node, python)` | 2 |
-| unknown `--lang` (`go`) | `unknown language "go" (options: java, node, python)` | 1 |
+| no `--lang` | `--lang is required (options: go, java, node, python)` | 2 |
+| unknown `--lang` (`rust`) | `unknown language "rust" (options: go, java, node, python)` | 1 |
 | no `--role` | `--role is required` | 2 |
 | target directory exists and is non-empty | `directory "<path>" already exists and is non-empty` | 1 |
 | `--role` with no starter for the language (`--lang=java --role=issuer`) | `scaffolding: template not found for lang=java role=issuer (available roles: acquirer)` — after the banner and the first two `[INFO]` lines, because the role is resolved during extraction | 1 |
@@ -225,6 +226,7 @@ Step 2 is `NextSteps` in `cli/config.go`. Step 3 is per language:
 
 | `--lang` | Step 3 |
 |---|---|
+| `go`/`acquirer` | `Run the application:` / `go run ./cmd` (via `RunSteps`) |
 | `java` | `Run the application:` / `./gradlew run` |
 | `node` | `Install dependencies and run:` / `npm install && npm run dev` |
 | `python`/`acquirer` | `Install dependencies and run:` / `uv sync && uv run python -m acquirer.main` (via `RunSteps`) |
@@ -242,6 +244,7 @@ src/main/java/network/t0/pay/acquirer/   src/main/resources/   src/test/java/
 
 | `--lang` / `--role` | Source in this repo | What it is | Entry files | Run | Test |
 |---|---|---|---|---|---|
+| `go` / `acquirer` | `go/starter/acquirer/` | Acquirer callback server and client: prices the sale, opens the intent, learns when it settles. Go 1.27, SDK `github.com/t-0-network/usdt-pay-sdk/go/sdk` | `go.mod`, `cmd/main.go` | `go run ./cmd` | `go test ./...` |
 | `java` / `acquirer` | `java/starter/acquirer/` | Acquirer callback server and client: prices the sale, opens the intent, learns when it settles. Gradle, Java 21 toolchain, SDK `network.t-0:usdt-pay-sdk-java` from Maven Central, pinned by `usdtPaySdkVersion` in `gradle.properties` | `build.gradle.kts`, `settings.gradle.kts`, `gradlew`, `src/main/java/network/t0/pay/acquirer/Main.java` | `./gradlew run` | `./gradlew test` |
 | `node` / `issuer` | `node/starter/issuer/` | Issuer callback server and client: reserves deposit addresses, reports the customer's USDt, settles on-chain. npm, Node 22, SDK `@t-0/usdt-pay-sdk` from the npm registry | `package.json`, `tsconfig.json`, `src/index.ts` | `npm install && npm run dev` | `npm test` |
 | `node` / `lp` | `node/starter/lp/` | LP callback server and client: publishes standing quotes, accepts executions, reports fiat settlements. npm, Node 22, SDK `@t-0/usdt-pay-sdk` from the npm registry | `package.json`, `tsconfig.json`, `src/index.ts` | `npm install && npm run dev` | `npm test` |
@@ -289,9 +292,13 @@ var Config = CLIConfig{
 	Description:  "a new usdt-pay project (acquirer, issuer or lp)",
 	RoleRequired: true,
 	DefaultRole:  "",
-	Languages:    []string{"java", "node", "python"},
+	Languages:    []string{"go", "java", "node", "python"},
 	NextSteps:    []string{"Add NETWORK_PUBLIC_KEY to .env — your t-0 onboarding contact gives you this"},
 	RunSteps: map[string]RunStep{
+		"go/acquirer": {
+			Label:   "Run the application:",
+			Command: "go run ./cmd",
+		},
 		"python/acquirer": {
 			Label:   "Install dependencies and run:",
 			Command: "uv sync && uv run python -m acquirer.main",
@@ -319,7 +326,7 @@ The tests are what tell you the product still works. If `CLIConfig` gained or lo
 `cli/generate.go` is one directive:
 
 ```go
-//go:generate go run ./internal/sync java/acquirer=java/starter/acquirer node/issuer=node/starter/issuer node/lp=node/starter/lp python/acquirer=python/starter/acquirer
+//go:generate go run ./internal/sync go/acquirer=go/starter/acquirer java/acquirer=java/starter/acquirer node/issuer=node/starter/issuer node/lp=node/starter/lp python/acquirer=python/starter/acquirer
 ```
 
 `go generate ./...` runs `internal/sync`, which copies each `<lang>/starter/<role>/` in the tree
@@ -388,6 +395,21 @@ tests. Commands are identical for both starters.
 
 Docker from the starter directory builds against the published SDK (not the workspace).
 
+### Go — `go/starter/acquirer/`
+
+The Go starter is a real Go module (`module github.com/t-0-network/usdt-pay-sdk/go/starter/acquirer`)
+that compiles and tests in-tree. The sync tool renames `.go` → `.tmpl` and replaces the module
+path with `{{MODULE_PATH}}` at embed time — the source files in the tree are plain `.go`.
+
+```bash
+# Build and test from here, with the local SDK:
+go mod edit -replace github.com/t-0-network/usdt-pay-sdk/go/sdk=../../sdk
+go build ./... && go test ./...
+go mod edit -dropreplace github.com/t-0-network/usdt-pay-sdk/go/sdk
+```
+
+The `-replace` directive must not be committed; it is for local development only.
+
 ### Python — `python/starter/acquirer/`
 
 ```bash
@@ -400,8 +422,8 @@ uv run python -m acquirer.main
 
 Docker from the starter directory builds against the published SDK (not the workspace).
 
-Whole-workspace builds are the four commands in `CLAUDE.md`, "Build and test" — the same ones
-`ci-java.yaml`, `ci-node.yaml`, `ci-python.yaml` and `ci-cli.yaml` run.
+Whole-workspace builds are the five commands in `CLAUDE.md`, "Build and test" — the same ones
+`ci-go.yaml`, `ci-java.yaml`, `ci-node.yaml`, `ci-python.yaml` and `ci-cli.yaml` run.
 
 ## Maintainers — tests and CI
 
@@ -422,12 +444,12 @@ Whole-workspace builds are the four commands in `CLAUDE.md`, "Build and test" �
   language in `Config.Languages` has a non-empty embed directory) and the name helpers
   (`sanitizeProjectName`, `toPascalCase`).
 - **`cli/keygen_test.go`** — synced from provider-sdk; the keypair generator.
-- **`.github/workflows/ci-cli.yaml`** — triggered by `cli/**`, `java/**`, `node/**`,
+- **`.github/workflows/ci-cli.yaml`** — triggered by `cli/**`, `go/**`, `java/**`, `node/**`,
   `python/**` and `proto/**`, because the starters and SDKs it builds are all inputs. Two jobs:
 
   **Build & Scaffold Test** (Linux): generates, builds and unit-tests the CLI (`go test -v`),
-  then scaffolds each starter with explicit steps — Java acquirer, Node issuer, Node LP and
-  Python acquirer — checking essential files (`build.gradle.kts`/`package.json`, `.env`,
+  then scaffolds each starter with explicit steps — Go acquirer, Java acquirer, Node issuer, Node LP and
+  Python acquirer — checking essential files (`go.mod`/`build.gradle.kts`/`package.json`, `.env`,
   `.gitignore`, `Dockerfile`, `.dockerignore`, `gradlew` executable). Publishes this tree's SDKs
   locally (Java through `publishToMavenLocal -Pversion=0.0.0-local`, Node through
   `npm pack -w sdk`) and builds and runs each scaffold's own tests against them.
@@ -442,7 +464,7 @@ Whole-workspace builds are the four commands in `CLAUDE.md`, "Build and test" �
 
 ## Maintainers — adding a starter or a language
 
-1. The starter itself under `java/starter/<role>/`, `node/starter/<role>/` or
+1. The starter itself under `go/starter/<role>/`, `java/starter/<role>/`, `node/starter/<role>/` or
    `python/starter/<role>/`, wired into `cli/generate.go` as
    `<lang>/<role>=<lang>/starter/<role>`, and a scaffold + verify step pair in `ci-cli.yaml` for
    it. Its `.env.example` needs an active `PROVIDER_PRIVATE_KEY=` line; the scaffolder records

@@ -43,6 +43,7 @@ usdt-pay init --lang=<language> --role=<role> <project-name>
 
 | `--lang` | `--role` | Starter |
 |---|---|---|
+| `go` | `acquirer` | [`go/starter/acquirer/`](../go/starter/acquirer/) |
 | `java` | `acquirer` | [`java/starter/acquirer/`](../java/starter/acquirer/) |
 | `node` | `issuer` | [`node/starter/issuer/`](../node/starter/issuer/) |
 | `node` | `lp` | [`node/starter/lp/`](../node/starter/lp/) |

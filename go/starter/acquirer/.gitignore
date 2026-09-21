@@ -1,0 +1,38 @@
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Dependency directories (Go modules)
+vendor/
+
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Output of the go coverage tool
+*.coverprofile
+*.cov
+*.coverage
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Test results
+*.tmp
+*.cache
+*.bench
+
+# environment files
+.env
+local.env
+
+# keys
+*.pem
+*.key

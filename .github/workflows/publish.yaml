@@ -206,9 +206,34 @@ jobs:
         working-directory: python
         run: uv run ruff format --check .
 
+  build-go:
+    name: Build Go
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          show-progress: false
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: "stable"
+          cache-dependency-path: |
+            go/sdk/go.sum
+            .github/tools/sumtool/go.sum
+
+      - name: Test sumtool
+        working-directory: .github/tools/sumtool
+        run: go test -v ./...
+
+      - name: Build and test
+        working-directory: go/sdk
+        run: go vet ./... && go test -v ./...
+
   publish-node-sdk:
     name: Publish Node SDK
-    needs: [preflight, build-java, build-node, build-python, build-cli]
+    needs: [preflight, build-java, build-node, build-python, build-go, build-cli]
     # npm rejects --provenance from self-hosted runners.
     runs-on: ubuntu-latest
     permissions:
@@ -291,7 +316,7 @@ jobs:
 
   publish-java:
     name: Publish Java
-    needs: [preflight, build-java, build-node, build-python, build-cli]
+    needs: [preflight, build-java, build-node, build-python, build-go, build-cli]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -342,7 +367,7 @@ jobs:
 
   publish-python-sdk:
     name: Publish Python SDK
-    needs: [preflight, build-java, build-node, build-python]
+    needs: [preflight, build-java, build-node, build-python, build-go]
     runs-on: ubuntu-latest
     environment: pypi-sdk
     permissions:
@@ -387,9 +412,66 @@ jobs:
         working-directory: python
         run: uv publish --trusted-publishing always dist/t0_usdt_pay_sdk-*
 
+  publish-go:
+    name: Publish Go
+    needs: [preflight, build-java, build-node, build-python, build-go, build-cli]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.CI_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: usdt-pay-sdk
+          permission-contents: write
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          show-progress: false
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: "stable"
+          cache-dependency-path: |
+            go/sdk/go.sum
+            .github/tools/sumtool/go.sum
+
+      - name: Verify SDK version matches tag
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          RUNTIME=$(grep -oP '(?<=SDKVersion = \")[^\"]+' go/sdk/version.go)
+          [ "$RUNTIME" = "$VERSION" ] || { echo "::error::go/sdk/version.go has $RUNTIME, tag is v$VERSION"; exit 1; }
+          grep -q "usdt-pay-sdk/go/sdk v$VERSION" go/starter/acquirer/go.mod.tmpl || { echo "::error::go/starter/acquirer/go.mod.tmpl does not pin v$VERSION"; exit 1; }
+          echo "Go version sites match tag v$VERSION"
+
+      - name: Create and push Go module tag
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          git tag "go/sdk/v${VERSION}"
+          git push origin "go/sdk/v${VERSION}"
+
+      - name: Verify starter template against the published SDK
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          PROXY_DIR="${RUNNER_TEMP}/goproxy"
+          go -C .github/tools/sumtool run . "${GITHUB_WORKSPACE}/go/sdk" "v${VERSION}" "${PROXY_DIR}"
+          (cd cli && go generate ./... && go build -ldflags "-X main.Version=${VERSION}" -o "$RUNNER_TEMP/usdt-pay" .)
+          "$RUNNER_TEMP/usdt-pay" init test-go --lang=go --role=acquirer --module=github.com/test/test-go --no-color --dir="$RUNNER_TEMP/test-go"
+          cd "$RUNNER_TEMP/test-go"
+          export GONOSUMDB="github.com/t-0-network"
+          GOPROXY="file://${PROXY_DIR}" go mod download "github.com/t-0-network/usdt-pay-sdk/go/sdk@v${VERSION}"
+          GOPROXY="file://${PROXY_DIR},https://proxy.golang.org,direct" go build -mod=readonly ./...
+          sed 's|github.com/test/test-go|{{MODULE_PATH}}|g' go.mod | cmp - "$GITHUB_WORKSPACE/go/starter/acquirer/go.mod.tmpl"
+          cmp go.sum "$GITHUB_WORKSPACE/go/starter/acquirer/go.sum.tmpl"
+
   publish-cli:
     name: Publish CLI
-    needs: [preflight, build-java, build-node, build-python, build-cli, publish-python-sdk]
+    needs: [preflight, build-java, build-node, build-python, build-go, build-cli, publish-python-sdk, publish-go]
     runs-on: ubuntu-latest
     steps:
       - name: Generate GitHub App token

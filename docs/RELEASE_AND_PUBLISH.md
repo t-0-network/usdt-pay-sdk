@@ -37,12 +37,14 @@ any site disagrees.
 | `python/sdk/src/t0_usdt_pay_sdk/_version.py` | `__version__` |
 | `python/starter/acquirer/pyproject.toml` | `t0-usdt-pay-sdk>=X.Y.Z` dependency |
 | `python/uv.lock` | regenerated after the three sites above are bumped |
+| `go/sdk/version.go` | `const SDKVersion = "X.Y.Z"` |
+| `go/starter/acquirer/go.mod.tmpl` | `require .../usdt-pay-sdk/go/sdk vX.Y.Z` |
 
 ---
 
 ## Starters
 
-Starters are live, tested projects under `java/starter/`, `node/starter/` and `python/starter/` —
+Starters are live, tested projects under `go/starter/`, `java/starter/`, `node/starter/` and `python/starter/` —
 each `<lang>/starter/<role>/` directory is one starter. They are **not published as packages** — the
 unified CLI in `cli/` (`usdt-pay init`) embeds them as templates at build time via `go generate`.
 
@@ -62,8 +64,8 @@ build. Deliberately not a `+` range, because an SDK bump is the consumer's decis
 
 Dispatch input `bump` — `patch` (default) / `minor` / `major`.
 
-1. **Build gate** — `build-java`, `build-node` and `build-cli`, the build/test core of
-   `ci-java.yaml` / `ci-node.yaml` / `ci-cli.yaml` including `npm audit --omit=dev --audit-level=high`.
+1. **Build gate** — `build-go`, `build-java`, `build-node`, `build-python` and `build-cli`, the build/test core of
+   `ci-go.yaml` / `ci-java.yaml` / `ci-node.yaml` / `ci-python.yaml` / `ci-cli.yaml` including `npm audit --omit=dev --audit-level=high`.
    A red tree cannot be released.
 2. **`release` job**, guarded by `if: github.ref == 'refs/heads/master'` so a dispatch against a
    feature branch cannot tag.
@@ -110,19 +112,19 @@ Dispatch input `bump` — `patch` (default) / `minor` / `major`.
 
 Fires on `v[0-9]+.[0-9]+.[0-9]+`.
 
-**Build gate** — `build-java` + `build-node` + `build-python` + `build-cli` again, **minus `npm audit`**.
+**Build gate** — `build-go` + `build-java` + `build-node` + `build-python` + `build-cli` again, **minus `npm audit`**.
 Deliberate: pre-tag a fresh advisory should block the release; post-tag it must not, or an
 advisory published in the minutes between tag and publish strands a tagged release that cannot be
 re-cut without a dependency bump.
 
 ```
-    preflight    build-java    build-node    build-python    build-cli
-         \            |            |              |             /
-          \-----------+------------+--------------+------------/
-                                   |
-                   /---------------+----------------------\
-                  /         /      |       \               \
-        publish-node-sdk  publish-java  publish-python-sdk  publish-cli
+    preflight    build-go    build-java    build-node    build-python    build-cli
+         \          |            |            |              |             /
+          \---------+------------+------------+--------------+------------/
+                                             |
+                   /---------------+---------+---------------------\
+                  /         /      |         |       \              \
+        publish-go  publish-node-sdk  publish-java  publish-python-sdk  publish-cli
 ```
 
 Nothing publishes until everything builds and the shared **`preflight`** job passes.
@@ -172,6 +174,12 @@ published.
 | Job | Package | Directory |
 |---|---|---|
 | `publish-python-sdk` | `t0-usdt-pay-sdk` | `python/sdk` |
+
+### `publish-go`
+
+Verify `SDKVersion` matches tag and starter pin in `go.mod.tmpl`. Create and push the
+`go/sdk/vX.Y.Z` module tag. Rebuild sumtool layout from the tagged tree, scaffold a project,
+run `go build -mod=readonly ./...` to verify the precomputed `go.sum` is correct.
 
 ### `publish-java`
 
@@ -336,16 +344,19 @@ assertion there for each, a `build-*` job in `publish.yaml`'s gate, and a `publi
 version-matches-tag assertion. The [version sites table](#version-sites) above grows a row per site
 — `publish.yaml`'s validation must grow with it, or the twice-validation stops catching drift.
 
-### Go
+### Go — implemented
 
-Go publishing has the most moving parts. Copy provider-sdk's Go steps wholesale and keep them
-identical to upstream: the `release.yaml` "Update Go Starter template SDK version" step, the
-[`publish-go` job](https://github.com/t-0-network/provider-sdk/blob/master/.github/workflows/publish.yaml)
-and `.github/tools/sumtool`. The rules behind them — module tags created in `publish.yaml`,
-`sumtool` precomputing `go.sum` before the tag exists, the `GOPROXY` chain with its file-proxy
-gate, a `LICENSE` in every module directory — are in provider-sdk's
+Go SDK at `go/sdk/`, acquirer starter at `go/starter/acquirer/`. Module tag `go/sdk/vX.Y.Z`
+is created and pushed by `publish-go` in `publish.yaml`. `.github/tools/sumtool` precomputes
+`go.sum` before the tag exists so the starter template's checksums are ready in the release commit.
+The rules — module tags, `sumtool`, the `GOPROXY` chain with its file-proxy gate, a `LICENSE`
+in the module directory — are adapted from provider-sdk's
 [`RELEASE_AND_PUBLISH.md`](https://github.com/t-0-network/provider-sdk/blob/master/docs/RELEASE_AND_PUBLISH.md),
-"Precomputing the Go template's `go.sum`". They are deliberately not restated here.
+"Precomputing the Go template's `go.sum`".
+
+Version sites: `go/sdk/version.go` (`SDKVersion` constant, category C) and
+`go/starter/acquirer/go.mod.tmpl` (SDK dependency pin, category B). Site A is the
+git tag `go/sdk/vX.Y.Z`, not a file edit.
 
 ### Python
 

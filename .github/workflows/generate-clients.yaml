@@ -63,8 +63,12 @@ jobs:
         working-directory: python/sdk
         run: buf generate --clean
 
+      - name: Generate Go clients
+        working-directory: go/sdk
+        run: buf generate --clean
+
       - name: Commit generated files
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "Auto-generate gRPC clients"
-          file_pattern: "node/sdk/src/gen/** python/sdk/src/t0_usdt_pay_sdk/api/**"
+          file_pattern: "node/sdk/src/gen/** python/sdk/src/t0_usdt_pay_sdk/api/** go/sdk/gen/**"
