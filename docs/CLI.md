@@ -15,7 +15,7 @@ headed "Maintainers", is how the pieces fit and what to do when they change.
 | Languages and roles | `go`/`acquirer`, `java`/`acquirer`, `node`/`issuer`, `node`/`lp`, `python`/`acquirer` |
 | Releases | assets `usdt-pay-<os>-<arch>[.exe]` on the GitHub Release `vX.Y.Z`, uploaded by `publish-cli` in `publish.yaml` |
 | Installers | `cli/install.sh` (macOS, Linux) and `cli/install.ps1` (Windows) download the latest release |
-| Source | `cli/` — eight files synced from provider-sdk, the rest repo-owned (see "Maintainers — ownership and sync") |
+| Source | `cli/` — files synced from provider-sdk (list below), the rest repo-owned (see "Maintainers — ownership and sync") |
 | Short version | [`cli/README.md`](../cli/README.md) — install and create a project |
 
 ## Installation
@@ -254,8 +254,8 @@ Each scaffold ships its README — the integration guide for the role.
 
 ## Maintainers — ownership and sync
 
-Eight files are upstream-owned and overwritten by every sync PR from provider-sdk. The list is
-provider-sdk's `.github/workflows/cli-sync-config/usdt-pay-sdk.yaml`:
+The following files are upstream-owned and overwritten by every sync PR from provider-sdk
+(the list is provider-sdk's `.github/workflows/cli-sync-config/usdt-pay-sdk.yaml`):
 
 ```
 cli/main.go
@@ -266,6 +266,10 @@ cli/env.go
 cli/go.mod
 cli/go.sum
 cli/internal/sync/main.go
+cli/internal/gomod/gomod.go
+cli/internal/gomod/gomod_test.go
+cli/config_test.go
+cli/scaffold_test.go
 ```
 
 A bug in any of them is fixed in provider-sdk first; the next sync carries it here. A local patch
@@ -279,7 +283,7 @@ Everything else under `cli/` is repo-owned:
 | `config.go` | the product's `CLIConfig`: `ProductName`, `Command`, `Description`, `RoleRequired`, `DefaultRole`, `Languages`, `NextSteps`, `RunSteps` |
 | `generate.go` | the `go generate` directive that embeds the starters |
 | `internal/embed/.gitignore` | keeps the generated embed tree out of the repo |
-| `starters_test.go`, `scaffold_test.go` | this product's tests |
+| `starters_test.go` | this product's tests (repo-owned) |
 | `install.sh`, `install.ps1` | installer scripts |
 | `README.md` | the user-facing how-to |
 
@@ -335,7 +339,9 @@ into `cli/internal/embed/<lang>/<role>/`, skipping `node_modules`, `dist`, `buil
 `//go:embed all:internal/embed`. The directory is generated and ignored
 (`cli/internal/embed/.gitignore`), so every build — local, `ci-cli.yaml`,
 `publish-cli` — runs `go generate` first, and the binary ships the starters of the commit it was
-built from. A starter edited in the tree reaches the CLI on the next `go generate`.
+built from. A starter edited in the tree reaches the CLI on the next `go generate`. For Go
+starters the sync tool renames `.go`/`go.mod`/`go.sum` → `.tmpl` at embed time so the
+source files in the tree are plain `.go` and `go.mod`/`go.sum`.
 
 ## Maintainers — Dockerfiles and .dockerignore
 
@@ -350,8 +356,10 @@ the project name is not the monorepo's.
 
 ## Maintainers — working on a starter in the tree
 
-In the tree a starter is a workspace member and compiles against the SDK next to it, so the
-commands differ from the ones a scaffolded project's README gives. `.env` is yours to create
+In the tree a starter is a workspace member and compiles against the SDK next to it (except Go —
+the Go starter is a standalone module pinned to the published SDK; the local SDK is reached with
+the `-replace` recipe below), so the commands differ from the ones a scaffolded project's README
+gives. `.env` is yours to create
 here — the generated key and `.env` are what `usdt-pay init` writes into a scaffold, and the tree
 is what it scaffolds from:
 
@@ -398,11 +406,14 @@ Docker from the starter directory builds against the published SDK (not the work
 ### Go — `go/starter/acquirer/`
 
 The Go starter is a real Go module (`module github.com/t-0-network/usdt-pay-sdk/go/starter/acquirer`)
-that compiles and tests in-tree. The sync tool renames `.go` → `.tmpl` and replaces the module
-path with `{{MODULE_PATH}}` at embed time — the source files in the tree are plain `.go`.
+that compiles and tests in-tree. The sync tool renames `.go`/`go.mod`/`go.sum` → `.tmpl` only;
+the module path stays real and the scaffolder reads it from `go.mod.tmpl` at scaffold time and
+replaces it with `--module`. The in-tree module builds against the published SDK pin without a
+`-replace`.
+
+To develop against the local SDK:
 
 ```bash
-# Build and test from here, with the local SDK:
 go mod edit -replace github.com/t-0-network/usdt-pay-sdk/go/sdk=../../sdk
 go build ./... && go test ./...
 go mod edit -dropreplace github.com/t-0-network/usdt-pay-sdk/go/sdk
@@ -432,7 +443,9 @@ Whole-workspace builds are the five commands in `CLAUDE.md`, "Build and test" �
   languages that have one, so a new starter is covered without editing the test and an unwired
   one fails it. `TestStarters_HaveDockerfiles` requires `Dockerfile` and `.dockerignore` in each
   starter directory. `TestRun_InstantiatesEveryStarter` runs the CLI end to end for each:
-  - `.gitignore` and the language's entry files are there, `dot-gitignore` is not;
+  - `.gitignore` and the language's entry files are there, `dot-gitignore` is not (starters ship
+    a real `.gitignore` — `go:embed all:` keeps dotfiles; `dot-gitignore` is the optional rename
+    convention the scaffolder also honours);
   - `Dockerfile` and `.dockerignore` are present.
 
   `TestRun_WritesFreshPrivateKey` instantiates each starter twice: `.env` holds a fresh key —
@@ -440,9 +453,10 @@ Whole-workspace builds are the five commands in `CLAUDE.md`, "Build and test" �
   printed to the user and the one recorded in `.env` both derive from it; `.env.example` keeps
   its empty `PROVIDER_PRIVATE_KEY=`; `NETWORK_PUBLIC_KEY` is present (pre-filled with the
   sandbox key); `.env` is `0600`.
-- **`cli/scaffold_test.go`** — embed path handling (`embed.FS` rejects backslash paths, every
-  language in `Config.Languages` has a non-empty embed directory) and the name helpers
-  (`sanitizeProjectName`, `toPascalCase`).
+- **`cli/scaffold_test.go`** — synced from provider-sdk; embed path handling, the module-path
+  replacer, and the name helpers (`sanitizeProjectName`, `toPascalCase`).
+- **`cli/config_test.go`** — synced from provider-sdk; validates that `CLIConfig` satisfies the
+  upstream contract.
 - **`cli/keygen_test.go`** — synced from provider-sdk; the keypair generator.
 - **`.github/workflows/ci-cli.yaml`** — triggered by `cli/**`, `go/**`, `java/**`, `node/**`,
   `python/**` and `proto/**`, because the starters and SDKs it builds are all inputs. Two jobs:
@@ -460,7 +474,8 @@ Whole-workspace builds are the five commands in `CLAUDE.md`, "Build and test" �
   starter that matches the SDK released with it, so the tree is the right thing to prove.
 
   **Build & Test (Windows)**: generates, builds and unit-tests the CLI, then scaffolds both Node
-  starters and checks their essential files.
+  starters and the Go acquirer with `--module` and checks their essential files (`go.mod`/`.env`/
+  `.gitignore` for Go, `package.json`/`.env`/`.gitignore` for Node).
 
 ## Maintainers — adding a starter or a language
 

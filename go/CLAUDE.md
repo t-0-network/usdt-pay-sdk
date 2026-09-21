@@ -20,3 +20,10 @@ paths — the pay protos have no `go_package` option.
 
 `github.com/t-0-network/provider-sdk/go` is pinned exact in `go/sdk/go.mod`.
 Bump deliberately, not as drive-by.
+
+## Starter
+
+`go/starter/acquirer/` has a single `go.mod` and `go.sum` with the real module
+path. `release.yaml` bumps the SDK pin to the current release. No `.tmpl` files
+in the tree — the sync tool creates the `.tmpl` rename only in the CLI's embed
+directory. Develop against the local SDK with `-replace` per `docs/CLI.md`.

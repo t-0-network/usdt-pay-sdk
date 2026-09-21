@@ -40,7 +40,9 @@ cd cli && go generate ./... && go build ./... && go test ./...
 
 CI (`ci-go.yaml`, `ci-java.yaml`, `ci-node.yaml`, `ci-python.yaml`, `ci-cli.yaml`) runs exactly these builds; if they pass locally the tree is
 releasable. `ci-cli.yaml` additionally scaffolds every starter with the built CLI and runs each
-scaffold's tests against the SDKs built from the tree, on Linux and Windows (`docs/CLI.md`).
+scaffold's tests against the SDKs built from the tree on Linux; the Windows job
+scaffolds the two Node starters and the Go acquirer (essential-files check, no
+test run). Details: `docs/CLI.md`.
 
 ## The proto sync
 
@@ -68,14 +70,19 @@ When handling one:
 
 ## The CLI sync
 
-`cli/` is a product instance of provider-sdk's unified CLI. Eight files are
-synced from upstream and overwritten by every sync PR — `main.go`, `scaffold.go`,
-`keygen.go`, `keygen_test.go`, `env.go`, `go.mod`, `go.sum`,
-`internal/sync/main.go` — so a bug in them is fixed in provider-sdk first.
-Everything else under `cli/` is repo-owned. A green sync PR proves only that
-`cli/` compiles; `go test ./...` in `cli/` is what proves the scaffolder still
-works. How the pieces fit — embedded starters, the tests, what
-`ci-cli.yaml` verifies, adding a starter: `docs/CLI.md`.
+`cli/` is a product instance of provider-sdk's unified CLI. The following files
+are synced from upstream and overwritten by every sync PR — `main.go`,
+`scaffold.go`, `keygen.go`, `keygen_test.go`, `env.go`, `go.mod`, `go.sum`,
+`internal/sync/main.go`, `internal/gomod/gomod.go`, `internal/gomod/gomod_test.go`,
+`config_test.go`, `scaffold_test.go` — so a bug in them is fixed in
+provider-sdk first. Everything else under `cli/` is repo-owned. A sync PR is
+proven by `ci-cli.yaml`; reproduce locally with `go generate && go test` in
+`cli/`. How the pieces fit — embedded starters, the tests, what `ci-cli.yaml`
+verifies, adding a starter: `docs/CLI.md`.
+
+The Go starter has exactly one `go.mod`/`go.sum` with the real module path; the
+scaffolder reads it from the embedded `go.mod.tmpl` and replaces the module path
+with `--module` at scaffold time. Never add a `.tmpl` next to it in the tree.
 
 ## README section order
 
