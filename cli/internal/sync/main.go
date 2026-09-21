@@ -9,7 +9,8 @@
 // Go templates require a go.mod at their root; the module directive must be
 // parsable so the scaffolder can read it at scaffold time. Files ending in
 // .go, go.mod, and go.sum are renamed to .tmpl to prevent go:embed from
-// treating them as source.
+// treating them as source. A source directory containing both X and X.tmpl
+// for any renamed file is refused (the .tmpl copy would overwrite the renamed one).
 //
 // Other handling:
 //   - Filters out build artifacts (node_modules, dist, __pycache__, build, .venv, etc.)
@@ -118,10 +119,20 @@ func main() {
 	fmt.Println("done")
 }
 
+type copyEntry struct {
+	src     string
+	destRel string
+	mode    os.FileMode
+}
+
 // copyTree copies srcDir to destDir. When isGo is true, .go/.mod/.sum files are
 // renamed to .tmpl so go:embed treats them as data, not source.
 func copyTree(srcDir, destDir string, isGo bool) error {
-	return filepath.WalkDir(srcDir, func(src string, d fs.DirEntry, err error) error {
+	// Pass 1: plan — collect entries and detect destination collisions.
+	var entries []copyEntry
+	seen := map[string]string{} // destRel → source rel
+
+	if err := filepath.WalkDir(srcDir, func(src string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -140,7 +151,7 @@ func copyTree(srcDir, destDir string, isGo bool) error {
 			if skipDirs[base] {
 				return filepath.SkipDir
 			}
-			return os.MkdirAll(filepath.Join(destDir, rel), 0777)
+			return nil
 		}
 
 		if skipFiles[base] {
@@ -157,15 +168,10 @@ func copyTree(srcDir, destDir string, isGo bool) error {
 			destRel += ".tmpl"
 		}
 
-		destPath := filepath.Join(destDir, destRel)
-		if err := os.MkdirAll(filepath.Dir(destPath), 0777); err != nil {
-			return err
+		if prev, ok := seen[destRel]; ok {
+			return fmt.Errorf("both %q and %q would be written as %q — remove one", prev, rel, destRel)
 		}
-
-		data, err := os.ReadFile(src)
-		if err != nil {
-			return fmt.Errorf("reading %s: %w", src, err)
-		}
+		seen[destRel] = rel
 
 		info, err := d.Info()
 		if err != nil {
@@ -176,8 +182,30 @@ func copyTree(srcDir, destDir string, isGo bool) error {
 			mode = 0666
 		}
 
-		return os.WriteFile(destPath, data, mode)
-	})
+		entries = append(entries, copyEntry{src: src, destRel: destRel, mode: mode})
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	// Pass 2: write.
+	for _, e := range entries {
+		destPath := filepath.Join(destDir, e.destRel)
+		if err := os.MkdirAll(filepath.Dir(destPath), 0777); err != nil {
+			return err
+		}
+
+		data, err := os.ReadFile(e.src)
+		if err != nil {
+			return fmt.Errorf("reading %s: %w", e.src, err)
+		}
+
+		if err := os.WriteFile(destPath, data, e.mode); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func findRepoRoot() (string, error) {
