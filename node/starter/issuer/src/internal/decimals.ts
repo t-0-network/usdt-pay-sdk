@@ -54,7 +54,7 @@ export function decimalFromString(value: string): Decimal {
 }
 
 /**
- * Exact decimal string, for logs and for chain-native URIs that want a human amount.
+ * Exact decimal string, for logs.
  *
  * Handles a positive exponent too: t-0 may send a round magnitude as unscaled=10n,
  * exponent=8 rather than as a billion zeros.
@@ -76,26 +76,4 @@ export function decimalToString(value: Decimal): string {
 
   const point = digits.length + value.exponent;
   return sign + digits.slice(0, point) + "." + digits.slice(point);
-}
-
-/**
- * The amount in a chain's smallest unit — what an ERC-681 URI carries. USDt is 6
- * decimals on the deployments in this contract.
- *
- * @throws RangeError if the amount is finer than `decimals` can express, rather than
- *         rounding a customer's money away behind your back
- */
-export function decimalToUnits(value: Decimal, decimals: number): bigint {
-  const shift = value.exponent + decimals;
-  if (shift < 0) {
-    // Exact rescale: surplus digits are zeros.
-    const divisor = 10n ** BigInt(-shift);
-    if (value.unscaled % divisor === 0n) {
-      return value.unscaled / divisor;
-    }
-    throw new RangeError(
-      `${decimalToString(value)} has more precision than ${decimals} decimals can carry`,
-    );
-  }
-  return value.unscaled * 10n ** BigInt(shift);
 }

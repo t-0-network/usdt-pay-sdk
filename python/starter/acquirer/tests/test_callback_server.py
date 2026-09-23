@@ -110,6 +110,7 @@ async def test_payment_failed(server_and_client):
         payment_ref="order-4",
         amount_usdt=common_pb2.Decimal(unscaled=500, exponent=-2),
         disposition=common_pb2.FUNDS_DISPOSITION_RETURNED_TO_SENDER,
+        reason=common_pb2.PAYMENT_FAILURE_REASON_AMOUNT_MISMATCH,
         failed_at=_now_ts(),
     )
     req.usdt_on_chain.chain = common_pb2.BLOCKCHAIN_ETH

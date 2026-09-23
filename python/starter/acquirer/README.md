@@ -77,8 +77,13 @@ merchant rings up a sale:
    `fx_rate`, `quote_id`, `expires_at`. The quote stands until it expires; any
    number of intents may reference it.
 2. `create_payment_intent` — `payment_intent_id`, `expires_at`,
-   `settlement_amount`, deposit options (one per chain), settlement mode. Hand
-   each `payment_uri` to the POS unchanged and show it until `expires_at`.
+   `settlement_amount`, deposit options (one per chain), settlement mode. The POS
+   builds a QR per option from `chain`, `deposit_address`, `token_contract`,
+   `token_decimals` and `settlement_amount` and shows it until `expires_at`. A wallet
+   URI carries `settlement_amount × 10^token_decimals` base units, scaled by that
+   option's own `token_decimals` (USDt is 6 on some chains, 18 on others); on EVM:
+   `ethereum:<token_contract>@<chainId>/transfer?address=<deposit_address>&uint256=<base units>`
+   (`chainId` 1 for ETH, 56 for BSC).
 3. The customer pays from their wallet. You wait for the callbacks.
 
 ## Phase 3 — the callbacks
@@ -92,8 +97,9 @@ t-0 pushes five callbacks, each delivered at least once:
 - **SettlementCompleted** (USDt) — on-chain settlement verified. The intents
   it names are terminal.
 - **PaymentExpired** — the QR window lapsed. Clear the pending order.
-- **PaymentFailed** — a deposit that will not settle. `disposition` tells the
-  customer what to expect.
+- **PaymentFailed** — a deposit that will not settle. `reason` tells the customer
+  why (`AMOUNT_MISMATCH`, or `ISSUER_DECLINED` with no further detail);
+  `disposition` tells them what to expect.
 
 ## Phase 4 — fiat mode: confirm receipt
 
