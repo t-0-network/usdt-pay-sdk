@@ -69,8 +69,8 @@ class FakeAcquirerService:
         deposit = success.usdt_on_chain.deposit_options.add()
         deposit.chain = common_pb2.BLOCKCHAIN_ETH
         deposit.deposit_address = "0x" + "aa" * 20
-        deposit.payment_uri = "ethereum:0x" + "aa" * 20
         deposit.token_contract = "0x" + "bb" * 20
+        deposit.token_decimals = 6
 
         success.onchain.SetInParent()
         return resp
@@ -103,8 +103,8 @@ class FakeAcquirerServiceSync:
         deposit = success.usdt_on_chain.deposit_options.add()
         deposit.chain = common_pb2.BLOCKCHAIN_ETH
         deposit.deposit_address = "0x" + "aa" * 20
-        deposit.payment_uri = "ethereum:0x" + "aa" * 20
         deposit.token_contract = "0x" + "bb" * 20
+        deposit.token_decimals = 6
         success.onchain.SetInParent()
         return resp
 
@@ -159,8 +159,8 @@ def test_outcome_from_response_success():
     deposit = resp.success.usdt_on_chain.deposit_options.add()
     deposit.chain = common_pb2.BLOCKCHAIN_ETH
     deposit.deposit_address = "0x" + "aa" * 20
-    deposit.payment_uri = "ethereum:test"
     deposit.token_contract = "0x" + "bb" * 20
+    deposit.token_decimals = 6
     resp.success.onchain.SetInParent()
     result = outcome_from_response(resp)
     assert isinstance(result, Accepted)

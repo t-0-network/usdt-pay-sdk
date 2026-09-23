@@ -1416,6 +1416,8 @@ type PaymentFailedRequest struct {
 	PaymentMethod isPaymentFailedRequest_PaymentMethod `protobuf_oneof:"payment_method"`
 	// * Where the funds go, so the merchant can tell the customer what to expect.
 	Disposition pay.FundsDisposition `protobuf:"varint,50,opt,name=disposition,proto3,enum=tzero.v1.pay.FundsDisposition" json:"disposition,omitempty"`
+	// * Why the Issuer will not process the deposit, so the merchant can tell the customer.
+	Reason pay.PaymentFailureReason `protobuf:"varint,70,opt,name=reason,proto3,enum=tzero.v1.pay.PaymentFailureReason" json:"reason,omitempty"`
 	// * Moment the intent became terminally failed.
 	FailedAt *timestamppb.Timestamp `protobuf:"bytes,60,opt,name=failed_at,json=failedAt,proto3" json:"failed_at,omitempty"`
 	// no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
@@ -1496,6 +1498,13 @@ func (x *PaymentFailedRequest) GetDisposition() pay.FundsDisposition {
 		return x.Disposition
 	}
 	return pay.FundsDisposition(0)
+}
+
+func (x *PaymentFailedRequest) GetReason() pay.PaymentFailureReason {
+	if x != nil {
+		return x.Reason
+	}
+	return pay.PaymentFailureReason(0)
 }
 
 func (x *PaymentFailedRequest) GetFailedAt() *timestamppb.Timestamp {
@@ -1922,7 +1931,7 @@ func (x *CreatePaymentIntentResponse_Failure) GetReason() CreatePaymentIntentRes
 type CreatePaymentIntentResponse_Success_UsdtOnChainInstructions struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// * One deposit option per chain the Issuer supports for this intent; the customer picks one in their wallet.
-	DepositOptions []*pay.DepositOption `protobuf:"bytes,30,rep,name=deposit_options,json=depositOptions,proto3" json:"deposit_options,omitempty"`
+	DepositOptions []*CreatePaymentIntentResponse_Success_UsdtOnChainInstructions_DepositOption `protobuf:"bytes,30,rep,name=deposit_options,json=depositOptions,proto3" json:"deposit_options,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -1957,7 +1966,7 @@ func (*CreatePaymentIntentResponse_Success_UsdtOnChainInstructions) Descriptor()
 	return file_tzero_v1_pay_acquirer_acquirer_proto_rawDescGZIP(), []int{5, 0, 0}
 }
 
-func (x *CreatePaymentIntentResponse_Success_UsdtOnChainInstructions) GetDepositOptions() []*pay.DepositOption {
+func (x *CreatePaymentIntentResponse_Success_UsdtOnChainInstructions) GetDepositOptions() []*CreatePaymentIntentResponse_Success_UsdtOnChainInstructions_DepositOption {
 	if x != nil {
 		return x.DepositOptions
 	}
@@ -2004,6 +2013,87 @@ func (*CreatePaymentIntentResponse_Success_OnchainSettlement) Descriptor() ([]by
 	return file_tzero_v1_pay_acquirer_acquirer_proto_rawDescGZIP(), []int{5, 0, 1}
 }
 
+// *
+// One selectable deposit option: the chain, the one-time address reserved
+// on it, and the USDt token contract with its decimals. Together with
+// settlement_amount these are everything the POS needs to build whatever
+// it carries to the customer (a QR image, a wallet deep link, or a plain
+// address).
+type CreatePaymentIntentResponse_Success_UsdtOnChainInstructions_DepositOption struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// * Chain this deposit option pays on.
+	Chain pay.Blockchain `protobuf:"varint,10,opt,name=chain,proto3,enum=tzero.v1.pay.Blockchain" json:"chain,omitempty"`
+	// * One-time deposit address reserved for this intent on `chain`.
+	DepositAddress string `protobuf:"bytes,20,opt,name=deposit_address,json=depositAddress,proto3" json:"deposit_address,omitempty"`
+	// * USDt token contract on `chain` the deposit must be made in.
+	TokenContract string `protobuf:"bytes,40,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
+	// *
+	// Decimals of `token_contract`: the amount to transfer in the token's
+	// base units is settlement_amount * 10^token_decimals. USDt does not use
+	// the same decimals on every chain.
+	TokenDecimals uint32 `protobuf:"varint,50,opt,name=token_decimals,json=tokenDecimals,proto3" json:"token_decimals,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreatePaymentIntentResponse_Success_UsdtOnChainInstructions_DepositOption) Reset() {
+	*x = CreatePaymentIntentResponse_Success_UsdtOnChainInstructions_DepositOption{}
+	mi := &file_tzero_v1_pay_acquirer_acquirer_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreatePaymentIntentResponse_Success_UsdtOnChainInstructions_DepositOption) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreatePaymentIntentResponse_Success_UsdtOnChainInstructions_DepositOption) ProtoMessage() {}
+
+func (x *CreatePaymentIntentResponse_Success_UsdtOnChainInstructions_DepositOption) ProtoReflect() protoreflect.Message {
+	mi := &file_tzero_v1_pay_acquirer_acquirer_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreatePaymentIntentResponse_Success_UsdtOnChainInstructions_DepositOption.ProtoReflect.Descriptor instead.
+func (*CreatePaymentIntentResponse_Success_UsdtOnChainInstructions_DepositOption) Descriptor() ([]byte, []int) {
+	return file_tzero_v1_pay_acquirer_acquirer_proto_rawDescGZIP(), []int{5, 0, 0, 0}
+}
+
+func (x *CreatePaymentIntentResponse_Success_UsdtOnChainInstructions_DepositOption) GetChain() pay.Blockchain {
+	if x != nil {
+		return x.Chain
+	}
+	return pay.Blockchain(0)
+}
+
+func (x *CreatePaymentIntentResponse_Success_UsdtOnChainInstructions_DepositOption) GetDepositAddress() string {
+	if x != nil {
+		return x.DepositAddress
+	}
+	return ""
+}
+
+func (x *CreatePaymentIntentResponse_Success_UsdtOnChainInstructions_DepositOption) GetTokenContract() string {
+	if x != nil {
+		return x.TokenContract
+	}
+	return ""
+}
+
+func (x *CreatePaymentIntentResponse_Success_UsdtOnChainInstructions_DepositOption) GetTokenDecimals() uint32 {
+	if x != nil {
+		return x.TokenDecimals
+	}
+	return 0
+}
+
 // * The confirmation is recorded and the covered intents are settled.
 type SettlementReceivedResponse_Accepted struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -2013,7 +2103,7 @@ type SettlementReceivedResponse_Accepted struct {
 
 func (x *SettlementReceivedResponse_Accepted) Reset() {
 	*x = SettlementReceivedResponse_Accepted{}
-	mi := &file_tzero_v1_pay_acquirer_acquirer_proto_msgTypes[25]
+	mi := &file_tzero_v1_pay_acquirer_acquirer_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2025,7 +2115,7 @@ func (x *SettlementReceivedResponse_Accepted) String() string {
 func (*SettlementReceivedResponse_Accepted) ProtoMessage() {}
 
 func (x *SettlementReceivedResponse_Accepted) ProtoReflect() protoreflect.Message {
-	mi := &file_tzero_v1_pay_acquirer_acquirer_proto_msgTypes[25]
+	mi := &file_tzero_v1_pay_acquirer_acquirer_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2051,7 +2141,7 @@ type SettlementReceivedResponse_Rejected struct {
 
 func (x *SettlementReceivedResponse_Rejected) Reset() {
 	*x = SettlementReceivedResponse_Rejected{}
-	mi := &file_tzero_v1_pay_acquirer_acquirer_proto_msgTypes[26]
+	mi := &file_tzero_v1_pay_acquirer_acquirer_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2063,7 +2153,7 @@ func (x *SettlementReceivedResponse_Rejected) String() string {
 func (*SettlementReceivedResponse_Rejected) ProtoMessage() {}
 
 func (x *SettlementReceivedResponse_Rejected) ProtoReflect() protoreflect.Message {
-	mi := &file_tzero_v1_pay_acquirer_acquirer_proto_msgTypes[26]
+	mi := &file_tzero_v1_pay_acquirer_acquirer_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2090,7 +2180,7 @@ var File_tzero_v1_pay_acquirer_acquirer_proto protoreflect.FileDescriptor
 
 const file_tzero_v1_pay_acquirer_acquirer_proto_rawDesc = "" +
 	"\n" +
-	"$tzero/v1/pay/acquirer/acquirer.proto\x12\x15tzero.v1.pay.acquirer\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19tzero/v1/pay/common.proto\"\xab\x01\n" +
+	"$tzero/v1/pay/acquirer/acquirer.proto\x12\x15tzero.v1.pay.acquirer\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19tzero/v1/pay/common.proto\x1a\x1btzero/v1/pay/validate.proto\"\xab\x01\n" +
 	"\vLocalAmount\x12j\n" +
 	"\x05value\x18\n" +
 	" \x01(\v2\x15.tzero.v1.pay.DecimalB=\xbaH:\xba\x014\x12\x1fvalue must be greater than zero\x1a\x11this.unscaled > 0\xc8\x01\x01R\x05value\x120\n" +
@@ -2141,12 +2231,11 @@ const file_tzero_v1_pay_acquirer_acquirer_proto_rawDesc = "" +
 	"\x05value\x18\n" +
 	" \x01(\v2\x15.tzero.v1.pay.DecimalBr\xbaHo\xba\x01i\x12=value must be greater than zero with at most 2 decimal places\x1a(this.unscaled > 0 && this.exponent >= -2\xc8\x01\x01R\x05valueB\x0f\n" +
 	"\x06amount\x12\x05\xbaH\x02\b\x01B\x12\n" +
-	"\x10settlement_quote\"\x93\n" +
-	"\n" +
+	"\x10settlement_quote\"\xc0\f\n" +
 	"\x1bCreatePaymentIntentResponse\x12V\n" +
 	"\asuccess\x18\n" +
 	" \x01(\v2:.tzero.v1.pay.acquirer.CreatePaymentIntentResponse.SuccessH\x00R\asuccess\x12V\n" +
-	"\afailure\x18\x14 \x01(\v2:.tzero.v1.pay.acquirer.CreatePaymentIntentResponse.FailureH\x00R\afailure\x1a\xe0\x05\n" +
+	"\afailure\x18\x14 \x01(\v2:.tzero.v1.pay.acquirer.CreatePaymentIntentResponse.FailureH\x00R\afailure\x1a\x8d\b\n" +
 	"\aSuccess\x123\n" +
 	"\x11payment_intent_id\x18\n" +
 	" \x01(\x04B\a\xbaH\x042\x02 \x00R\x0fpaymentIntentId\x12A\n" +
@@ -2155,9 +2244,16 @@ const file_tzero_v1_pay_acquirer_acquirer_proto_rawDesc = "" +
 	"\x11settlement_amount\x18\x8c\x01 \x01(\v2\x15.tzero.v1.pay.DecimalBI\xbaHF\xba\x01@\x12+settlement_amount must be greater than zero\x1a\x11this.unscaled > 0\xc8\x01\x01R\x10settlementAmount\x12x\n" +
 	"\rusdt_on_chain\x18P \x01(\v2R.tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.UsdtOnChainInstructionsH\x00R\vusdtOnChain\x12;\n" +
 	"\x04fiat\x18x \x01(\v2%.tzero.v1.pay.acquirer.FiatSettlementH\x01R\x04fiat\x12i\n" +
-	"\aonchain\x18\x82\x01 \x01(\v2L.tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.OnchainSettlementH\x01R\aonchain\x1ai\n" +
-	"\x17UsdtOnChainInstructions\x12N\n" +
-	"\x0fdeposit_options\x18\x1e \x03(\v2\x1b.tzero.v1.pay.DepositOptionB\b\xbaH\x05\x92\x01\x02\b\x01R\x0edepositOptions\x1a\x13\n" +
+	"\aonchain\x18\x82\x01 \x01(\v2L.tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.OnchainSettlementH\x01R\aonchain\x1a\x95\x03\n" +
+	"\x17UsdtOnChainInstructions\x12\x93\x01\n" +
+	"\x0fdeposit_options\x18\x1e \x03(\v2`.tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.UsdtOnChainInstructions.DepositOptionB\b\xbaH\x05\x92\x01\x02\b\x01R\x0edepositOptions\x1a\xe3\x01\n" +
+	"\rDepositOption\x12:\n" +
+	"\x05chain\x18\n" +
+	" \x01(\x0e2\x18.tzero.v1.pay.BlockchainB\n" +
+	"\xbaH\a\x82\x01\x04\x10\x01 \x00R\x05chain\x122\n" +
+	"\x0fdeposit_address\x18\x14 \x01(\tB\t\xbaH\x06r\x04\x90\xb5\x18\x01R\x0edepositAddress\x120\n" +
+	"\x0etoken_contract\x18( \x01(\tB\t\xbaH\x06r\x04\x90\xb5\x18\x01R\rtokenContract\x120\n" +
+	"\x0etoken_decimals\x182 \x01(\rB\t\xbaH\x06*\x04\x18\x12(\x02R\rtokenDecimals\x1a\x13\n" +
 	"\x11OnchainSettlementB\x15\n" +
 	"\finstructions\x12\x05\xbaH\x02\b\x01B\x13\n" +
 	"\n" +
@@ -2250,7 +2346,7 @@ const file_tzero_v1_pay_acquirer_acquirer_proto_rawDesc = "" +
 	"\n" +
 	"expired_at\x18\x1e \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\texpiredAt\x12N\n" +
 	"\x0ffiat_settlement\x182 \x01(\v2%.tzero.v1.pay.acquirer.FiatSettlementR\x0efiatSettlement\"\x18\n" +
-	"\x16PaymentExpiredResponse\"\xb2\x04\n" +
+	"\x16PaymentExpiredResponse\"\xfa\x04\n" +
 	"\x14PaymentFailedRequest\x123\n" +
 	"\x11payment_intent_id\x18\n" +
 	" \x01(\x04B\a\xbaH\x042\x02 \x00R\x0fpaymentIntentId\x12(\n" +
@@ -2260,7 +2356,9 @@ const file_tzero_v1_pay_acquirer_acquirer_proto_rawDesc = "" +
 	"amountUsdt\x12F\n" +
 	"\rusdt_on_chain\x18( \x01(\v2 .tzero.v1.pay.UsdtOnChainPaymentH\x00R\vusdtOnChain\x12L\n" +
 	"\vdisposition\x182 \x01(\x0e2\x1e.tzero.v1.pay.FundsDispositionB\n" +
-	"\xbaH\a\x82\x01\x04\x10\x01 \x00R\vdisposition\x12?\n" +
+	"\xbaH\a\x82\x01\x04\x10\x01 \x00R\vdisposition\x12F\n" +
+	"\x06reason\x18F \x01(\x0e2\".tzero.v1.pay.PaymentFailureReasonB\n" +
+	"\xbaH\a\x82\x01\x04\x10\x01 \x00R\x06reason\x12?\n" +
 	"\tfailed_at\x18< \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\bfailedAt\x12N\n" +
 	"\x0ffiat_settlement\x18P \x01(\v2%.tzero.v1.pay.acquirer.FiatSettlementR\x0efiatSettlementB\x17\n" +
 	"\x0epayment_method\x12\x05\xbaH\x02\b\x01\"\x17\n" +
@@ -2290,112 +2388,116 @@ func file_tzero_v1_pay_acquirer_acquirer_proto_rawDescGZIP() []byte {
 }
 
 var file_tzero_v1_pay_acquirer_acquirer_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_tzero_v1_pay_acquirer_acquirer_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
+var file_tzero_v1_pay_acquirer_acquirer_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_tzero_v1_pay_acquirer_acquirer_proto_goTypes = []any{
-	(GetPaymentQuoteResponse_Failure_Reason)(0),                         // 0: tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Failure.Reason
-	(CreatePaymentIntentResponse_Failure_Reason)(0),                     // 1: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Failure.Reason
-	(SettlementReceivedResponse_Rejected_Reason)(0),                     // 2: tzero.v1.pay.acquirer.SettlementReceivedResponse.Rejected.Reason
-	(*LocalAmount)(nil),                                                 // 3: tzero.v1.pay.acquirer.LocalAmount
-	(*FiatSettlement)(nil),                                              // 4: tzero.v1.pay.acquirer.FiatSettlement
-	(*GetPaymentQuoteRequest)(nil),                                      // 5: tzero.v1.pay.acquirer.GetPaymentQuoteRequest
-	(*GetPaymentQuoteResponse)(nil),                                     // 6: tzero.v1.pay.acquirer.GetPaymentQuoteResponse
-	(*CreatePaymentIntentRequest)(nil),                                  // 7: tzero.v1.pay.acquirer.CreatePaymentIntentRequest
-	(*CreatePaymentIntentResponse)(nil),                                 // 8: tzero.v1.pay.acquirer.CreatePaymentIntentResponse
-	(*SettlementReceivedRequest)(nil),                                   // 9: tzero.v1.pay.acquirer.SettlementReceivedRequest
-	(*SettlementReceivedResponse)(nil),                                  // 10: tzero.v1.pay.acquirer.SettlementReceivedResponse
-	(*PaymentAuthorizedRequest)(nil),                                    // 11: tzero.v1.pay.acquirer.PaymentAuthorizedRequest
-	(*PaymentAuthorizedResponse)(nil),                                   // 12: tzero.v1.pay.acquirer.PaymentAuthorizedResponse
-	(*SettlementInitiatedRequest)(nil),                                  // 13: tzero.v1.pay.acquirer.SettlementInitiatedRequest
-	(*SettlementInitiatedResponse)(nil),                                 // 14: tzero.v1.pay.acquirer.SettlementInitiatedResponse
-	(*SettlementCompletedRequest)(nil),                                  // 15: tzero.v1.pay.acquirer.SettlementCompletedRequest
-	(*SettlementCompletedResponse)(nil),                                 // 16: tzero.v1.pay.acquirer.SettlementCompletedResponse
-	(*PaymentExpiredRequest)(nil),                                       // 17: tzero.v1.pay.acquirer.PaymentExpiredRequest
-	(*PaymentExpiredResponse)(nil),                                      // 18: tzero.v1.pay.acquirer.PaymentExpiredResponse
-	(*PaymentFailedRequest)(nil),                                        // 19: tzero.v1.pay.acquirer.PaymentFailedRequest
-	(*PaymentFailedResponse)(nil),                                       // 20: tzero.v1.pay.acquirer.PaymentFailedResponse
-	(*GetPaymentQuoteResponse_Success)(nil),                             // 21: tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Success
-	(*GetPaymentQuoteResponse_Failure)(nil),                             // 22: tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Failure
-	(*CreatePaymentIntentRequest_SettlementAmount)(nil),                 // 23: tzero.v1.pay.acquirer.CreatePaymentIntentRequest.SettlementAmount
-	(*CreatePaymentIntentResponse_Success)(nil),                         // 24: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success
-	(*CreatePaymentIntentResponse_Failure)(nil),                         // 25: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Failure
-	(*CreatePaymentIntentResponse_Success_UsdtOnChainInstructions)(nil), // 26: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.UsdtOnChainInstructions
-	(*CreatePaymentIntentResponse_Success_OnchainSettlement)(nil),       // 27: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.OnchainSettlement
-	(*SettlementReceivedResponse_Accepted)(nil),                         // 28: tzero.v1.pay.acquirer.SettlementReceivedResponse.Accepted
-	(*SettlementReceivedResponse_Rejected)(nil),                         // 29: tzero.v1.pay.acquirer.SettlementReceivedResponse.Rejected
-	(*pay.Decimal)(nil),                                                 // 30: tzero.v1.pay.Decimal
-	(*timestamppb.Timestamp)(nil),                                       // 31: google.protobuf.Timestamp
-	(*pay.UsdtOnChainPayment)(nil),                                      // 32: tzero.v1.pay.UsdtOnChainPayment
-	(*pay.OnChainSettlementDetails)(nil),                                // 33: tzero.v1.pay.OnChainSettlementDetails
-	(pay.FundsDisposition)(0),                                           // 34: tzero.v1.pay.FundsDisposition
-	(*pay.DepositOption)(nil),                                           // 35: tzero.v1.pay.DepositOption
+	(GetPaymentQuoteResponse_Failure_Reason)(0),                                       // 0: tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Failure.Reason
+	(CreatePaymentIntentResponse_Failure_Reason)(0),                                   // 1: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Failure.Reason
+	(SettlementReceivedResponse_Rejected_Reason)(0),                                   // 2: tzero.v1.pay.acquirer.SettlementReceivedResponse.Rejected.Reason
+	(*LocalAmount)(nil),                                                               // 3: tzero.v1.pay.acquirer.LocalAmount
+	(*FiatSettlement)(nil),                                                            // 4: tzero.v1.pay.acquirer.FiatSettlement
+	(*GetPaymentQuoteRequest)(nil),                                                    // 5: tzero.v1.pay.acquirer.GetPaymentQuoteRequest
+	(*GetPaymentQuoteResponse)(nil),                                                   // 6: tzero.v1.pay.acquirer.GetPaymentQuoteResponse
+	(*CreatePaymentIntentRequest)(nil),                                                // 7: tzero.v1.pay.acquirer.CreatePaymentIntentRequest
+	(*CreatePaymentIntentResponse)(nil),                                               // 8: tzero.v1.pay.acquirer.CreatePaymentIntentResponse
+	(*SettlementReceivedRequest)(nil),                                                 // 9: tzero.v1.pay.acquirer.SettlementReceivedRequest
+	(*SettlementReceivedResponse)(nil),                                                // 10: tzero.v1.pay.acquirer.SettlementReceivedResponse
+	(*PaymentAuthorizedRequest)(nil),                                                  // 11: tzero.v1.pay.acquirer.PaymentAuthorizedRequest
+	(*PaymentAuthorizedResponse)(nil),                                                 // 12: tzero.v1.pay.acquirer.PaymentAuthorizedResponse
+	(*SettlementInitiatedRequest)(nil),                                                // 13: tzero.v1.pay.acquirer.SettlementInitiatedRequest
+	(*SettlementInitiatedResponse)(nil),                                               // 14: tzero.v1.pay.acquirer.SettlementInitiatedResponse
+	(*SettlementCompletedRequest)(nil),                                                // 15: tzero.v1.pay.acquirer.SettlementCompletedRequest
+	(*SettlementCompletedResponse)(nil),                                               // 16: tzero.v1.pay.acquirer.SettlementCompletedResponse
+	(*PaymentExpiredRequest)(nil),                                                     // 17: tzero.v1.pay.acquirer.PaymentExpiredRequest
+	(*PaymentExpiredResponse)(nil),                                                    // 18: tzero.v1.pay.acquirer.PaymentExpiredResponse
+	(*PaymentFailedRequest)(nil),                                                      // 19: tzero.v1.pay.acquirer.PaymentFailedRequest
+	(*PaymentFailedResponse)(nil),                                                     // 20: tzero.v1.pay.acquirer.PaymentFailedResponse
+	(*GetPaymentQuoteResponse_Success)(nil),                                           // 21: tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Success
+	(*GetPaymentQuoteResponse_Failure)(nil),                                           // 22: tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Failure
+	(*CreatePaymentIntentRequest_SettlementAmount)(nil),                               // 23: tzero.v1.pay.acquirer.CreatePaymentIntentRequest.SettlementAmount
+	(*CreatePaymentIntentResponse_Success)(nil),                                       // 24: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success
+	(*CreatePaymentIntentResponse_Failure)(nil),                                       // 25: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Failure
+	(*CreatePaymentIntentResponse_Success_UsdtOnChainInstructions)(nil),               // 26: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.UsdtOnChainInstructions
+	(*CreatePaymentIntentResponse_Success_OnchainSettlement)(nil),                     // 27: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.OnchainSettlement
+	(*CreatePaymentIntentResponse_Success_UsdtOnChainInstructions_DepositOption)(nil), // 28: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.UsdtOnChainInstructions.DepositOption
+	(*SettlementReceivedResponse_Accepted)(nil),                                       // 29: tzero.v1.pay.acquirer.SettlementReceivedResponse.Accepted
+	(*SettlementReceivedResponse_Rejected)(nil),                                       // 30: tzero.v1.pay.acquirer.SettlementReceivedResponse.Rejected
+	(*pay.Decimal)(nil),                                                               // 31: tzero.v1.pay.Decimal
+	(*timestamppb.Timestamp)(nil),                                                     // 32: google.protobuf.Timestamp
+	(*pay.UsdtOnChainPayment)(nil),                                                    // 33: tzero.v1.pay.UsdtOnChainPayment
+	(*pay.OnChainSettlementDetails)(nil),                                              // 34: tzero.v1.pay.OnChainSettlementDetails
+	(pay.FundsDisposition)(0),                                                         // 35: tzero.v1.pay.FundsDisposition
+	(pay.PaymentFailureReason)(0),                                                     // 36: tzero.v1.pay.PaymentFailureReason
+	(pay.Blockchain)(0),                                                               // 37: tzero.v1.pay.Blockchain
 }
 var file_tzero_v1_pay_acquirer_acquirer_proto_depIdxs = []int32{
-	30, // 0: tzero.v1.pay.acquirer.LocalAmount.value:type_name -> tzero.v1.pay.Decimal
-	30, // 1: tzero.v1.pay.acquirer.FiatSettlement.fx_rate:type_name -> tzero.v1.pay.Decimal
+	31, // 0: tzero.v1.pay.acquirer.LocalAmount.value:type_name -> tzero.v1.pay.Decimal
+	31, // 1: tzero.v1.pay.acquirer.FiatSettlement.fx_rate:type_name -> tzero.v1.pay.Decimal
 	3,  // 2: tzero.v1.pay.acquirer.FiatSettlement.local:type_name -> tzero.v1.pay.acquirer.LocalAmount
-	30, // 3: tzero.v1.pay.acquirer.GetPaymentQuoteRequest.local_amount:type_name -> tzero.v1.pay.Decimal
+	31, // 3: tzero.v1.pay.acquirer.GetPaymentQuoteRequest.local_amount:type_name -> tzero.v1.pay.Decimal
 	21, // 4: tzero.v1.pay.acquirer.GetPaymentQuoteResponse.success:type_name -> tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Success
 	22, // 5: tzero.v1.pay.acquirer.GetPaymentQuoteResponse.failure:type_name -> tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Failure
 	23, // 6: tzero.v1.pay.acquirer.CreatePaymentIntentRequest.settlement:type_name -> tzero.v1.pay.acquirer.CreatePaymentIntentRequest.SettlementAmount
 	3,  // 7: tzero.v1.pay.acquirer.CreatePaymentIntentRequest.local:type_name -> tzero.v1.pay.acquirer.LocalAmount
 	24, // 8: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.success:type_name -> tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success
 	25, // 9: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.failure:type_name -> tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Failure
-	30, // 10: tzero.v1.pay.acquirer.SettlementReceivedRequest.amount_received:type_name -> tzero.v1.pay.Decimal
-	31, // 11: tzero.v1.pay.acquirer.SettlementReceivedRequest.received_at:type_name -> google.protobuf.Timestamp
-	28, // 12: tzero.v1.pay.acquirer.SettlementReceivedResponse.accepted:type_name -> tzero.v1.pay.acquirer.SettlementReceivedResponse.Accepted
-	29, // 13: tzero.v1.pay.acquirer.SettlementReceivedResponse.rejected:type_name -> tzero.v1.pay.acquirer.SettlementReceivedResponse.Rejected
-	32, // 14: tzero.v1.pay.acquirer.PaymentAuthorizedRequest.usdt_on_chain:type_name -> tzero.v1.pay.UsdtOnChainPayment
-	31, // 15: tzero.v1.pay.acquirer.PaymentAuthorizedRequest.approved_at:type_name -> google.protobuf.Timestamp
-	30, // 16: tzero.v1.pay.acquirer.PaymentAuthorizedRequest.settlement_amount:type_name -> tzero.v1.pay.Decimal
-	31, // 17: tzero.v1.pay.acquirer.PaymentAuthorizedRequest.received_at:type_name -> google.protobuf.Timestamp
+	31, // 10: tzero.v1.pay.acquirer.SettlementReceivedRequest.amount_received:type_name -> tzero.v1.pay.Decimal
+	32, // 11: tzero.v1.pay.acquirer.SettlementReceivedRequest.received_at:type_name -> google.protobuf.Timestamp
+	29, // 12: tzero.v1.pay.acquirer.SettlementReceivedResponse.accepted:type_name -> tzero.v1.pay.acquirer.SettlementReceivedResponse.Accepted
+	30, // 13: tzero.v1.pay.acquirer.SettlementReceivedResponse.rejected:type_name -> tzero.v1.pay.acquirer.SettlementReceivedResponse.Rejected
+	33, // 14: tzero.v1.pay.acquirer.PaymentAuthorizedRequest.usdt_on_chain:type_name -> tzero.v1.pay.UsdtOnChainPayment
+	32, // 15: tzero.v1.pay.acquirer.PaymentAuthorizedRequest.approved_at:type_name -> google.protobuf.Timestamp
+	31, // 16: tzero.v1.pay.acquirer.PaymentAuthorizedRequest.settlement_amount:type_name -> tzero.v1.pay.Decimal
+	32, // 17: tzero.v1.pay.acquirer.PaymentAuthorizedRequest.received_at:type_name -> google.protobuf.Timestamp
 	4,  // 18: tzero.v1.pay.acquirer.PaymentAuthorizedRequest.fiat_settlement:type_name -> tzero.v1.pay.acquirer.FiatSettlement
 	3,  // 19: tzero.v1.pay.acquirer.SettlementInitiatedRequest.local:type_name -> tzero.v1.pay.acquirer.LocalAmount
-	31, // 20: tzero.v1.pay.acquirer.SettlementInitiatedRequest.initiated_at:type_name -> google.protobuf.Timestamp
-	31, // 21: tzero.v1.pay.acquirer.SettlementInitiatedRequest.settled_at:type_name -> google.protobuf.Timestamp
-	30, // 22: tzero.v1.pay.acquirer.SettlementCompletedRequest.settlement_amount:type_name -> tzero.v1.pay.Decimal
-	31, // 23: tzero.v1.pay.acquirer.SettlementCompletedRequest.settled_at:type_name -> google.protobuf.Timestamp
-	33, // 24: tzero.v1.pay.acquirer.SettlementCompletedRequest.settlement:type_name -> tzero.v1.pay.OnChainSettlementDetails
-	31, // 25: tzero.v1.pay.acquirer.PaymentExpiredRequest.expired_at:type_name -> google.protobuf.Timestamp
+	32, // 20: tzero.v1.pay.acquirer.SettlementInitiatedRequest.initiated_at:type_name -> google.protobuf.Timestamp
+	32, // 21: tzero.v1.pay.acquirer.SettlementInitiatedRequest.settled_at:type_name -> google.protobuf.Timestamp
+	31, // 22: tzero.v1.pay.acquirer.SettlementCompletedRequest.settlement_amount:type_name -> tzero.v1.pay.Decimal
+	32, // 23: tzero.v1.pay.acquirer.SettlementCompletedRequest.settled_at:type_name -> google.protobuf.Timestamp
+	34, // 24: tzero.v1.pay.acquirer.SettlementCompletedRequest.settlement:type_name -> tzero.v1.pay.OnChainSettlementDetails
+	32, // 25: tzero.v1.pay.acquirer.PaymentExpiredRequest.expired_at:type_name -> google.protobuf.Timestamp
 	4,  // 26: tzero.v1.pay.acquirer.PaymentExpiredRequest.fiat_settlement:type_name -> tzero.v1.pay.acquirer.FiatSettlement
-	30, // 27: tzero.v1.pay.acquirer.PaymentFailedRequest.amount_usdt:type_name -> tzero.v1.pay.Decimal
-	32, // 28: tzero.v1.pay.acquirer.PaymentFailedRequest.usdt_on_chain:type_name -> tzero.v1.pay.UsdtOnChainPayment
-	34, // 29: tzero.v1.pay.acquirer.PaymentFailedRequest.disposition:type_name -> tzero.v1.pay.FundsDisposition
-	31, // 30: tzero.v1.pay.acquirer.PaymentFailedRequest.failed_at:type_name -> google.protobuf.Timestamp
-	4,  // 31: tzero.v1.pay.acquirer.PaymentFailedRequest.fiat_settlement:type_name -> tzero.v1.pay.acquirer.FiatSettlement
-	30, // 32: tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Success.settlement_amount:type_name -> tzero.v1.pay.Decimal
-	30, // 33: tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Success.fx_rate:type_name -> tzero.v1.pay.Decimal
-	31, // 34: tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Success.expires_at:type_name -> google.protobuf.Timestamp
-	0,  // 35: tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Failure.reason:type_name -> tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Failure.Reason
-	30, // 36: tzero.v1.pay.acquirer.CreatePaymentIntentRequest.SettlementAmount.value:type_name -> tzero.v1.pay.Decimal
-	31, // 37: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.expires_at:type_name -> google.protobuf.Timestamp
-	30, // 38: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.settlement_amount:type_name -> tzero.v1.pay.Decimal
-	26, // 39: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.usdt_on_chain:type_name -> tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.UsdtOnChainInstructions
-	4,  // 40: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.fiat:type_name -> tzero.v1.pay.acquirer.FiatSettlement
-	27, // 41: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.onchain:type_name -> tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.OnchainSettlement
-	1,  // 42: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Failure.reason:type_name -> tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Failure.Reason
-	35, // 43: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.UsdtOnChainInstructions.deposit_options:type_name -> tzero.v1.pay.DepositOption
-	2,  // 44: tzero.v1.pay.acquirer.SettlementReceivedResponse.Rejected.reason:type_name -> tzero.v1.pay.acquirer.SettlementReceivedResponse.Rejected.Reason
-	5,  // 45: tzero.v1.pay.acquirer.AcquirerService.GetPaymentQuote:input_type -> tzero.v1.pay.acquirer.GetPaymentQuoteRequest
-	7,  // 46: tzero.v1.pay.acquirer.AcquirerService.CreatePaymentIntent:input_type -> tzero.v1.pay.acquirer.CreatePaymentIntentRequest
-	9,  // 47: tzero.v1.pay.acquirer.AcquirerService.SettlementReceived:input_type -> tzero.v1.pay.acquirer.SettlementReceivedRequest
-	11, // 48: tzero.v1.pay.acquirer.AcquirerCallbackService.PaymentAuthorized:input_type -> tzero.v1.pay.acquirer.PaymentAuthorizedRequest
-	13, // 49: tzero.v1.pay.acquirer.AcquirerCallbackService.SettlementInitiated:input_type -> tzero.v1.pay.acquirer.SettlementInitiatedRequest
-	15, // 50: tzero.v1.pay.acquirer.AcquirerCallbackService.SettlementCompleted:input_type -> tzero.v1.pay.acquirer.SettlementCompletedRequest
-	17, // 51: tzero.v1.pay.acquirer.AcquirerCallbackService.PaymentExpired:input_type -> tzero.v1.pay.acquirer.PaymentExpiredRequest
-	19, // 52: tzero.v1.pay.acquirer.AcquirerCallbackService.PaymentFailed:input_type -> tzero.v1.pay.acquirer.PaymentFailedRequest
-	6,  // 53: tzero.v1.pay.acquirer.AcquirerService.GetPaymentQuote:output_type -> tzero.v1.pay.acquirer.GetPaymentQuoteResponse
-	8,  // 54: tzero.v1.pay.acquirer.AcquirerService.CreatePaymentIntent:output_type -> tzero.v1.pay.acquirer.CreatePaymentIntentResponse
-	10, // 55: tzero.v1.pay.acquirer.AcquirerService.SettlementReceived:output_type -> tzero.v1.pay.acquirer.SettlementReceivedResponse
-	12, // 56: tzero.v1.pay.acquirer.AcquirerCallbackService.PaymentAuthorized:output_type -> tzero.v1.pay.acquirer.PaymentAuthorizedResponse
-	14, // 57: tzero.v1.pay.acquirer.AcquirerCallbackService.SettlementInitiated:output_type -> tzero.v1.pay.acquirer.SettlementInitiatedResponse
-	16, // 58: tzero.v1.pay.acquirer.AcquirerCallbackService.SettlementCompleted:output_type -> tzero.v1.pay.acquirer.SettlementCompletedResponse
-	18, // 59: tzero.v1.pay.acquirer.AcquirerCallbackService.PaymentExpired:output_type -> tzero.v1.pay.acquirer.PaymentExpiredResponse
-	20, // 60: tzero.v1.pay.acquirer.AcquirerCallbackService.PaymentFailed:output_type -> tzero.v1.pay.acquirer.PaymentFailedResponse
-	53, // [53:61] is the sub-list for method output_type
-	45, // [45:53] is the sub-list for method input_type
-	45, // [45:45] is the sub-list for extension type_name
-	45, // [45:45] is the sub-list for extension extendee
-	0,  // [0:45] is the sub-list for field type_name
+	31, // 27: tzero.v1.pay.acquirer.PaymentFailedRequest.amount_usdt:type_name -> tzero.v1.pay.Decimal
+	33, // 28: tzero.v1.pay.acquirer.PaymentFailedRequest.usdt_on_chain:type_name -> tzero.v1.pay.UsdtOnChainPayment
+	35, // 29: tzero.v1.pay.acquirer.PaymentFailedRequest.disposition:type_name -> tzero.v1.pay.FundsDisposition
+	36, // 30: tzero.v1.pay.acquirer.PaymentFailedRequest.reason:type_name -> tzero.v1.pay.PaymentFailureReason
+	32, // 31: tzero.v1.pay.acquirer.PaymentFailedRequest.failed_at:type_name -> google.protobuf.Timestamp
+	4,  // 32: tzero.v1.pay.acquirer.PaymentFailedRequest.fiat_settlement:type_name -> tzero.v1.pay.acquirer.FiatSettlement
+	31, // 33: tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Success.settlement_amount:type_name -> tzero.v1.pay.Decimal
+	31, // 34: tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Success.fx_rate:type_name -> tzero.v1.pay.Decimal
+	32, // 35: tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Success.expires_at:type_name -> google.protobuf.Timestamp
+	0,  // 36: tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Failure.reason:type_name -> tzero.v1.pay.acquirer.GetPaymentQuoteResponse.Failure.Reason
+	31, // 37: tzero.v1.pay.acquirer.CreatePaymentIntentRequest.SettlementAmount.value:type_name -> tzero.v1.pay.Decimal
+	32, // 38: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.expires_at:type_name -> google.protobuf.Timestamp
+	31, // 39: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.settlement_amount:type_name -> tzero.v1.pay.Decimal
+	26, // 40: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.usdt_on_chain:type_name -> tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.UsdtOnChainInstructions
+	4,  // 41: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.fiat:type_name -> tzero.v1.pay.acquirer.FiatSettlement
+	27, // 42: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.onchain:type_name -> tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.OnchainSettlement
+	1,  // 43: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Failure.reason:type_name -> tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Failure.Reason
+	28, // 44: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.UsdtOnChainInstructions.deposit_options:type_name -> tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.UsdtOnChainInstructions.DepositOption
+	37, // 45: tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.UsdtOnChainInstructions.DepositOption.chain:type_name -> tzero.v1.pay.Blockchain
+	2,  // 46: tzero.v1.pay.acquirer.SettlementReceivedResponse.Rejected.reason:type_name -> tzero.v1.pay.acquirer.SettlementReceivedResponse.Rejected.Reason
+	5,  // 47: tzero.v1.pay.acquirer.AcquirerService.GetPaymentQuote:input_type -> tzero.v1.pay.acquirer.GetPaymentQuoteRequest
+	7,  // 48: tzero.v1.pay.acquirer.AcquirerService.CreatePaymentIntent:input_type -> tzero.v1.pay.acquirer.CreatePaymentIntentRequest
+	9,  // 49: tzero.v1.pay.acquirer.AcquirerService.SettlementReceived:input_type -> tzero.v1.pay.acquirer.SettlementReceivedRequest
+	11, // 50: tzero.v1.pay.acquirer.AcquirerCallbackService.PaymentAuthorized:input_type -> tzero.v1.pay.acquirer.PaymentAuthorizedRequest
+	13, // 51: tzero.v1.pay.acquirer.AcquirerCallbackService.SettlementInitiated:input_type -> tzero.v1.pay.acquirer.SettlementInitiatedRequest
+	15, // 52: tzero.v1.pay.acquirer.AcquirerCallbackService.SettlementCompleted:input_type -> tzero.v1.pay.acquirer.SettlementCompletedRequest
+	17, // 53: tzero.v1.pay.acquirer.AcquirerCallbackService.PaymentExpired:input_type -> tzero.v1.pay.acquirer.PaymentExpiredRequest
+	19, // 54: tzero.v1.pay.acquirer.AcquirerCallbackService.PaymentFailed:input_type -> tzero.v1.pay.acquirer.PaymentFailedRequest
+	6,  // 55: tzero.v1.pay.acquirer.AcquirerService.GetPaymentQuote:output_type -> tzero.v1.pay.acquirer.GetPaymentQuoteResponse
+	8,  // 56: tzero.v1.pay.acquirer.AcquirerService.CreatePaymentIntent:output_type -> tzero.v1.pay.acquirer.CreatePaymentIntentResponse
+	10, // 57: tzero.v1.pay.acquirer.AcquirerService.SettlementReceived:output_type -> tzero.v1.pay.acquirer.SettlementReceivedResponse
+	12, // 58: tzero.v1.pay.acquirer.AcquirerCallbackService.PaymentAuthorized:output_type -> tzero.v1.pay.acquirer.PaymentAuthorizedResponse
+	14, // 59: tzero.v1.pay.acquirer.AcquirerCallbackService.SettlementInitiated:output_type -> tzero.v1.pay.acquirer.SettlementInitiatedResponse
+	16, // 60: tzero.v1.pay.acquirer.AcquirerCallbackService.SettlementCompleted:output_type -> tzero.v1.pay.acquirer.SettlementCompletedResponse
+	18, // 61: tzero.v1.pay.acquirer.AcquirerCallbackService.PaymentExpired:output_type -> tzero.v1.pay.acquirer.PaymentExpiredResponse
+	20, // 62: tzero.v1.pay.acquirer.AcquirerCallbackService.PaymentFailed:output_type -> tzero.v1.pay.acquirer.PaymentFailedResponse
+	55, // [55:63] is the sub-list for method output_type
+	47, // [47:55] is the sub-list for method input_type
+	47, // [47:47] is the sub-list for extension type_name
+	47, // [47:47] is the sub-list for extension extendee
+	0,  // [0:47] is the sub-list for field type_name
 }
 
 func init() { file_tzero_v1_pay_acquirer_acquirer_proto_init() }
@@ -2437,7 +2539,7 @@ func file_tzero_v1_pay_acquirer_acquirer_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_tzero_v1_pay_acquirer_acquirer_proto_rawDesc), len(file_tzero_v1_pay_acquirer_acquirer_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   27,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

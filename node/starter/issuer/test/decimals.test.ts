@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { create } from "@bufbuild/protobuf";
 import { DecimalSchema } from "@t-0/usdt-pay-sdk";
-import { decimalFromString, decimalToString, decimalToUnits } from "../src/internal/decimals.js";
+import { decimalFromString, decimalToString } from "../src/internal/decimals.js";
 
 const wire = (unscaled: bigint, exponent: number) =>
   create(DecimalSchema, { unscaled, exponent });
@@ -42,20 +42,4 @@ test("refuses anything that is not a plain decimal", () => {
   // Exponent notation would have to be a float first, which is the whole point.
   assert.throws(() => decimalFromString("1e9"), RangeError);
   assert.throws(() => decimalFromString(""), RangeError);
-});
-
-test("converts to chain units exactly", () => {
-  // What an ERC-681 URI carries: 123.45 USDt at 6 decimals.
-  assert.equal(decimalToUnits(decimalFromString("123.45"), 6), 123_450_000n);
-  assert.equal(decimalToUnits(wire(10n, 8), 6), 1_000_000_000_000_000n);
-});
-
-test("exact rescale when trailing digits are zeros", () => {
-  assert.equal(decimalToUnits(wire(100_000_000n, -7), 6), 10_000_000n);
-  assert.equal(decimalToUnits(wire(-100_000_000n, -7), 6), -10_000_000n);
-});
-
-test("refuses to round a customer's money away", () => {
-  // 7 decimal places into a 6-decimal chain unit: that last digit is money.
-  assert.throws(() => decimalToUnits(decimalFromString("0.1234567"), 6), RangeError);
 });

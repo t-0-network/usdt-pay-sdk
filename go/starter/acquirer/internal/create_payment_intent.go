@@ -58,13 +58,14 @@ func CreateIntent(
 		}
 
 		// TODO: Step 2.2 — store paymentIntentId against your sale, then render
-		//       one deposit option per chain. paymentUri is chain-native;
-		//       encode it as-is, do not rebuild it from the address and the amount.
+		//       one deposit option per chain. Build the QR from the option and the
+		//       settlement amount; the wallet URI carries settlementAmount × 10^tokenDecimals,
+		//       scaled by that option's own decimals.
 		if usdt := s.GetUsdtOnChain(); usdt != nil {
 			for _, opt := range usdt.GetDepositOptions() {
-				log.Printf("  deposit option — chain=%s address=%s uri=%s contract=%s",
+				log.Printf("  deposit option — chain=%s address=%s contract=%s decimals=%d",
 					opt.GetChain(), opt.GetDepositAddress(),
-					opt.GetPaymentUri(), opt.GetTokenContract())
+					opt.GetTokenContract(), opt.GetTokenDecimals())
 			}
 		}
 		return Accepted[*acquirer.CreatePaymentIntentResponse_Success]{Payload: s}

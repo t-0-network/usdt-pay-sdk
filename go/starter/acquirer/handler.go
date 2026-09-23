@@ -95,15 +95,16 @@ func (h *AcquirerCallbackHandler) PaymentFailed(
 	req *connect.Request[acquirer.PaymentFailedRequest],
 ) (*connect.Response[acquirer.PaymentFailedResponse], error) {
 	r := req.Msg
-	log.Printf("PaymentFailed: intent=%d sale=%s amount=%s disposition=%s",
+	log.Printf("PaymentFailed: intent=%d sale=%s amount=%s disposition=%s reason=%s",
 		r.GetPaymentIntentId(),
 		r.GetPaymentRef(),
 		internal.DecimalToString(r.GetAmountUsdt()),
-		r.GetDisposition().String())
+		r.GetDisposition().String(),
+		r.GetReason().String())
 
 	// TODO: Step 3.5 — dedup on paymentIntentId, cancel the pending sale, take the QR off the
-	//   POS, and tell the customer what to expect based on disposition (RETURNED_TO_SENDER
-	//   or RETAINED_BY_ISSUER).
+	//   POS, and tell the customer why (reason: AMOUNT_MISMATCH or ISSUER_DECLINED) and what
+	//   to expect (disposition: RETURNED_TO_SENDER or RETAINED_BY_ISSUER).
 
 	return connect.NewResponse(&acquirer.PaymentFailedResponse{}), nil
 }

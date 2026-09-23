@@ -3,6 +3,7 @@ import datetime
 from buf.validate import validate_pb2 as _validate_pb2
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from tzero.v1.pay import common_pb2 as _common_pb2
+from tzero.v1.pay import validate_pb2 as _validate_pb2_1
 from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
@@ -18,10 +19,12 @@ class PaymentReceivedRequest(_message.Message):
         __slots__ = ()
         def __init__(self) -> None: ...
     class Unprocessable(_message.Message):
-        __slots__ = ("disposition",)
+        __slots__ = ("disposition", "reason")
         DISPOSITION_FIELD_NUMBER: _ClassVar[int]
+        REASON_FIELD_NUMBER: _ClassVar[int]
         disposition: _common_pb2.FundsDisposition
-        def __init__(self, disposition: _Optional[_Union[_common_pb2.FundsDisposition, str]] = ...) -> None: ...
+        reason: _common_pb2.PaymentFailureReason
+        def __init__(self, disposition: _Optional[_Union[_common_pb2.FundsDisposition, str]] = ..., reason: _Optional[_Union[_common_pb2.PaymentFailureReason, str]] = ...) -> None: ...
     PAYMENT_INTENT_ID_FIELD_NUMBER: _ClassVar[int]
     AMOUNT_USDT_FIELD_NUMBER: _ClassVar[int]
     USDT_ON_CHAIN_FIELD_NUMBER: _ClassVar[int]
@@ -124,11 +127,20 @@ class CreatePaymentInstructionsResponse(_message.Message):
     __slots__ = ("success", "failure")
     class Success(_message.Message):
         __slots__ = ("deposit_options", "expires_at")
+        class DepositOption(_message.Message):
+            __slots__ = ("chain", "deposit_address", "token_contract")
+            CHAIN_FIELD_NUMBER: _ClassVar[int]
+            DEPOSIT_ADDRESS_FIELD_NUMBER: _ClassVar[int]
+            TOKEN_CONTRACT_FIELD_NUMBER: _ClassVar[int]
+            chain: _common_pb2.Blockchain
+            deposit_address: str
+            token_contract: str
+            def __init__(self, chain: _Optional[_Union[_common_pb2.Blockchain, str]] = ..., deposit_address: _Optional[str] = ..., token_contract: _Optional[str] = ...) -> None: ...
         DEPOSIT_OPTIONS_FIELD_NUMBER: _ClassVar[int]
         EXPIRES_AT_FIELD_NUMBER: _ClassVar[int]
-        deposit_options: _containers.RepeatedCompositeFieldContainer[_common_pb2.DepositOption]
+        deposit_options: _containers.RepeatedCompositeFieldContainer[CreatePaymentInstructionsResponse.Success.DepositOption]
         expires_at: _timestamp_pb2.Timestamp
-        def __init__(self, deposit_options: _Optional[_Iterable[_Union[_common_pb2.DepositOption, _Mapping]]] = ..., expires_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
+        def __init__(self, deposit_options: _Optional[_Iterable[_Union[CreatePaymentInstructionsResponse.Success.DepositOption, _Mapping]]] = ..., expires_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
     class Failure(_message.Message):
         __slots__ = ("reason",)
         class Reason(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):

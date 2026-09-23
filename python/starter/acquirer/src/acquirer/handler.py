@@ -81,12 +81,14 @@ class AcquirerCallbacks:
         ctx: RequestContext,  # type: ignore[type-arg]
     ) -> acquirer_pb2.PaymentFailedResponse:
         logger.info(
-            "PaymentFailed: intent=%d ref=%s disposition=%s",
+            "PaymentFailed: intent=%d ref=%s disposition=%s reason=%s",
             request.payment_intent_id,
             request.payment_ref,
             common_pb2.FundsDisposition.Name(request.disposition) if request.disposition else "UNKNOWN",
+            common_pb2.PaymentFailureReason.Name(request.reason) if request.reason else "UNKNOWN",
         )
         # TODO: record idempotently under payment_intent_id. Close the pending
-        #   order and tell the customer the outcome. request.disposition says
+        #   order and tell the customer the outcome. request.reason says why
+        #   (AMOUNT_MISMATCH or ISSUER_DECLINED); request.disposition says
         #   where the funds went (RETURNED_TO_SENDER or RETAINED_BY_ISSUER).
         return acquirer_pb2.PaymentFailedResponse()

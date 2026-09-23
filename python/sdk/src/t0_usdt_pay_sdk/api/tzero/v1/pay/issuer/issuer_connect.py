@@ -316,11 +316,11 @@ class IssuerCallbackService(Protocol):
     """
     *
     Issuer-implemented endpoint t-0 calls to reserve deposit addresses and obtain
-    the deposit options (chain-native payment URIs) for an intent.
+    the deposit options for an intent.
     """
     async def create_payment_instructions(self, request: CreatePaymentInstructionsRequest, ctx: RequestContext[CreatePaymentInstructionsRequest, CreatePaymentInstructionsResponse], /) -> CreatePaymentInstructionsResponse:
         """
-        * Reserves one deposit address per supported chain and returns the deposit options with their payment URIs.
+        * Reserves one deposit address per supported chain and returns the deposit options.
         """
         raise ConnectError(Code.UNIMPLEMENTED, 'Not implemented')
 
@@ -365,7 +365,7 @@ class IssuerCallbackServiceClient(ConnectClient):
     """
     *
     Issuer-implemented endpoint t-0 calls to reserve deposit addresses and obtain
-    the deposit options (chain-native payment URIs) for an intent.
+    the deposit options for an intent.
     """
     def __init__(
         self,
@@ -399,7 +399,7 @@ class IssuerCallbackServiceClient(ConnectClient):
         timeout_ms: int | None = None,
     ) -> CreatePaymentInstructionsResponse:
         """
-        * Reserves one deposit address per supported chain and returns the deposit options with their payment URIs.
+        * Reserves one deposit address per supported chain and returns the deposit options.
         """
         return await self.execute_unary(
             request=request,
@@ -418,11 +418,11 @@ class IssuerCallbackServiceSync(Protocol):
     """
     *
     Issuer-implemented endpoint t-0 calls to reserve deposit addresses and obtain
-    the deposit options (chain-native payment URIs) for an intent.
+    the deposit options for an intent.
     """
     def create_payment_instructions(self, request: CreatePaymentInstructionsRequest, ctx: RequestContext[CreatePaymentInstructionsRequest, CreatePaymentInstructionsResponse], /) -> CreatePaymentInstructionsResponse:
         """
-        * Reserves one deposit address per supported chain and returns the deposit options with their payment URIs.
+        * Reserves one deposit address per supported chain and returns the deposit options.
         """
         raise ConnectError(Code.UNIMPLEMENTED, 'Not implemented')
 
@@ -465,7 +465,7 @@ class IssuerCallbackServiceClientSync(ConnectClientSync):
     """
     *
     Issuer-implemented endpoint t-0 calls to reserve deposit addresses and obtain
-    the deposit options (chain-native payment URIs) for an intent.
+    the deposit options for an intent.
     """
     def __init__(
         self,
@@ -499,7 +499,7 @@ class IssuerCallbackServiceClientSync(ConnectClientSync):
         timeout_ms: int | None = None,
     ) -> CreatePaymentInstructionsResponse:
         """
-        * Reserves one deposit address per supported chain and returns the deposit options with their payment URIs.
+        * Reserves one deposit address per supported chain and returns the deposit options.
         """
         return self.execute_unary(
             request=request,
