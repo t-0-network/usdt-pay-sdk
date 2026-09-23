@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file tzero/v1/pay/common.proto.
  */
 export const file_tzero_v1_pay_common: GenFile = /*@__PURE__*/
-  fileDesc("Chl0emVyby92MS9wYXkvY29tbW9uLnByb3RvEgx0emVyby52MS5wYXkiQQoHRGVjaW1hbBIQCgh1bnNjYWxlZBgKIAEoAxIkCghleHBvbmVudBgUIAEoBUISukgPGg0YCCj4//////////8BIpEBChJVc2R0T25DaGFpblBheW1lbnQSMwoFY2hhaW4YCiABKA4yGC50emVyby52MS5wYXkuQmxvY2tjaGFpbkIKukgHggEEEAEgABIjChBvbl9jaGFpbl90eF9oYXNoGBQgASgJQgm6SAZyBIi1GAESIQoOc2VuZGVyX2FkZHJlc3MYHiABKAlCCbpIBnIEkLUYASKpAQoNRGVwb3NpdE9wdGlvbhIzCgVjaGFpbhgKIAEoDjIYLnR6ZXJvLnYxLnBheS5CbG9ja2NoYWluQgq6SAeCAQQQASAAEiIKD2RlcG9zaXRfYWRkcmVzcxgUIAEoCUIJukgGcgSQtRgBEhwKC3BheW1lbnRfdXJpGB4gASgJQge6SARyAhABEiEKDnRva2VuX2NvbnRyYWN0GCggASgJQgm6SAZyBJC1GAEinAEKGE9uQ2hhaW5TZXR0bGVtZW50RGV0YWlscxIjChBvbl9jaGFpbl90eF9oYXNoGAogASgJQgm6SAZyBIi1GAESMwoFY2hhaW4YFCABKA4yGC50emVyby52MS5wYXkuQmxvY2tjaGFpbkIKukgHggEEEAEgABImChNkZXN0aW5hdGlvbl9hZGRyZXNzGB4gASgJQgm6SAZyBJC1GAEqZQoKQmxvY2tjaGFpbhIaChZCTE9DS0NIQUlOX1VOU1BFQ0lGSUVEEAASEwoPQkxPQ0tDSEFJTl9UUk9OEAoSEgoOQkxPQ0tDSEFJTl9FVEgQFBISCg5CTE9DS0NIQUlOX0JTQxAeKokBChBGdW5kc0Rpc3Bvc2l0aW9uEiEKHUZVTkRTX0RJU1BPU0lUSU9OX1VOU1BFQ0lGSUVEEAASKAokRlVORFNfRElTUE9TSVRJT05fUkVUVVJORURfVE9fU0VOREVSEAoSKAokRlVORFNfRElTUE9TSVRJT05fUkVUQUlORURfQllfSVNTVUVSEBRiBnByb3RvMw", [file_buf_validate_validate, file_tzero_v1_pay_validate]);
+  fileDesc("Chl0emVyby92MS9wYXkvY29tbW9uLnByb3RvEgx0emVyby52MS5wYXkiQQoHRGVjaW1hbBIQCgh1bnNjYWxlZBgKIAEoAxIkCghleHBvbmVudBgUIAEoBUISukgPGg0YCCj4//////////8BIpEBChJVc2R0T25DaGFpblBheW1lbnQSMwoFY2hhaW4YCiABKA4yGC50emVyby52MS5wYXkuQmxvY2tjaGFpbkIKukgHggEEEAEgABIjChBvbl9jaGFpbl90eF9oYXNoGBQgASgJQgm6SAZyBIi1GAESIQoOc2VuZGVyX2FkZHJlc3MYHiABKAlCCbpIBnIEkLUYASKcAQoYT25DaGFpblNldHRsZW1lbnREZXRhaWxzEiMKEG9uX2NoYWluX3R4X2hhc2gYCiABKAlCCbpIBnIEiLUYARIzCgVjaGFpbhgUIAEoDjIYLnR6ZXJvLnYxLnBheS5CbG9ja2NoYWluQgq6SAeCAQQQASAAEiYKE2Rlc3RpbmF0aW9uX2FkZHJlc3MYHiABKAlCCbpIBnIEkLUYASplCgpCbG9ja2NoYWluEhoKFkJMT0NLQ0hBSU5fVU5TUEVDSUZJRUQQABITCg9CTE9DS0NIQUlOX1RST04QChISCg5CTE9DS0NIQUlOX0VUSBAUEhIKDkJMT0NLQ0hBSU5fQlNDEB4qiQEKEEZ1bmRzRGlzcG9zaXRpb24SIQodRlVORFNfRElTUE9TSVRJT05fVU5TUEVDSUZJRUQQABIoCiRGVU5EU19ESVNQT1NJVElPTl9SRVRVUk5FRF9UT19TRU5ERVIQChIoCiRGVU5EU19ESVNQT1NJVElPTl9SRVRBSU5FRF9CWV9JU1NVRVIQFCqWAQoUUGF5bWVudEZhaWx1cmVSZWFzb24SJgoiUEFZTUVOVF9GQUlMVVJFX1JFQVNPTl9VTlNQRUNJRklFRBAAEioKJlBBWU1FTlRfRkFJTFVSRV9SRUFTT05fQU1PVU5UX01JU01BVENIEAoSKgomUEFZTUVOVF9GQUlMVVJFX1JFQVNPTl9JU1NVRVJfREVDTElORUQQFGIGcHJvdG8z", [file_buf_validate_validate, file_tzero_v1_pay_validate]);
 
 /**
  * *
@@ -83,51 +83,6 @@ export const UsdtOnChainPaymentSchema: GenMessage<UsdtOnChainPayment> = /*@__PUR
 
 /**
  * *
- * One selectable deposit option for an intent: the chain, the one-time address
- * reserved on it, and the chain-native payment URI the POS carries to the customer
- * (as a QR image, a wallet deep link, or any other carrier) without modification.
- *
- * @generated from message tzero.v1.pay.DepositOption
- */
-export type DepositOption = Message<"tzero.v1.pay.DepositOption"> & {
-  /**
-   * * Chain this deposit option pays on. 
-   *
-   * @generated from field: tzero.v1.pay.Blockchain chain = 10;
-   */
-  chain: Blockchain;
-
-  /**
-   * * One-time deposit address reserved for this intent on `chain`. 
-   *
-   * @generated from field: string deposit_address = 20;
-   */
-  depositAddress: string;
-
-  /**
-   * * Chain-native payment URI (EIP-681 on EVM chains); produced only by the Issuer and carried to the customer unchanged. 
-   *
-   * @generated from field: string payment_uri = 30;
-   */
-  paymentUri: string;
-
-  /**
-   * * USDt token contract on `chain` the deposit must be made in. 
-   *
-   * @generated from field: string token_contract = 40;
-   */
-  tokenContract: string;
-};
-
-/**
- * Describes the message tzero.v1.pay.DepositOption.
- * Use `create(DepositOptionSchema)` to create a new message.
- */
-export const DepositOptionSchema: GenMessage<DepositOption> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_common, 2);
-
-/**
- * *
  * One on-chain USDt settlement transfer, as reported by the Issuer on
  * SettlementSent and relayed to the Acquirer on SettlementCompleted.
  *
@@ -161,7 +116,7 @@ export type OnChainSettlementDetails = Message<"tzero.v1.pay.OnChainSettlementDe
  * Use `create(OnChainSettlementDetailsSchema)` to create a new message.
  */
 export const OnChainSettlementDetailsSchema: GenMessage<OnChainSettlementDetails> = /*@__PURE__*/
-  messageDesc(file_tzero_v1_pay_common, 3);
+  messageDesc(file_tzero_v1_pay_common, 2);
 
 /**
  * *
@@ -233,4 +188,38 @@ export enum FundsDisposition {
  */
 export const FundsDispositionSchema: GenEnum<FundsDisposition> = /*@__PURE__*/
   enumDesc(file_tzero_v1_pay_common, 1);
+
+/**
+ * *
+ * Why the Issuer will not process a deposit, reported by the Issuer and relayed
+ * to the Acquirer so the merchant can tell the customer what went wrong.
+ *
+ * @generated from enum tzero.v1.pay.PaymentFailureReason
+ */
+export enum PaymentFailureReason {
+  /**
+   * @generated from enum value: PAYMENT_FAILURE_REASON_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * The deposit's amount differs from the intent's settlement_amount.
+   *
+   * @generated from enum value: PAYMENT_FAILURE_REASON_AMOUNT_MISMATCH = 10;
+   */
+  AMOUNT_MISMATCH = 10,
+
+  /**
+   * The Issuer declined the deposit for any other reason, screening included; no detail is disclosed.
+   *
+   * @generated from enum value: PAYMENT_FAILURE_REASON_ISSUER_DECLINED = 20;
+   */
+  ISSUER_DECLINED = 20,
+}
+
+/**
+ * Describes the enum tzero.v1.pay.PaymentFailureReason.
+ */
+export const PaymentFailureReasonSchema: GenEnum<PaymentFailureReason> = /*@__PURE__*/
+  enumDesc(file_tzero_v1_pay_common, 2);
 
