@@ -55,6 +55,31 @@ func TestToPascalCase_EdgeCases(t *testing.T) {
 	}
 }
 
+func TestValidProjectName(t *testing.T) {
+	for _, name := range []string{"a", "ab", "a1", "a-b", "a_b", "my-provider"} {
+		if !validProjectName(name) {
+			t.Errorf("validProjectName(%q) = false, want true", name)
+		}
+	}
+	for _, name := range []string{"", "_abc", "-abc", "abc-", "abc_", "---", "9abc"} {
+		if validProjectName(name) {
+			t.Errorf("validProjectName(%q) = true, want false", name)
+		}
+	}
+}
+
+func TestCopyVerbatim(t *testing.T) {
+	if !copyVerbatim("logo.png", []byte("my-provider")) {
+		t.Error("a binary extension must be copied without substitution")
+	}
+	if copyVerbatim("readme.txt", []byte("my-provider")) {
+		t.Error("valid UTF-8 text must be substituted")
+	}
+	if !copyVerbatim("readme.txt", []byte{0xff, 0xfe, 'a'}) {
+		t.Error("invalid UTF-8 must be copied without substitution")
+	}
+}
+
 func TestSanitizeProjectName(t *testing.T) {
 	tests := []struct {
 		input string

@@ -8,8 +8,10 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/t-0-network/provider-sdk/cli/internal/gomod"
 )
@@ -70,12 +72,7 @@ type ScaffoldOpts struct {
 }
 
 func (c CLIConfig) hasLang(lang string) bool {
-	for _, l := range c.Languages {
-		if l == lang {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(c.Languages, lang)
 }
 
 func (c CLIConfig) description() string {
@@ -155,8 +152,8 @@ func scaffold(opts ScaffoldOpts) error {
 			return err
 		}
 
-		// Binary files: copy without processing
-		if isBinaryFile(filepath.Base(src)) {
+		// Binary files, and files that are not valid UTF-8: copy without processing.
+		if copyVerbatim(filepath.Base(src), data) {
 			return writeFileWithMode(destPath, data, src)
 		}
 
@@ -237,6 +234,10 @@ func isBinaryFile(name string) bool {
 	return binaryExts[ext]
 }
 
+func copyVerbatim(name string, data []byte) bool {
+	return isBinaryFile(name) || !utf8.Valid(data)
+}
+
 func writeFileWithMode(dest string, data []byte, src string) error {
 	mode := os.FileMode(0666)
 	// Restore executable bit for known executables
@@ -291,4 +292,18 @@ func sanitizeProjectName(name string) string {
 		}
 	}
 	return b.String()
+}
+
+// validProjectName reports whether a sanitized name is safe to hand to every
+// scaffolded ecosystem. It must start with a letter and end with a letter or
+// digit: uv rejects "_abc", "-abc" and "abc-".
+func validProjectName(name string) bool {
+	if name == "" {
+		return false
+	}
+	start, end := name[0], name[len(name)-1]
+	if start < 'a' || start > 'z' {
+		return false
+	}
+	return (end >= 'a' && end <= 'z') || (end >= '0' && end <= '9')
 }
