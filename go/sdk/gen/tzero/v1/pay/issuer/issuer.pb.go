@@ -159,8 +159,6 @@ type CreatePaymentInstructionsResponse_Failure_Reason int32
 
 const (
 	CreatePaymentInstructionsResponse_Failure_REASON_UNSPECIFIED CreatePaymentInstructionsResponse_Failure_Reason = 0
-	// The Issuer is unavailable to allocate.
-	CreatePaymentInstructionsResponse_Failure_REASON_ISSUER_UNAVAILABLE CreatePaymentInstructionsResponse_Failure_Reason = 10
 	// No free one-time deposit addresses.
 	CreatePaymentInstructionsResponse_Failure_REASON_ADDRESS_POOL_EMPTY CreatePaymentInstructionsResponse_Failure_Reason = 20
 	// The amount falls outside the acceptable range.
@@ -171,13 +169,11 @@ const (
 var (
 	CreatePaymentInstructionsResponse_Failure_Reason_name = map[int32]string{
 		0:  "REASON_UNSPECIFIED",
-		10: "REASON_ISSUER_UNAVAILABLE",
 		20: "REASON_ADDRESS_POOL_EMPTY",
 		40: "REASON_AMOUNT_OUT_OF_RANGE",
 	}
 	CreatePaymentInstructionsResponse_Failure_Reason_value = map[string]int32{
 		"REASON_UNSPECIFIED":         0,
-		"REASON_ISSUER_UNAVAILABLE":  10,
 		"REASON_ADDRESS_POOL_EMPTY":  20,
 		"REASON_AMOUNT_OUT_OF_RANGE": 40,
 	}
@@ -1270,7 +1266,7 @@ const file_tzero_v1_pay_issuer_issuer_proto_rawDesc = "" +
 	"\vamount_usdt\x18\x1e \x01(\v2\x15.tzero.v1.pay.DecimalBC\xbaH@\xba\x01:\x12%amount_usdt must be greater than zero\x1a\x11this.unscaled > 0\xc8\x01\x01R\n" +
 	"amountUsdt\x12C\n" +
 	"\n" +
-	"expires_at\x18( \x01(\v2\x1a.google.protobuf.TimestampB\b\xbaH\x05\xb2\x01\x02@\x01R\texpiresAt\"\xe5\x06\n" +
+	"expires_at\x18( \x01(\v2\x1a.google.protobuf.TimestampB\b\xbaH\x05\xb2\x01\x02@\x01R\texpiresAt\"\xc6\x06\n" +
 	"!CreatePaymentInstructionsResponse\x12Z\n" +
 	"\asuccess\x18\n" +
 	" \x01(\v2>.tzero.v1.pay.issuer.CreatePaymentInstructionsResponse.SuccessH\x00R\asuccess\x12Z\n" +
@@ -1284,14 +1280,12 @@ const file_tzero_v1_pay_issuer_issuer_proto_rawDesc = "" +
 	" \x01(\x0e2\x18.tzero.v1.pay.BlockchainB\n" +
 	"\xbaH\a\x82\x01\x04\x10\x01 \x00R\x05chain\x122\n" +
 	"\x0fdeposit_address\x18\x14 \x01(\tB\t\xbaH\x06r\x04\x90\xb5\x18\x01R\x0edepositAddress\x120\n" +
-	"\x0etoken_contract\x18( \x01(\tB\t\xbaH\x06r\x04\x90\xb5\x18\x01R\rtokenContract\x1a\xf2\x01\n" +
+	"\x0etoken_contract\x18( \x01(\tB\t\xbaH\x06r\x04\x90\xb5\x18\x01R\rtokenContract\x1a\xd3\x01\n" +
 	"\aFailure\x12g\n" +
 	"\x06reason\x18\n" +
-	" \x01(\x0e2E.tzero.v1.pay.issuer.CreatePaymentInstructionsResponse.Failure.ReasonB\b\xbaH\x05\x82\x01\x02 \x00R\x06reason\"~\n" +
+	" \x01(\x0e2E.tzero.v1.pay.issuer.CreatePaymentInstructionsResponse.Failure.ReasonB\b\xbaH\x05\x82\x01\x02 \x00R\x06reason\"_\n" +
 	"\x06Reason\x12\x16\n" +
 	"\x12REASON_UNSPECIFIED\x10\x00\x12\x1d\n" +
-	"\x19REASON_ISSUER_UNAVAILABLE\x10\n" +
-	"\x12\x1d\n" +
 	"\x19REASON_ADDRESS_POOL_EMPTY\x10\x14\x12\x1e\n" +
 	"\x1aREASON_AMOUNT_OUT_OF_RANGE\x10(B\x0f\n" +
 	"\x06result\x12\x05\xbaH\x02\b\x012\xf2\x01\n" +
