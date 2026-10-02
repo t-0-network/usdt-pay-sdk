@@ -146,11 +146,9 @@ class CreatePaymentInstructionsResponse(_message.Message):
         class Reason(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
             __slots__ = ()
             REASON_UNSPECIFIED: _ClassVar[CreatePaymentInstructionsResponse.Failure.Reason]
-            REASON_ISSUER_UNAVAILABLE: _ClassVar[CreatePaymentInstructionsResponse.Failure.Reason]
             REASON_ADDRESS_POOL_EMPTY: _ClassVar[CreatePaymentInstructionsResponse.Failure.Reason]
             REASON_AMOUNT_OUT_OF_RANGE: _ClassVar[CreatePaymentInstructionsResponse.Failure.Reason]
         REASON_UNSPECIFIED: CreatePaymentInstructionsResponse.Failure.Reason
-        REASON_ISSUER_UNAVAILABLE: CreatePaymentInstructionsResponse.Failure.Reason
         REASON_ADDRESS_POOL_EMPTY: CreatePaymentInstructionsResponse.Failure.Reason
         REASON_AMOUNT_OUT_OF_RANGE: CreatePaymentInstructionsResponse.Failure.Reason
         REASON_FIELD_NUMBER: _ClassVar[int]
