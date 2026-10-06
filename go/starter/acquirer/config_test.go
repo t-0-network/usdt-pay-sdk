@@ -37,16 +37,6 @@ func TestLoadConfig_MissingNetworkKey(t *testing.T) {
 	}
 }
 
-func TestLoadConfig_InvalidNetworkKey(t *testing.T) {
-	t.Setenv("PROVIDER_PRIVATE_KEY", testPrivateKey)
-	t.Setenv("NETWORK_PUBLIC_KEY", "not-a-key")
-
-	_, err := LoadConfig()
-	if err == nil {
-		t.Fatal("expected error for invalid NETWORK_PUBLIC_KEY")
-	}
-}
-
 func TestLoadConfig_InvalidPort(t *testing.T) {
 	t.Setenv("PROVIDER_PRIVATE_KEY", testPrivateKey)
 	t.Setenv("NETWORK_PUBLIC_KEY", testNetworkKey)

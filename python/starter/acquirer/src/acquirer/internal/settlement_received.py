@@ -63,7 +63,7 @@ async def settlement_received(
         received_at=received_at,
     )
     try:
-        resp = await t0.settlement_received(req, timeout_ms=15_000)
+        resp = await t0.settlement_received(req)
     except Exception as e:
         return outcome_from_error(e)
     return outcome_from_response(resp)
@@ -86,7 +86,7 @@ def settlement_received_sync(
         received_at=received_at,
     )
     try:
-        resp = t0.settlement_received(req, timeout_ms=15_000)
+        resp = t0.settlement_received(req)
     except Exception as e:
         return outcome_from_error(e)
     return outcome_from_response(resp)

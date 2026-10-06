@@ -8,8 +8,6 @@ import {
 } from "@t-0/usdt-pay-sdk";
 import { accepted, noResultVariant, outcomeFromError, rejected, type Outcome } from "./outcome.js";
 
-const TIMEOUT_MS = 10_000;
-
 /**
  * PublishQuote — push standing quotes into t-0's order book.
  *
@@ -27,17 +25,14 @@ export async function publishQuotes(
   }[],
 ): Promise<Outcome<PublishQuoteResponse_Success>> {
   try {
-    const response = await t0.publishQuote(
-      {
-        quotes: quotes.map((q) => ({
-          quoteRef: q.quoteRef,
-          localCurrency: q.localCurrency,
-          fxRate: q.fxRate,
-          expiresAt: timestampFromDate(q.expiresAt),
-        })),
-      },
-      { timeoutMs: TIMEOUT_MS },
-    );
+    const response = await t0.publishQuote({
+      quotes: quotes.map((q) => ({
+        quoteRef: q.quoteRef,
+        localCurrency: q.localCurrency,
+        fxRate: q.fxRate,
+        expiresAt: timestampFromDate(q.expiresAt),
+      })),
+    });
 
     switch (response.result.case) {
       case "success":

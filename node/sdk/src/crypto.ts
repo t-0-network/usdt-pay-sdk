@@ -40,8 +40,8 @@ import { SDK_VERSION } from "./version.js";
  * Create once at startup, call per request. The raw bytes rule applies:
  * pass the exact wire bytes, no body parsers or decompression.
  */
-export function createRequestDecoder(opts: CreateVerifierOptions): RequestDecoder {
-  return createBaseRequestDecoder({ ...opts, registry: payRegistry, version: SDK_VERSION });
+export function createRequestDecoder(opts: Pick<CreateVerifierOptions, "networkPublicKey">): RequestDecoder {
+  return createBaseRequestDecoder({ networkPublicKey: opts.networkPublicKey, registry: payRegistry, version: SDK_VERSION });
 }
 
 export {
@@ -51,7 +51,6 @@ export {
   verifySignature,
   computeDigest,
   keccak256,
-  parsePublicKey,
   publicKeysEqual,
   NetworkHeaders,
 } from "@t-0/provider-sdk/crypto";

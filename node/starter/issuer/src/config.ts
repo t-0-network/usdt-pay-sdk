@@ -24,9 +24,6 @@ export class ConfigurationError extends Error {
   }
 }
 
-/** Uncompressed secp256k1 point: 65 bytes as hex, 0x prefix optional. */
-const NETWORK_PUBLIC_KEY_PATTERN = /^(0x)?[0-9a-fA-F]{130}$/;
-
 export function loadConfig(): Config {
   // dotenv reads .env from the process working directory, so run the app from the
   // directory holding your .env. Say where we looked — otherwise a .env one directory
@@ -60,16 +57,6 @@ export function loadConfig(): Config {
     throw new ConfigurationError(
       "NETWORK_PUBLIC_KEY is not set",
       "Ask the t-0 team for the network public key and put it in .env.",
-    );
-  }
-
-  // Checked here so a typo reports as configuration, with somewhere to go for the
-  // right value. The signature verifier does reject a malformed key on its own, but
-  // not until the first callback arrives.
-  if (!NETWORK_PUBLIC_KEY_PATTERN.test(networkPublicKey)) {
-    throw new ConfigurationError(
-      "NETWORK_PUBLIC_KEY is not a valid uncompressed secp256k1 public key",
-      `Expected 130 hex characters (65 bytes), optionally 0x-prefixed; got ${networkPublicKey.length} characters.`,
     );
   }
 

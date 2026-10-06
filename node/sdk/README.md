@@ -93,7 +93,7 @@ import {
 } from "@t-0/usdt-pay-sdk";
 
 const decode = createRequestDecoder({
-  networkPublicKey: process.env.NETWORK_PUBLIC_KEY!, // "0x04..." uncompressed secp256k1
+  networkPublicKey: process.env.NETWORK_PUBLIC_KEY!, // from your t-0 onboarding contact
 });
 
 // Hono / fetch-shaped framework — route by Connect procedure path:
@@ -133,7 +133,7 @@ import {
 } from "@t-0/usdt-pay-sdk";
 
 const decode = createRequestDecoder({
-  networkPublicKey: process.env.NETWORK_PUBLIC_KEY!, // "0x04..." uncompressed secp256k1
+  networkPublicKey: process.env.NETWORK_PUBLIC_KEY!, // from your t-0 onboarding contact
 });
 
 http.createServer((req, res) => {
@@ -169,7 +169,7 @@ http.createServer((req, res) => {
 
 The decoder accepts both fetch `Headers` and Node's `Record<string, string | string[] | undefined>`. It normalizes header case internally, detects Content-Type (`application/json` or `application/proto` / `application/protobuf` / `application/x-protobuf`), and the returned `encodeResponse` closure responds in the matching format. The pay contract's proto registry is baked in; you don't pass one.
 
-On success (`result.ok === true`), `result.request` is the typed message, `result.format` is `'json' | 'proto'`, and `result.encodeResponse(schema, message)` returns a `WireResponse` in the matching format. On failure (`result.ok === false`), `result.error` carries `{ status, headers, body }` ready to send — signature failures return 401, malformed bodies 400, unsupported Content-Type 415, and validation errors 400 with a `violations` array.
+On success (`result.ok === true`), `result.request` is the typed message, `result.format` is `'json' | 'proto'`, and `result.encodeResponse(schema, message)` returns a `WireResponse` in the matching format. On failure (`result.ok === false`), `result.error` carries `{ status, headers, body }` ready to send, with the status provider-sdk assigns to that failure.
 
 **Important constraints for standalone integrations:**
 
@@ -180,7 +180,7 @@ On success (`result.ok === true`), `result.request` is the typed message, `resul
 <details>
 <summary>Lower-level primitives</summary>
 
-The individual building blocks are also exported: `createRequestVerifier`, `rejectRequest`, `NetworkHeaders`, `DEFAULT_TOLERANCE_MS`, `verifySignature`, `computeDigest`, `keccak256`, `parsePublicKey`, `publicKeysEqual`. You can import them from the `./crypto` subpath: `import { createRequestVerifier } from "@t-0/usdt-pay-sdk/crypto"`.
+The individual building blocks are also exported: `createRequestVerifier`, `rejectRequest`, `NetworkHeaders`, `DEFAULT_TOLERANCE_MS`, `verifySignature`, `computeDigest`, `keccak256`, `publicKeysEqual`. You can import them from the `./crypto` subpath: `import { createRequestVerifier } from "@t-0/usdt-pay-sdk/crypto"`.
 </details>
 
 ## Calling t-0
@@ -188,8 +188,8 @@ The individual building blocks are also exported: `createRequestVerifier`, `reje
 ```ts
 import { createClient, IssuerService } from "@t-0/usdt-pay-sdk";
 
-const t0 = createClient(process.env.TZERO_ENDPOINT!, privateKeyHex, IssuerService);
-const response = await t0.paymentReceived(request, { timeoutMs: 10_000 });
+const t0 = createClient(endpoint, privateKeyHex, IssuerService);
+const response = await t0.paymentReceived(request);
 ```
 
 All 14 endpoints are unary request/response — nothing in this contract streams.
@@ -198,11 +198,8 @@ All 14 endpoints are unary request/response — nothing in this contract streams
 API, and a pay participant that omitted it would sign perfectly valid requests and
 send them to the wrong host.
 
-Every call has a 15 s deadline by default. A `{ timeoutMs }` on the call replaces it
-for that call. A Connect timeout is a duration evaluated when the call is made, so
-each call site can pick its own — the starters give a settlement report more room
-than the rest, because the transfer is already broadcast by then and an answer is
-worth waiting for.
+Every call gets provider-sdk's default deadline; a `{ timeoutMs }` in a call's second
+argument replaces it for that call.
 
 `signer` takes a hex private key, or a `SignerFunction` when the key lives in an HSM
 or KMS and never reaches this process.

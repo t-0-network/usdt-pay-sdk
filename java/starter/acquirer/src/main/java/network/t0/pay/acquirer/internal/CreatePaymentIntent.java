@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 /**
  * CreatePaymentIntent — opens an intent for a sale. t-0 calls the Issuer inline
  * and returns the payment instructions (deposit options), which makes this the slowest
- * call on the POS path — it runs on the default 10s deadline.
+ * call on the POS path.
  *
  * <p>Idempotency key: {@code idempotencyKey}, unique per acquirer. Mint it when the
  * sale is created and store it with the sale — <em>not</em> here. On

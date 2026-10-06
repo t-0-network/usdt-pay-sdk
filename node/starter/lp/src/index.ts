@@ -22,8 +22,7 @@ async function main(): Promise<void> {
   console.log(`LP public key: ${config.publicKey}`);
   // TODO: Step 1.2 — send this public key to the t-0 team so they can verify your calls.
 
-  // Outbound: everything you call on t-0 (PublishQuote, FiatSettlementSent). Each internal/ helper sets its
-  // own timeout — a Connect deadline is per call, so there is nothing to install here.
+  // Outbound: everything you call on t-0 (PublishQuote, FiatSettlementSent).
   const t0 = createClient(config.tzeroEndpoint, config.privateKey, LpService);
 
   // Inbound: the one callback t-0 pushes to you (ExecuteQuote).
@@ -69,9 +68,8 @@ function shutdownOn(server: Server, stopQuotes: () => void): void {
       stopQuotes();
       server.close(() => process.exit(0));
       // close() waits on open connections, and t-0 holds its callback connection
-      // alive between calls. Drop the idle ones, give in-flight requests 10s, leave.
+      // alive between calls: drop the idle ones so in-flight requests are all it waits for.
       server.closeIdleConnections();
-      setTimeout(() => process.exit(0), 10_000).unref();
     });
   }
 }

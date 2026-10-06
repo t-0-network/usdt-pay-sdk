@@ -16,5 +16,4 @@ export * from "./gen/tzero/v1/pay/issuer/issuer_pb.js";
 export * from "./gen/tzero/v1/pay/acquirer/acquirer_pb.js";
 export * from "./gen/tzero/v1/pay/lp/lp_pb.js";
 
-export type { Client, HandlerContext } from "@connectrpc/connect";
-export type { SignerFunction, Signature } from "@t-0/provider-sdk";
+export type { Client, HandlerContext, SignerFunction, Signature } from "@t-0/provider-sdk";

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import logging
-
 from t0_provider_sdk.provider.handler import (
     BuildHandler,
     BuildHandlerSync,
@@ -23,26 +21,14 @@ from t0_provider_sdk.provider.validate import validate
 from t0_usdt_pay_sdk._version import __version__
 
 
-def create_asgi_app(
-    network_public_key: str,
-    *build_handlers: BuildHandler,
-    logger: logging.Logger | None = None,
-) -> ASGIApp:
+def create_asgi_app(network_public_key: str, *build_handlers: BuildHandler) -> ASGIApp:
     """Create an ASGI app for receiving t-0 callbacks with signature verification."""
-    if not network_public_key or not network_public_key.strip():
-        raise ValueError("network_public_key is required — an empty key disables signature verification")
-    return _new_asgi_app(network_public_key, *build_handlers, logger=logger, version=__version__)
+    return _new_asgi_app(network_public_key, *build_handlers, version=__version__)
 
 
-def create_wsgi_app(
-    network_public_key: str,
-    *build_handlers: BuildHandlerSync,
-    logger: logging.Logger | None = None,
-) -> WSGIApp:
+def create_wsgi_app(network_public_key: str, *build_handlers: BuildHandlerSync) -> WSGIApp:
     """Create a WSGI app for receiving t-0 callbacks with signature verification."""
-    if not network_public_key or not network_public_key.strip():
-        raise ValueError("network_public_key is required — an empty key disables signature verification")
-    return _new_wsgi_app(network_public_key, *build_handlers, logger=logger, version=__version__)
+    return _new_wsgi_app(network_public_key, *build_handlers, version=__version__)
 
 
 __all__ = [

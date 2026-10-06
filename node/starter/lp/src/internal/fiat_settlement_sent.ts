@@ -10,13 +10,6 @@ import { decimalToString } from "./decimals.js";
 import { accepted, noResultVariant, outcomeFromError, rejected, type Outcome } from "./outcome.js";
 
 /**
- * Longer than the 10s the other calls use: the transfer is already sent, so
- * it is worth waiting rather than turning a settlement that landed into an `unknown`
- * you have to reconcile.
- */
-const TIMEOUT_MS = 15_000;
-
-/**
  * FiatSettlementSent — you wired local fiat to the acquirer over bank rails;
  * t-0 verifies the covered executions.
  *
@@ -39,16 +32,13 @@ export async function reportFiatSettlementSent(
   },
 ): Promise<Outcome<FiatSettlementSentResponse_Accepted>> {
   try {
-    const response = await t0.fiatSettlementSent(
-      {
-        bankTransferRef: settlement.bankTransferRef,
-        settledExecutionIds: settlement.settledExecutionIds,
-        localCurrency: settlement.localCurrency,
-        settlementAmount: settlement.settlementAmount,
-        settledAt: timestampFromDate(settlement.settledAt),
-      },
-      { timeoutMs: TIMEOUT_MS },
-    );
+    const response = await t0.fiatSettlementSent({
+      bankTransferRef: settlement.bankTransferRef,
+      settledExecutionIds: settlement.settledExecutionIds,
+      localCurrency: settlement.localCurrency,
+      settlementAmount: settlement.settlementAmount,
+      settledAt: timestampFromDate(settlement.settledAt),
+    });
 
     switch (response.result.case) {
       case "accepted":

@@ -1,7 +1,6 @@
 package network.t0.pay.acquirer;
 
 import io.github.cdimascio.dotenv.Dotenv;
-import network.t0.pay.client.CallDeadline;
 import network.t0.pay.acquirer.handler.AcquirerCallbackHandler;
 import network.t0.pay.acquirer.internal.CreatePaymentIntent;
 import network.t0.pay.acquirer.internal.Decimals;
@@ -18,10 +17,7 @@ import java.io.IOException;
 import java.net.BindException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
 
 /**
  * Acquirer starter for the t-0 USDt pay flow.
@@ -35,10 +31,6 @@ import java.util.regex.Pattern;
 public final class Main {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
-
-    /** Uncompressed secp256k1 point: 65 bytes as hex, 0x prefix optional. */
-    private static final Pattern NETWORK_PUBLIC_KEY_PATTERN =
-            Pattern.compile("(0x)?[0-9a-fA-F]{130}");
 
     public static void main(String[] args) {
         // First, before anything logs: grpc-java logs through java.util.logging, which
@@ -66,14 +58,9 @@ public final class Main {
         Signer signer = Signer.fromHex(config.privateKey());
 
         // Outbound: GetPaymentQuote, CreatePaymentIntent, SettlementReceived.
-        // BlockingNetworkClient signs each request with your private key, and
-        // CallDeadline bounds every call at 10s. A call that needs a different
-        // deadline sets one at its own call site and this steps aside —
-        // see GetPaymentQuote.
+        // BlockingNetworkClient signs each request with your private key.
         var t0 = BlockingNetworkClient.create(
-                config.tzeroEndpoint(), signer,
-                channel -> AcquirerServiceGrpc.newBlockingStub(channel)
-                        .withInterceptors(new CallDeadline(Duration.ofSeconds(10))));
+                config.tzeroEndpoint(), signer, AcquirerServiceGrpc::newBlockingStub);
 
         // Inbound: PaymentAuthorized, SettlementInitiated, SettlementCompleted, PaymentExpired.
         // Every inbound signature is verified against NETWORK_PUBLIC_KEY.
@@ -173,17 +160,6 @@ public final class Main {
                     "Ask the t-0 team for the network public key and put it in .env.");
         }
 
-        // Checked here so a typo reports as configuration, with somewhere to go for
-        // the right value. The signature verifier does reject a malformed key on its
-        // own, but not until the callback server starts and only as an
-        // IllegalArgumentException about hex length.
-        if (!NETWORK_PUBLIC_KEY_PATTERN.matcher(networkPublicKey).matches()) {
-            throw new ConfigurationException(
-                    "NETWORK_PUBLIC_KEY is not a valid uncompressed secp256k1 public key",
-                    "Expected 130 hex characters (65 bytes), optionally 0x-prefixed; got "
-                            + networkPublicKey.length() + " characters.");
-        }
-
         // Last, so the keys — which nobody can guess for you — are reported before a
         // setting that has a working default.
         int port = parsePort(dotenv.get("PORT", "8080"));
@@ -239,14 +215,8 @@ public final class Main {
             BlockingNetworkClient<AcquirerServiceGrpc.AcquirerServiceBlockingStub> t0) {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             log.info("Shutting down");
-            server.shutdown();
-            t0.shutdown();
-            try {
-                server.awaitTermination(10, TimeUnit.SECONDS);
-                t0.awaitTermination(10, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+            server.close();
+            t0.close();
         }));
 
         try {

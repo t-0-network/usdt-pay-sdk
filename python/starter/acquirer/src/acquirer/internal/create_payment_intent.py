@@ -58,7 +58,7 @@ async def create_payment_intent(
         quote_id=quote_id,
     )
     try:
-        resp = await t0.create_payment_intent(req, timeout_ms=15_000)
+        resp = await t0.create_payment_intent(req)
     except Exception as e:
         return outcome_from_error(e)
     return outcome_from_response(resp)
@@ -79,7 +79,7 @@ def create_payment_intent_sync(
         quote_id=quote_id,
     )
     try:
-        resp = t0.create_payment_intent(req, timeout_ms=15_000)
+        resp = t0.create_payment_intent(req)
     except Exception as e:
         return outcome_from_error(e)
     return outcome_from_response(resp)

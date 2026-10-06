@@ -23,14 +23,6 @@ def test_missing_network_public_key(monkeypatch, tmp_path):
         load_config()
 
 
-def test_invalid_network_public_key(monkeypatch, tmp_path):
-    monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("PROVIDER_PRIVATE_KEY", "0x" + "ab" * 32)
-    monkeypatch.setenv("NETWORK_PUBLIC_KEY", "not-a-key")
-    with pytest.raises(ConfigurationError, match="not a valid uncompressed"):
-        load_config()
-
-
 def test_network_public_key_with_trailing_newline_is_stripped(monkeypatch, tmp_path):
     """Env vars are stripped, so a trailing newline doesn't break config."""
     monkeypatch.chdir(tmp_path)

@@ -90,8 +90,7 @@ async def main() -> None:
     # Phase 1: send this public key and your base URL to the t-0 onboarding
     # contact; put the NETWORK_PUBLIC_KEY you get back into .env.
 
-    # Outbound: everything you call on t-0. Each internal/ helper sets its own
-    # timeout per call.
+    # Outbound: everything you call on t-0.
     t0 = create_client(config.tzero_endpoint, config.private_key, AcquirerServiceClient)
 
     # Inbound: the five callbacks t-0 pushes to you. Every inbound signature is

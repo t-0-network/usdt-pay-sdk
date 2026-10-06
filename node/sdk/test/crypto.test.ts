@@ -385,26 +385,6 @@ describe("createRequestDecoder", () => {
     assert.equal(parsed.code, "internal");
   });
 
-  test("toleranceMs passthrough", async () => {
-    const { priv, publicKeyHex } = newKeypair();
-
-    const msg = create(CreatePaymentInstructionsRequestSchema, validRequest);
-    const jsonBody = new TextEncoder().encode(
-      toJsonString(CreatePaymentInstructionsRequestSchema, msg, { registry: payRegistry }),
-    );
-    const headers = { ...sign(jsonBody, priv), "content-type": "application/json" };
-
-    // Wait for the signature to become stale relative to a 1ms tolerance
-    await new Promise((r) => setTimeout(r, 50));
-
-    const strictDecode = createRequestDecoder({ networkPublicKey: publicKeyHex, toleranceMs: 1 });
-    const strictResult = strictDecode(CreatePaymentInstructionsRequestSchema, { body: jsonBody, headers });
-    assert.equal(strictResult.ok, false, "1ms tolerance should reject a 50ms-old signature");
-
-    const relaxedDecode = createRequestDecoder({ networkPublicKey: publicKeyHex, toleranceMs: 60_000 });
-    const relaxedResult = relaxedDecode(CreatePaymentInstructionsRequestSchema, { body: jsonBody, headers });
-    assert.equal(relaxedResult.ok, true, "60s tolerance should accept the same signature");
-  });
 
   test("accepts fetch Headers object", () => {
     const { priv, publicKeyHex } = newKeypair();

@@ -43,7 +43,7 @@ async def get_payment_quote(
 ) -> Outcome[acquirer_pb2.GetPaymentQuoteResponse.Success]:
     req = build_request(local_currency=local_currency, local_amount=local_amount)
     try:
-        resp = await t0.get_payment_quote(req, timeout_ms=10_000)
+        resp = await t0.get_payment_quote(req)
     except Exception as e:
         return outcome_from_error(e)
     return outcome_from_response(resp)
@@ -57,7 +57,7 @@ def get_payment_quote_sync(
 ) -> Outcome[acquirer_pb2.GetPaymentQuoteResponse.Success]:
     req = build_request(local_currency=local_currency, local_amount=local_amount)
     try:
-        resp = t0.get_payment_quote(req, timeout_ms=10_000)
+        resp = t0.get_payment_quote(req)
     except Exception as e:
         return outcome_from_error(e)
     return outcome_from_response(resp)

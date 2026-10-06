@@ -1,8 +1,7 @@
 package usdtpay
 
 import (
-	"errors"
-
+	"github.com/t-0-network/provider-sdk/go/crypto"
 	"github.com/t-0-network/provider-sdk/go/network"
 )
 
@@ -15,12 +14,16 @@ func CreateClient[T any](
 	endpoint string,
 	privateKeyHex string,
 	newClient network.ClientFactory[T],
-	opts ...network.ClientOption,
 ) (T, error) {
-	if endpoint == "" {
-		var zero T
-		return zero, errors.New("endpoint is required")
-	}
-	opts = append(opts, network.WithBaseURL(endpoint))
-	return network.NewServiceClient(network.PrivateKeyHexed(privateKeyHex), newClient, opts...)
+	return network.NewServiceClient(network.PrivateKeyHexed(privateKeyHex), newClient, network.WithBaseURL(endpoint))
+}
+
+// CreateClientWithSigner is CreateClient for a key that lives in an HSM or KMS
+// and never reaches this process: signFn signs every request instead.
+func CreateClientWithSigner[T any](
+	endpoint string,
+	signFn crypto.SignFn,
+	newClient network.ClientFactory[T],
+) (T, error) {
+	return network.NewServiceClient("", newClient, network.WithBaseURL(endpoint), network.WithSignatureFunction(signFn))
 }

@@ -38,7 +38,7 @@ Create a client, make a call:
 import { createClient, IssuerService } from "@t-0/usdt-pay-sdk";
 
 const t0 = createClient(endpoint, privateKeyHex, IssuerService);
-const response = await t0.paymentReceived(request, { timeoutMs: 10_000 });
+const response = await t0.paymentReceived(request);
 ```
 
 Serve callbacks:

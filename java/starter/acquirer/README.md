@@ -13,9 +13,8 @@ and decline code means, see the
 
 - Java 21+. If your JDK is older the Gradle build still works — it provisions a 21
   toolchain on its own — but the binary it produces needs a 21 runtime.
-- The t-0 network public key — an uncompressed secp256k1 key, `0x04…` and 130 hex
-  digits. It comes from your t-0 onboarding contact, along with a `TZERO_ENDPOINT`
-  you can reach.
+- The t-0 network public key. It comes from your t-0 onboarding contact, along with
+  a `TZERO_ENDPOINT` you can reach.
 
 ## Run it
 

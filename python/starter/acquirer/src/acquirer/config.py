@@ -3,15 +3,12 @@
 from __future__ import annotations
 
 import os
-import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 
 from dotenv import load_dotenv
 from t0_usdt_pay_sdk import public_key_from_private_key
-
-_NETWORK_PUBLIC_KEY_PATTERN = re.compile(r"^(0x)?[0-9a-fA-F]{130}$")
 
 
 class ConfigurationError(Exception):
@@ -53,13 +50,6 @@ def load_config() -> Config:
         raise ConfigurationError(
             "NETWORK_PUBLIC_KEY is not set",
             "Ask the t-0 team for the network public key and put it in .env.",
-        )
-
-    if not _NETWORK_PUBLIC_KEY_PATTERN.match(network_public_key):
-        raise ConfigurationError(
-            "NETWORK_PUBLIC_KEY is not a valid uncompressed secp256k1 public key",
-            f"Expected 130 hex characters (65 bytes), optionally 0x-prefixed; "
-            f"got {len(network_public_key)} characters.",
         )
 
     try:

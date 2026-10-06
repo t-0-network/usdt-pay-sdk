@@ -10,8 +10,6 @@ import {
 import { decimalToString } from "./decimals.js";
 import { accepted, noResultVariant, outcomeFromError, rejected, type Outcome } from "./outcome.js";
 
-const TIMEOUT_MS = 10_000;
-
 /**
  * PaymentReceived — the customer's transfer is final on-chain and KYT-cleared.
  * This call is what authorizes the sale: t-0 fires PaymentAuthorized to the acquirer off it, and from
@@ -36,23 +34,20 @@ export async function reportPaymentReceived(
   },
 ): Promise<Outcome<PaymentReceivedResponse_Accepted>> {
   try {
-    const response = await t0.paymentReceived(
-      {
-        paymentIntentId: payment.paymentIntentId,
-        amountUsdt: payment.amountUsdt,
-        paymentMethod: {
-          case: "usdtOnChain",
-          value: {
-            chain: payment.chain,
-            onChainTxHash: payment.txHash,
-            senderAddress: payment.senderAddress,
-          },
+    const response = await t0.paymentReceived({
+      paymentIntentId: payment.paymentIntentId,
+      amountUsdt: payment.amountUsdt,
+      paymentMethod: {
+        case: "usdtOnChain",
+        value: {
+          chain: payment.chain,
+          onChainTxHash: payment.txHash,
+          senderAddress: payment.senderAddress,
         },
-        receivedAt: timestampFromDate(payment.receivedAt),
-        outcome: { case: "authorized", value: {} },
       },
-      { timeoutMs: TIMEOUT_MS },
-    );
+      receivedAt: timestampFromDate(payment.receivedAt),
+      outcome: { case: "authorized", value: {} },
+    });
 
     switch (response.result.case) {
       case "accepted":

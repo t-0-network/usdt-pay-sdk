@@ -38,6 +38,9 @@ t0, err := usdtpay.CreateClient(endpoint, privateKeyHex,
     acquirerconnect.NewAcquirerServiceClient)
 ```
 
+When the key lives in an HSM or KMS and never reaches this process, pass a
+`crypto.SignFn` to `usdtpay.CreateClientWithSigner` instead of the hex key.
+
 Start a callback server:
 
 ```go
@@ -46,5 +49,5 @@ shutdown, err := usdtpay.StartServer(":8080", networkPublicKey,
 defer shutdown(context.Background())
 ```
 
-Requires Go 1.27 or newer. See [sdk/](sdk/) for client patterns, server setup and
-the generated protobuf stubs.
+Requires Go 1.27 or newer. The API reference, with the generated protobuf stubs, is
+on [pkg.go.dev](https://pkg.go.dev/github.com/t-0-network/usdt-pay-sdk/go/sdk).

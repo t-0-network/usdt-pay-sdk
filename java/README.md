@@ -31,15 +31,13 @@ on Maven Central — see [sdk/](sdk/) for Gradle and Maven dependency snippets.
 Create a client, make a call:
 
 ```java
-var t0 = BlockingNetworkClient.create(endpoint, signer,
-        channel -> AcquirerServiceGrpc.newBlockingStub(channel)
-                .withInterceptors(new CallDeadline(Duration.ofSeconds(10))));
+var t0 = BlockingNetworkClient.create(endpoint, signer, AcquirerServiceGrpc::newBlockingStub);
 
 var response = t0.stub().createPaymentIntent(request);
 ```
 
 Compiled for Java 17, consumable on 17+. See [sdk/](sdk/) for client patterns:
-blocking and non-blocking stubs, `CallDeadline`, V2 checked exceptions.
+blocking and non-blocking stubs, V2 checked exceptions.
 
 ### Java 21
 

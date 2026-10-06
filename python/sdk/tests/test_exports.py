@@ -1,4 +1,4 @@
-"""Public API surface: __all__ and endpoint validation."""
+"""Public API surface: __all__ and network key validation."""
 
 from __future__ import annotations
 
@@ -38,25 +38,11 @@ def test_all_entries_are_importable():
         assert hasattr(t0_usdt_pay_sdk, name), f"{name} in __all__ but not an attribute"
 
 
-def test_create_client_rejects_empty_endpoint():
-    from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer.acquirer_connect import AcquirerServiceClient
-
-    with pytest.raises(ValueError, match="endpoint is required"):
-        t0_usdt_pay_sdk.create_client("", "0x" + "ab" * 32, AcquirerServiceClient)
-
-
-def test_create_client_sync_rejects_empty_endpoint():
-    from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer.acquirer_connect import AcquirerServiceClientSync
-
-    with pytest.raises(ValueError, match="endpoint is required"):
-        t0_usdt_pay_sdk.create_client_sync("  ", "0x" + "ab" * 32, AcquirerServiceClientSync)
-
-
 def test_create_asgi_app_rejects_empty_key():
-    with pytest.raises(ValueError, match="network_public_key is required"):
+    with pytest.raises(ValueError, match="network public key is not set"):
         t0_usdt_pay_sdk.create_asgi_app("")
 
 
 def test_create_wsgi_app_rejects_empty_key():
-    with pytest.raises(ValueError, match="network_public_key is required"):
+    with pytest.raises(ValueError, match="network public key is not set"):
         t0_usdt_pay_sdk.create_wsgi_app("")

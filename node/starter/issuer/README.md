@@ -10,9 +10,8 @@ This README says what to build — for what every field and decline code means, 
 ## Prerequisites
 
 - Node 22+.
-- The t-0 network public key — an uncompressed secp256k1 key, `0x04…` and 130 hex
-  digits. It comes from your t-0 onboarding contact, along with a `TZERO_ENDPOINT`
-  you can reach.
+- The t-0 network public key. It comes from your t-0 onboarding contact, along with
+  a `TZERO_ENDPOINT` you can reach.
 
 ## Run it
 

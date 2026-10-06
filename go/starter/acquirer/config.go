@@ -4,14 +4,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 
 	"github.com/joho/godotenv"
 	usdtpay "github.com/t-0-network/usdt-pay-sdk/go/sdk"
 )
-
-var networkPublicKeyPattern = regexp.MustCompile(`^(0x)?[0-9a-fA-F]{130}$`)
 
 type Config struct {
 	PrivateKey       string
@@ -67,15 +64,6 @@ func LoadConfig() (*Config, error) {
 		return nil, &ConfigurationError{
 			Msg:         "NETWORK_PUBLIC_KEY is not set",
 			HelpMessage: "Ask the t-0 team for the network public key and put it in .env.",
-		}
-	}
-
-	if !networkPublicKeyPattern.MatchString(networkPublicKey) {
-		return nil, &ConfigurationError{
-			Msg: "NETWORK_PUBLIC_KEY is not a valid uncompressed secp256k1 public key",
-			HelpMessage: fmt.Sprintf(
-				"Expected 130 hex characters (65 bytes), optionally 0x-prefixed; got %d characters.",
-				len(networkPublicKey)),
 		}
 	}
 

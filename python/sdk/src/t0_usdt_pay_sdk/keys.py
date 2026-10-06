@@ -1,6 +1,6 @@
 """Key utilities for the pay contract."""
 
-from t0_provider_sdk.crypto.keys import private_key_from_hex
+from t0_provider_sdk.crypto.keys import private_key_from_hex, public_key_to_bytes
 
 
 def public_key_from_private_key(private_key_hex: str) -> str:
@@ -8,5 +8,4 @@ def public_key_from_private_key(private_key_hex: str) -> str:
 
     Returns ``0x04…`` (65 bytes as hex).
     """
-    pk = private_key_from_hex(private_key_hex)
-    return "0x" + pk.public_key.format(compressed=False).hex()
+    return "0x" + public_key_to_bytes(private_key_from_hex(private_key_hex).public_key).hex()

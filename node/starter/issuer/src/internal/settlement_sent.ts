@@ -11,13 +11,6 @@ import { decimalToString } from "./decimals.js";
 import { accepted, noResultVariant, outcomeFromError, rejected, type Outcome } from "./outcome.js";
 
 /**
- * Longer than the 10s the other two calls use: the transfer is already broadcast, so
- * it is worth waiting rather than turning a settlement that landed into an `unknown`
- * you have to reconcile.
- */
-const TIMEOUT_MS = 15_000;
-
-/**
  * SettlementSent — you broadcast a USDt settlement transfer; t-0 verifies it
  * on-chain against the intents it covers.
  *
@@ -41,20 +34,17 @@ export async function reportSettlementSent(
   },
 ): Promise<Outcome<SettlementSentResponse_Accepted>> {
   try {
-    const response = await t0.settlementSent(
-      {
-        settlementRef: settlement.settlementRef,
-        amountUsdt: settlement.amountUsdt,
-        settlement: {
-          chain: settlement.chain,
-          onChainTxHash: settlement.txHash,
-          destinationAddress: settlement.destinationAddress,
-        },
-        settledPaymentIntentIds: settlement.settledPaymentIntentIds,
-        settledAt: timestampFromDate(settlement.settledAt),
+    const response = await t0.settlementSent({
+      settlementRef: settlement.settlementRef,
+      amountUsdt: settlement.amountUsdt,
+      settlement: {
+        chain: settlement.chain,
+        onChainTxHash: settlement.txHash,
+        destinationAddress: settlement.destinationAddress,
       },
-      { timeoutMs: TIMEOUT_MS },
-    );
+      settledPaymentIntentIds: settlement.settledPaymentIntentIds,
+      settledAt: timestampFromDate(settlement.settledAt),
+    });
 
     switch (response.result.case) {
       case "accepted":

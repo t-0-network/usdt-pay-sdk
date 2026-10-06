@@ -3,15 +3,12 @@ package internal
 import (
 	"context"
 	"log"
-	"time"
 
 	"connectrpc.com/connect"
 	pay "github.com/t-0-network/usdt-pay-sdk/go/sdk/gen/tzero/v1/pay"
 	"github.com/t-0-network/usdt-pay-sdk/go/sdk/gen/tzero/v1/pay/acquirer"
 	"github.com/t-0-network/usdt-pay-sdk/go/sdk/gen/tzero/v1/pay/acquirer/acquirerconnect"
 )
-
-const quoteTimeout = 5 * time.Second
 
 // FetchQuote prices an upcoming fiat sale. Stateless lookup, no idempotency
 // key: an Unknown here is safe to retry as often as you like.
@@ -21,9 +18,6 @@ func FetchQuote(
 	localCurrency string,
 	localAmount *pay.Decimal,
 ) Outcome[*acquirer.GetPaymentQuoteResponse_Success] {
-	ctx, cancel := context.WithTimeout(ctx, quoteTimeout)
-	defer cancel()
-
 	resp, err := t0.GetPaymentQuote(ctx, connect.NewRequest(&acquirer.GetPaymentQuoteRequest{
 		LocalCurrency: localCurrency,
 		LocalAmount:   localAmount,

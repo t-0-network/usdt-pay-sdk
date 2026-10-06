@@ -65,28 +65,7 @@ helpers on `Executors.newVirtualThreadPerTaskExecutor()` and a blocked call cost
 you a continuation, not a platform thread. Straight-line code and non-blocking
 scaling are not a trade here.
 
-**Give the stub its own default deadline where you build it.** `CallDeadline` is a
-`ClientInterceptor` that applies one per call:
-
-```java
-var t0 = BlockingNetworkClient.create(endpoint, signer,
-        channel -> AcquirerServiceGrpc.newBlockingStub(channel)
-                .withInterceptors(new CallDeadline(Duration.ofSeconds(10))));
-```
-
-Do **not** use `stub.withDeadlineAfter(...)` for this. A gRPC `Deadline` is an
-absolute instant, not a per-call duration, so a stub built once that way works
-until the deadline passes and then fails every later call with
-`DEADLINE_EXCEEDED`. A call that sets its own deadline still wins —
-`CallDeadline` leaves it alone, which is how the acquirer starter gives
-`GetPaymentQuote` a shorter one at the call site.
-
-Without `CallDeadline`, every call still has a deadline: `BlockingNetworkClient`
-gives each one 15 s by default. `CallDeadline` replaces that default for the stub it
-is installed on. To change the default for the whole client without an interceptor,
-use `BlockingNetworkClient.create(endpoint, signer, stubFactory, Duration timeout,
-Duration streamTimeout)`. The `int timeoutSeconds` overload still works but is
-deprecated.
+Every call gets provider-sdk's default deadline.
 
 ## Non-blocking
 
