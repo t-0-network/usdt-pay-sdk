@@ -65,7 +65,7 @@ helpers on `Executors.newVirtualThreadPerTaskExecutor()` and a blocked call cost
 you a continuation, not a platform thread. Straight-line code and non-blocking
 scaling are not a trade here.
 
-**Give the stub a default deadline where you build it.** `CallDeadline` is a
+**Give the stub its own default deadline where you build it.** `CallDeadline` is a
 `ClientInterceptor` that applies one per call:
 
 ```java
@@ -81,9 +81,12 @@ until the deadline passes and then fails every later call with
 `CallDeadline` leaves it alone, which is how the acquirer starter gives
 `GetPaymentQuote` a shorter one at the call site.
 
-`BlockingNetworkClient.create(endpoint, signer, stubFactory, timeoutSeconds)`
-looks like the built-in knob for this. It is not: provider-sdk-java accepts the
-argument and never reads it.
+Without `CallDeadline`, every call still has a deadline: `BlockingNetworkClient`
+gives each one 15 s by default. `CallDeadline` replaces that default for the stub it
+is installed on. To change the default for the whole client without an interceptor,
+use `BlockingNetworkClient.create(endpoint, signer, stubFactory, Duration timeout,
+Duration streamTimeout)`. The `int timeoutSeconds` overload still works but is
+deprecated.
 
 ## Non-blocking
 

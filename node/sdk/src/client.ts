@@ -16,11 +16,10 @@ import { createClient as createProviderClient, type SignerFunction } from "@t-0/
  * participant that omitted the endpoint would sign perfectly valid requests and send
  * them to the wrong host.
  *
- * **Deadlines are per call**, passed as `{ timeoutMs }` in the second argument. There
- * is no default: a Connect timeout is a duration evaluated per call, so each of the
- * `internal/` helpers sets its own and the one slow endpoint can afford more than the
- * rest. (The Java SDK needs a `CallDeadline` interceptor for this because a gRPC
- * deadline is an absolute instant; nothing here has that problem.)
+ * **Every call has a 15 s deadline by default**, from the provider client. A
+ * `{ timeoutMs }` in the second argument replaces it for that call: a Connect timeout
+ * is a duration evaluated per call, so each of the `internal/` helpers sets its own and
+ * the one slow endpoint can afford more than the rest.
  *
  * @param endpoint  t-0 API base URL — e.g. `https://usdt-pay-api-sandbox.t-0.network`
  * @param signer    your secp256k1 private key as hex, or a signing function if the

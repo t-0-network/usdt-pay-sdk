@@ -198,10 +198,11 @@ All 14 endpoints are unary request/response — nothing in this contract streams
 API, and a pay participant that omitted it would sign perfectly valid requests and
 send them to the wrong host.
 
-Deadlines are per call, as `{ timeoutMs }`. A Connect timeout is a duration evaluated
-when the call is made, so each call site picks its own — the starters give a
-settlement report more room than the rest, because the transfer is already broadcast
-by then and an answer is worth waiting for.
+Every call has a 15 s deadline by default. A `{ timeoutMs }` on the call replaces it
+for that call. A Connect timeout is a duration evaluated when the call is made, so
+each call site can pick its own — the starters give a settlement report more room
+than the rest, because the transfer is already broadcast by then and an answer is
+worth waiting for.
 
 `signer` takes a hex private key, or a `SignerFunction` when the key lives in an HSM
 or KMS and never reaches this process.

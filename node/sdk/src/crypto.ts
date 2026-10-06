@@ -33,6 +33,7 @@ import {
   type RequestDecoder,
 } from "@t-0/provider-sdk/crypto";
 import { payRegistry } from "./registry.js";
+import { SDK_VERSION } from "./version.js";
 
 /**
  * One-call request decoder with the pay contract's registry baked in.
@@ -40,7 +41,7 @@ import { payRegistry } from "./registry.js";
  * pass the exact wire bytes, no body parsers or decompression.
  */
 export function createRequestDecoder(opts: CreateVerifierOptions): RequestDecoder {
-  return createBaseRequestDecoder({ ...opts, registry: payRegistry });
+  return createBaseRequestDecoder({ ...opts, registry: payRegistry, version: SDK_VERSION });
 }
 
 export {

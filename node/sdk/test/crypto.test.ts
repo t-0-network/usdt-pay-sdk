@@ -401,9 +401,9 @@ describe("createRequestDecoder", () => {
     const strictResult = strictDecode(CreatePaymentInstructionsRequestSchema, { body: jsonBody, headers });
     assert.equal(strictResult.ok, false, "1ms tolerance should reject a 50ms-old signature");
 
-    const relaxedDecode = createRequestDecoder({ networkPublicKey: publicKeyHex, toleranceMs: 600_000 });
+    const relaxedDecode = createRequestDecoder({ networkPublicKey: publicKeyHex, toleranceMs: 60_000 });
     const relaxedResult = relaxedDecode(CreatePaymentInstructionsRequestSchema, { body: jsonBody, headers });
-    assert.equal(relaxedResult.ok, true, "600s tolerance should accept the same signature");
+    assert.equal(relaxedResult.ok, true, "60s tolerance should accept the same signature");
   });
 
   test("accepts fetch Headers object", () => {

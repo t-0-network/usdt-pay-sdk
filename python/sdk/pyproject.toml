@@ -8,7 +8,7 @@ authors = [
     { name = "T-0 Network" },
 ]
 dependencies = [
-    "t0-provider-sdk==1.1.41",
+    "t0-provider-sdk==1.2.0",
     "connectrpc>=0.11.1",
     "protobuf>=7.36.2",
     "protovalidate>=2.0",

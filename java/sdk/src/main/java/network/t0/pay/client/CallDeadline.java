@@ -10,10 +10,10 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Gives a long-lived stub a default deadline, applied fresh to every call.
+ * Gives a long-lived stub its own default deadline, applied fresh to every call.
  *
- * <p>Install it once where the stub is built and every call through that stub is
- * bounded:
+ * <p>Install it once where the stub is built and every call through that stub gets
+ * this deadline instead of the client's default:
  *
  * <pre>{@code
  * var t0 = BlockingNetworkClient.create(endpoint, signer,
@@ -33,16 +33,19 @@ import java.util.concurrent.TimeUnit;
  * {@link CallOptions} — is left alone. That is how a single RPC opts out of the
  * default without the default having to know about it.
  *
- * <p><strong>Do not reach for {@code BlockingNetworkClient.create(endpoint, signer,
- * stubFactory, timeoutSeconds)} instead.</strong> As of provider-sdk-java 1.1.25 that
- * fourth argument is never read — {@code NetworkClient.createChannel} ignores it — so
- * it looks like this knob and silently is not one. This class exists until that is
- * fixed upstream.
+ * <p><strong>The client already has a default.</strong> Since provider-sdk-java 1.2.0,
+ * {@code BlockingNetworkClient} gives every call a deadline of 15 s (5 min for
+ * streams), set with {@code create(endpoint, signer, stubFactory, Duration timeout,
+ * Duration streamTimeout)}; the {@code int timeoutSeconds} overload is honored but
+ * deprecated. That default is a channel interceptor that fills in a deadline only when
+ * the call has none, and a stub interceptor runs first — so this class replaces the
+ * client's default for the stub it is installed on, and a call-site deadline still
+ * wins over both.
  *
  * <p><strong>If you copy one {@code internal/} helper out on its own,</strong> copy
- * this with it or set a deadline at the call site. The helpers rely on the stub they
- * are handed already carrying this interceptor; on a bare stub they would block on a
- * stalled t-0 indefinitely.
+ * this with it or set a deadline at the call site. The helpers are written for the
+ * stub they are handed already carrying this interceptor; on a bare stub they get the
+ * client's 15 s default instead.
  *
  * @param timeout how long a call may run before it fails {@code DEADLINE_EXCEEDED}
  */

@@ -17,6 +17,6 @@ in the sync means a new import in `python/sdk/src/t0_usdt_pay_sdk/registry.py`.
 
 ## Provider SDK
 
-`t0-provider-sdk==1.1.41` is pinned exact in `python/sdk/pyproject.toml`. Bump
+`t0-provider-sdk==1.2.0` is pinned exact in `python/sdk/pyproject.toml`. Bump
 deliberately, not as drive-by. `buf.validate` descriptors are owned by
 provider-sdk's `api/buf/` package — this SDK ships no `buf/` directory.
