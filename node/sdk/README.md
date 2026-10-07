@@ -111,7 +111,7 @@ app.post("/tzero.v1.pay.issuer.IssuerCallbackService/CreatePaymentInstructions",
   const response = create(CreatePaymentInstructionsResponseSchema, {
     result: {
       case: "failure",
-      value: { reason: CreatePaymentInstructionsResponse_Failure_Reason.ISSUER_UNAVAILABLE },
+      value: { reason: CreatePaymentInstructionsResponse_Failure_Reason.ADDRESS_POOL_EMPTY },
     },
   });
 
@@ -153,7 +153,7 @@ http.createServer((req, res) => {
       const response = create(CreatePaymentInstructionsResponseSchema, {
         result: {
           case: "failure",
-          value: { reason: CreatePaymentInstructionsResponse_Failure_Reason.ISSUER_UNAVAILABLE },
+          value: { reason: CreatePaymentInstructionsResponse_Failure_Reason.ADDRESS_POOL_EMPTY },
         },
       });
       const wire = result.encodeResponse(CreatePaymentInstructionsResponseSchema, response);

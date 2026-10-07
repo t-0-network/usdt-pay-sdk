@@ -78,7 +78,7 @@ const server = http.createServer(async (req, res) => {
           reason:
             request.paymentIntentId === 42n
               ? CreatePaymentInstructionsResponse_Failure_Reason.AMOUNT_OUT_OF_RANGE
-              : CreatePaymentInstructionsResponse_Failure_Reason.ISSUER_UNAVAILABLE,
+              : CreatePaymentInstructionsResponse_Failure_Reason.ADDRESS_POOL_EMPTY,
         },
       },
     });
@@ -198,7 +198,7 @@ describe("createRequestDecoder", () => {
     const resp = create(CreatePaymentInstructionsResponseSchema, {
       result: {
         case: "failure",
-        value: { reason: CreatePaymentInstructionsResponse_Failure_Reason.ISSUER_UNAVAILABLE },
+        value: { reason: CreatePaymentInstructionsResponse_Failure_Reason.ADDRESS_POOL_EMPTY },
       },
     });
     const wire = result.encodeResponse(CreatePaymentInstructionsResponseSchema, resp);

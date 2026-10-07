@@ -24,7 +24,7 @@ const NETWORK_PRIVATE_KEY = "0x" + "11".repeat(32);
 const decline = create(CreatePaymentInstructionsResponseSchema, {
   result: {
     case: "failure",
-    value: { reason: CreatePaymentInstructionsResponse_Failure_Reason.ISSUER_UNAVAILABLE },
+    value: { reason: CreatePaymentInstructionsResponse_Failure_Reason.ADDRESS_POOL_EMPTY },
   },
 });
 
