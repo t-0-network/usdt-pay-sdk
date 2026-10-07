@@ -76,8 +76,7 @@ Implement `createPaymentInstructions` in `src/handler.ts`.
    requested one — earlier, and t-0 discards the instructions and declines the
    payment. Size your address pool for windows on the order of a minute or two.
 4. **2.4** Out of addresses, or the amount is outside your range? Answer with the
-   `failure` variant (`ADDRESS_POOL_EMPTY`, `AMOUNT_OUT_OF_RANGE`,
-   `ISSUER_UNAVAILABLE`) rather than throwing.
+   `failure` variant (`ADDRESS_POOL_EMPTY`, `AMOUNT_OUT_OF_RANGE`) rather than throwing.
 
 The shipped handler returns two example deposit options (ETH and BSC); TRON is
 commented out until it goes live. The USDt contract constants are real and stay

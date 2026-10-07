@@ -41,8 +41,8 @@ export const issuerCallbackHandler: ServiceImpl<typeof IssuerCallbackService> = 
     // TODO: Step 2.3 — swap the two example address constants above for addresses
     //       from your own pool, and hold the reservation until request.expiresAt.
     // TODO: Step 2.4 — no free addresses, or the amount is outside your range? Answer
-    //       with the failure variant (ADDRESS_POOL_EMPTY / AMOUNT_OUT_OF_RANGE /
-    //       ISSUER_UNAVAILABLE) instead of throwing.
+    //       with the failure variant (ADDRESS_POOL_EMPTY / AMOUNT_OUT_OF_RANGE)
+    //       instead of throwing.
 
     // expires_at is required on the response but the request's gt_now lacks `required`
     const expiresAt = request.expiresAt ?? timestampFromDate(new Date(Date.now() + 2 * 60_000));
