@@ -150,24 +150,25 @@ public class AcquirerCallbackHandler extends AcquirerCallbackServiceGrpc.Acquire
 
     /**
      * PaymentFailed — the issuer reported the deposit as unprocessable. Cancel the
-     * pending sale and communicate the outcome based on disposition.
+     * pending sale and communicate the outcome based on reason and disposition.
      */
     @Override
     public void paymentFailed(
             PaymentFailedRequest request,
             StreamObserver<PaymentFailedResponse> responseObserver) {
 
-        log.info("PaymentFailed: intent={} sale={} amount={} disposition={} at {}",
+        log.info("PaymentFailed: intent={} sale={} amount={} disposition={} reason={} at {}",
                 request.getPaymentIntentId(),
                 request.getPaymentRef(),
                 Decimals.format(request.getAmountUsdt()),
                 request.getDisposition(),
+                request.getReason(),
                 Times.format(request.getFailedAt()));
 
         // TODO: Step 3.5 — dedup on paymentIntentId (scoped to this callback, not shared with
         //   PaymentAuthorized or PaymentExpired), cancel the pending sale, take the QR off the
-        //   POS, and tell the customer what to expect based on disposition (RETURNED_TO_SENDER
-        //   or RETAINED_BY_ISSUER).
+        //   POS, and tell the customer why (reason: AMOUNT_MISMATCH or ISSUER_DECLINED) and what
+        //   to expect (disposition: RETURNED_TO_SENDER or RETAINED_BY_ISSUER).
 
         responseObserver.onNext(PaymentFailedResponse.getDefaultInstance());
         responseObserver.onCompleted();

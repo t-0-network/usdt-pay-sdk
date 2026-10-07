@@ -9,6 +9,7 @@ package tzero.v1.pay.acquirer;
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 import "tzero/v1/pay/common.proto";
+import "tzero/v1/pay/validate.proto";
 
 /**
  * t-0 endpoints the Acquirer calls to price a payment, open a payment intent, and
@@ -282,7 +283,38 @@ message CreatePaymentIntentResponse {
     /** The customer's USDt-via-QR payment instructions. */
     message UsdtOnChainInstructions {
       /** One deposit option per chain the Issuer supports for this intent; the customer picks one in their wallet. */
-      repeated tzero.v1.pay.DepositOption deposit_options = 30 [(buf.validate.field).repeated = {min_items: 1}];
+      repeated DepositOption deposit_options = 30 [(buf.validate.field).repeated = {min_items: 1}];
+
+      /**
+       * One selectable deposit option: the chain, the one-time address reserved
+       * on it, and the USDt token contract with its decimals. Together with
+       * settlement_amount these are everything the POS needs to build whatever
+       * it carries to the customer (a QR image, a wallet deep link, or a plain
+       * address).
+       */
+      message DepositOption {
+        /** Chain this deposit option pays on. */
+        tzero.v1.pay.Blockchain chain = 10 [(buf.validate.field).enum = {
+          defined_only: true
+          not_in: [0]
+        }];
+
+        /** One-time deposit address reserved for this intent on `chain`. */
+        string deposit_address = 20 [(buf.validate.field).string.(tzero.v1.pay.valid_address) = true];
+
+        /** USDt token contract on `chain` the deposit must be made in. */
+        string token_contract = 40 [(buf.validate.field).string.(tzero.v1.pay.valid_address) = true];
+
+        /**
+         * Decimals of `token_contract`: the amount to transfer in the token's
+         * base units is settlement_amount * 10^token_decimals. USDt does not use
+         * the same decimals on every chain.
+         */
+        uint32 token_decimals = 50 [(buf.validate.field).uint32 = {
+          gte: 2
+          lte: 18
+        }];
+      }
     }
 
     /** How the Acquirer is settled for this payment, per its configured settlement mode; always present, also when the variant carries no data. */
@@ -529,6 +561,12 @@ message PaymentFailedRequest {
 
   /** Where the funds go, so the merchant can tell the customer what to expect. */
   tzero.v1.pay.FundsDisposition disposition = 50 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+
+  /** Why the Issuer will not process the deposit, so the merchant can tell the customer. */
+  tzero.v1.pay.PaymentFailureReason reason = 70 [(buf.validate.field).enum = {
     defined_only: true
     not_in: [0]
   }];

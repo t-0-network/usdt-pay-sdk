@@ -69,9 +69,9 @@ Implement `createPaymentInstructions` in `src/handler.ts`.
    burn a second set out of the pool.
 2. **2.2** Resolve the settlement wallet for `acquirerId` from your onboarding
    mapping and keep it with the reservation; `SettlementSent` needs it.
-3. **2.3** Reserve one address per chain you support, build each option's `paymentUri` as a chain-native URI and set
-   `tokenContract` to the USDT contract on that chain (the POS encodes it untouched), and
-   hold the reservation until `expiresAt`. t-0 sizes that window per intent rather
+3. **2.3** Reserve one address per chain you support, set each option's
+   `tokenContract` to the USDT contract on that chain (the POS builds the QR from the
+   option and the intent's amount; t-0 adds the token decimals), and hold the reservation until `expiresAt`. t-0 sizes that window per intent rather
    than to a fixed value, and your response's `expiresAt` must be at or after the
    requested one — earlier, and t-0 discards the instructions and declines the
    payment. Size your address pool for windows on the order of a minute or two.
@@ -93,8 +93,10 @@ Wire your chain watcher to these; nothing here belongs on a timer.
    `PaymentAuthorized` to the acquirer off it, and from that moment you own the
    on-chain risk and are obligated to settle. For a deposit you will not process,
    extend the helper's `payment` argument to send the request's `unprocessable`
-   variant with its `disposition` (a `FundsDisposition`) instead; t-0 then fires
-   `PaymentFailed` to the acquirer and the intent ends failed.
+   variant with its `disposition` (a `FundsDisposition`) and `reason` (a
+   `PaymentFailureReason`: `AMOUNT_MISMATCH` or `ISSUER_DECLINED`, never a screening
+   detail) instead; t-0 then fires `PaymentFailed` to the acquirer with both, and the
+   intent ends failed.
 2. **3.2** `reportSettlementSent` — after you broadcast a settlement transfer,
    report it with the transfer's own id as `settlementRef`. On
    `ON_CHAIN_UNCONFIRMED`, resend the same ref once it confirms. Never broadcast a
@@ -142,8 +144,7 @@ resending those same bytes only spins.
 
 `Decimal` is `unscaled * 10^exponent`, and `unscaled` is a 64-bit integer, so it is a
 `bigint` here. `src/internal/decimals.ts` converts through strings and integers only:
-`decimalFromString("100000.00")`, `decimalToString(amount)`,
-`decimalToUnits(amount, 6)` for the integer an ERC-681 URI carries. A USDt amount
+`decimalFromString("100000.00")`, `decimalToString(amount)`. A USDt amount
 routed through a JS float loses cents at amounts a POS actually rings up.
 
 `PaymentReceived` reports the amount the deposit actually credited — t-0 compares

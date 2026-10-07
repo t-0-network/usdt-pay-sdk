@@ -4,12 +4,11 @@ import type { ServiceImpl } from "@connectrpc/connect";
 import {
   Blockchain,
   CreatePaymentInstructionsResponseSchema,
-  type Decimal,
+  type CreatePaymentInstructionsResponse_Success_DepositOption as DepositOption,
+  CreatePaymentInstructionsResponse_Success_DepositOptionSchema as DepositOptionSchema,
   type IssuerCallbackService,
-  type DepositOption,
-  DepositOptionSchema,
 } from "@t-0/usdt-pay-sdk";
-import { decimalToString, decimalToUnits } from "./internal/decimals.js";
+import { decimalToString } from "./internal/decimals.js";
 
 // TODO: Step 2.3 — replace with addresses from your own pool
 const EXAMPLE_ETH_DEPOSIT_ADDRESS = "0x000000000000000000000000000000000000dEaD";
@@ -45,7 +44,6 @@ export const issuerCallbackHandler: ServiceImpl<typeof IssuerCallbackService> = 
     //       with the failure variant (ADDRESS_POOL_EMPTY / AMOUNT_OUT_OF_RANGE /
     //       ISSUER_UNAVAILABLE) instead of throwing.
 
-    const amountUsdt = request.amountUsdt!;
     // expires_at is required on the response but the request's gt_now lacks `required`
     const expiresAt = request.expiresAt ?? timestampFromDate(new Date(Date.now() + 2 * 60_000));
 
@@ -54,11 +52,11 @@ export const issuerCallbackHandler: ServiceImpl<typeof IssuerCallbackService> = 
         case: "success",
         value: {
           depositOptions: [
-            // tron("TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", yourTronDepositAddress, amountUsdt) — not live yet
-            evm(Blockchain.ETH, 1, "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-                EXAMPLE_ETH_DEPOSIT_ADDRESS, amountUsdt),
-            evm(Blockchain.BSC, 56, "0x55d398326f99059fF775485246999027B3197955",
-                EXAMPLE_BSC_DEPOSIT_ADDRESS, amountUsdt),
+            // depositOption(Blockchain.TRON, "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", yourTronDepositAddress) — not live yet
+            depositOption(Blockchain.ETH, "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+                EXAMPLE_ETH_DEPOSIT_ADDRESS),
+            depositOption(Blockchain.BSC, "0x55d398326f99059fF775485246999027B3197955",
+                EXAMPLE_BSC_DEPOSIT_ADDRESS),
           ],
           expiresAt,
         },
@@ -68,34 +66,14 @@ export const issuerCallbackHandler: ServiceImpl<typeof IssuerCallbackService> = 
 };
 
 /**
- * `paymentUri` is chain-native and the POS encodes it as a QR image without
- * touching it — so it has to be complete and correct here. `tokenContract` is
- * the USDT contract on that chain.
+ * A deposit option is facts, not a rendering: the chain, the reserved address and the
+ * USDT contract on that chain. The POS builds the QR or wallet link from these and the
+ * intent's amount, with the token decimals t-0 adds on the way to the acquirer.
  */
-function tron(usdtContract: string, depositAddress: string, amountUsdt: Decimal): DepositOption {
-  // TRON wallets read a TIP-681-style URI; amount is in USDt units.
-  return create(DepositOptionSchema, {
-    chain: Blockchain.TRON,
-    depositAddress,
-    paymentUri: `tron:${depositAddress}?amount=${decimalToString(amountUsdt)}`,
-    tokenContract: usdtContract,
-  });
-}
-
-function evm(
-  chain: Blockchain,
-  chainId: number,
-  usdtContract: string,
-  depositAddress: string,
-  amountUsdt: Decimal,
-): DepositOption {
-  // ERC-681: pay <amount> of the USDt contract to <depositAddress> on <chainId>.
-  // USDt is 6 decimals on both Ethereum and BSC-pegged deployments here.
-  const units = decimalToUnits(amountUsdt, 6);
+function depositOption(chain: Blockchain, usdtContract: string, depositAddress: string): DepositOption {
   return create(DepositOptionSchema, {
     chain,
     depositAddress,
-    paymentUri: `ethereum:${usdtContract}@${chainId}/transfer?address=${depositAddress}&uint256=${units}`,
     tokenContract: usdtContract,
   });
 }

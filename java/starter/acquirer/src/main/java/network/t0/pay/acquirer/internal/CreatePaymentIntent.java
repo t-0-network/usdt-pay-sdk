@@ -5,7 +5,6 @@ import network.t0.pay.proto.tzero.v1.pay.acquirer.AcquirerServiceGrpc;
 import network.t0.pay.proto.tzero.v1.pay.acquirer.CreatePaymentIntentRequest;
 import network.t0.pay.proto.tzero.v1.pay.acquirer.CreatePaymentIntentResponse;
 import network.t0.pay.proto.tzero.v1.pay.Decimal;
-import network.t0.pay.proto.tzero.v1.pay.DepositOption;
 import network.t0.pay.proto.tzero.v1.pay.acquirer.LocalAmount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,15 +79,16 @@ public final class CreatePaymentIntent {
                     }
 
                     // TODO: Step 2.2 — store paymentIntentId against your sale, then render
-                    //       one deposit option per chain. paymentUri is chain-native;
-                    //       encode it as-is, do not rebuild it from the address and the amount.
+                    //       one deposit option per chain. Build the QR from the option and the
+                    //       settlement amount; the wallet URI carries settlementAmount × 10^tokenDecimals,
+                    //       scaled by that option's own decimals.
                     if (success.getInstructionsCase() == CreatePaymentIntentResponse.Success.InstructionsCase.USDT_ON_CHAIN) {
-                        for (DepositOption option : success.getUsdtOnChain().getDepositOptionsList()) {
-                            log.info("  deposit option — chain={} address={} uri={} contract={}",
+                        for (var option : success.getUsdtOnChain().getDepositOptionsList()) {
+                            log.info("  deposit option — chain={} address={} contract={} decimals={}",
                                     option.getChain(),
                                     option.getDepositAddress(),
-                                    option.getPaymentUri(),
-                                    option.getTokenContract());
+                                    option.getTokenContract(),
+                                    option.getTokenDecimals());
                         }
                     }
                     return new Outcome.Accepted<>(success);

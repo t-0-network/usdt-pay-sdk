@@ -10,7 +10,6 @@ import network.t0.pay.proto.tzero.v1.pay.acquirer.AcquirerServiceGrpc;
 import network.t0.pay.proto.tzero.v1.pay.Blockchain;
 import network.t0.pay.proto.tzero.v1.pay.acquirer.CreatePaymentIntentRequest;
 import network.t0.pay.proto.tzero.v1.pay.acquirer.CreatePaymentIntentResponse;
-import network.t0.pay.proto.tzero.v1.pay.DepositOption;
 import network.t0.pay.proto.tzero.v1.pay.acquirer.FiatSettlement;
 import network.t0.pay.proto.tzero.v1.pay.acquirer.LocalAmount;
 import org.junit.jupiter.api.AfterEach;
@@ -92,11 +91,11 @@ class CreatePaymentIntentTest {
                             .setSettlementAmount(Decimals.of("24.39"))
                             .setExpiresAt(Times.from(Instant.parse("2026-01-01T00:05:00Z")))
                             .setUsdtOnChain(CreatePaymentIntentResponse.Success.UsdtOnChainInstructions.newBuilder()
-                                    .addDepositOptions(DepositOption.newBuilder()
+                                    .addDepositOptions(CreatePaymentIntentResponse.Success.UsdtOnChainInstructions.DepositOption.newBuilder()
                                             .setChain(Blockchain.BLOCKCHAIN_TRON)
                                             .setDepositAddress("TXYZexampleDepositAddress")
-                                            .setPaymentUri("tron:TXYZexampleDepositAddress?amount=24.39")
-                                            .setTokenContract("TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t")))
+                                            .setTokenContract("TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t")
+                                            .setTokenDecimals(6)))
                             .setFiat(FiatSettlement.newBuilder()
                                     .setQuoteId(77)
                                     .setFxRate(Decimals.of("4100.00"))

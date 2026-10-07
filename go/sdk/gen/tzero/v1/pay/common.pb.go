@@ -136,6 +136,60 @@ func (FundsDisposition) EnumDescriptor() ([]byte, []int) {
 }
 
 // *
+// Why the Issuer will not process a deposit, reported by the Issuer and relayed
+// to the Acquirer so the merchant can tell the customer what went wrong.
+type PaymentFailureReason int32
+
+const (
+	PaymentFailureReason_PAYMENT_FAILURE_REASON_UNSPECIFIED PaymentFailureReason = 0
+	// The deposit's amount differs from the intent's settlement_amount.
+	PaymentFailureReason_PAYMENT_FAILURE_REASON_AMOUNT_MISMATCH PaymentFailureReason = 10
+	// The Issuer declined the deposit for any other reason, screening included; no detail is disclosed.
+	PaymentFailureReason_PAYMENT_FAILURE_REASON_ISSUER_DECLINED PaymentFailureReason = 20
+)
+
+// Enum value maps for PaymentFailureReason.
+var (
+	PaymentFailureReason_name = map[int32]string{
+		0:  "PAYMENT_FAILURE_REASON_UNSPECIFIED",
+		10: "PAYMENT_FAILURE_REASON_AMOUNT_MISMATCH",
+		20: "PAYMENT_FAILURE_REASON_ISSUER_DECLINED",
+	}
+	PaymentFailureReason_value = map[string]int32{
+		"PAYMENT_FAILURE_REASON_UNSPECIFIED":     0,
+		"PAYMENT_FAILURE_REASON_AMOUNT_MISMATCH": 10,
+		"PAYMENT_FAILURE_REASON_ISSUER_DECLINED": 20,
+	}
+)
+
+func (x PaymentFailureReason) Enum() *PaymentFailureReason {
+	p := new(PaymentFailureReason)
+	*p = x
+	return p
+}
+
+func (x PaymentFailureReason) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (PaymentFailureReason) Descriptor() protoreflect.EnumDescriptor {
+	return file_tzero_v1_pay_common_proto_enumTypes[2].Descriptor()
+}
+
+func (PaymentFailureReason) Type() protoreflect.EnumType {
+	return &file_tzero_v1_pay_common_proto_enumTypes[2]
+}
+
+func (x PaymentFailureReason) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use PaymentFailureReason.Descriptor instead.
+func (PaymentFailureReason) EnumDescriptor() ([]byte, []int) {
+	return file_tzero_v1_pay_common_proto_rawDescGZIP(), []int{2}
+}
+
+// *
 // Fixed-point monetary amount: unscaled * 10^exponent, so 123.45 is
 // unscaled=12345, exponent=-2.
 type Decimal struct {
@@ -258,82 +312,6 @@ func (x *UsdtOnChainPayment) GetSenderAddress() string {
 }
 
 // *
-// One selectable deposit option for an intent: the chain, the one-time address
-// reserved on it, and the chain-native payment URI the POS carries to the customer
-// (as a QR image, a wallet deep link, or any other carrier) without modification.
-type DepositOption struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// * Chain this deposit option pays on.
-	Chain Blockchain `protobuf:"varint,10,opt,name=chain,proto3,enum=tzero.v1.pay.Blockchain" json:"chain,omitempty"`
-	// * One-time deposit address reserved for this intent on `chain`.
-	DepositAddress string `protobuf:"bytes,20,opt,name=deposit_address,json=depositAddress,proto3" json:"deposit_address,omitempty"`
-	// * Chain-native payment URI (EIP-681 on EVM chains); produced only by the Issuer and carried to the customer unchanged.
-	PaymentUri string `protobuf:"bytes,30,opt,name=payment_uri,json=paymentUri,proto3" json:"payment_uri,omitempty"`
-	// * USDt token contract on `chain` the deposit must be made in.
-	TokenContract string `protobuf:"bytes,40,opt,name=token_contract,json=tokenContract,proto3" json:"token_contract,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DepositOption) Reset() {
-	*x = DepositOption{}
-	mi := &file_tzero_v1_pay_common_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DepositOption) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DepositOption) ProtoMessage() {}
-
-func (x *DepositOption) ProtoReflect() protoreflect.Message {
-	mi := &file_tzero_v1_pay_common_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DepositOption.ProtoReflect.Descriptor instead.
-func (*DepositOption) Descriptor() ([]byte, []int) {
-	return file_tzero_v1_pay_common_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *DepositOption) GetChain() Blockchain {
-	if x != nil {
-		return x.Chain
-	}
-	return Blockchain_BLOCKCHAIN_UNSPECIFIED
-}
-
-func (x *DepositOption) GetDepositAddress() string {
-	if x != nil {
-		return x.DepositAddress
-	}
-	return ""
-}
-
-func (x *DepositOption) GetPaymentUri() string {
-	if x != nil {
-		return x.PaymentUri
-	}
-	return ""
-}
-
-func (x *DepositOption) GetTokenContract() string {
-	if x != nil {
-		return x.TokenContract
-	}
-	return ""
-}
-
-// *
 // One on-chain USDt settlement transfer, as reported by the Issuer on
 // SettlementSent and relayed to the Acquirer on SettlementCompleted.
 type OnChainSettlementDetails struct {
@@ -350,7 +328,7 @@ type OnChainSettlementDetails struct {
 
 func (x *OnChainSettlementDetails) Reset() {
 	*x = OnChainSettlementDetails{}
-	mi := &file_tzero_v1_pay_common_proto_msgTypes[3]
+	mi := &file_tzero_v1_pay_common_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -362,7 +340,7 @@ func (x *OnChainSettlementDetails) String() string {
 func (*OnChainSettlementDetails) ProtoMessage() {}
 
 func (x *OnChainSettlementDetails) ProtoReflect() protoreflect.Message {
-	mi := &file_tzero_v1_pay_common_proto_msgTypes[3]
+	mi := &file_tzero_v1_pay_common_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -375,7 +353,7 @@ func (x *OnChainSettlementDetails) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OnChainSettlementDetails.ProtoReflect.Descriptor instead.
 func (*OnChainSettlementDetails) Descriptor() ([]byte, []int) {
-	return file_tzero_v1_pay_common_proto_rawDescGZIP(), []int{3}
+	return file_tzero_v1_pay_common_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *OnChainSettlementDetails) GetOnChainTxHash() string {
@@ -413,15 +391,7 @@ const file_tzero_v1_pay_common_proto_rawDesc = "" +
 	" \x01(\x0e2\x18.tzero.v1.pay.BlockchainB\n" +
 	"\xbaH\a\x82\x01\x04\x10\x01 \x00R\x05chain\x122\n" +
 	"\x10on_chain_tx_hash\x18\x14 \x01(\tB\t\xbaH\x06r\x04\x88\xb5\x18\x01R\ronChainTxHash\x120\n" +
-	"\x0esender_address\x18\x1e \x01(\tB\t\xbaH\x06r\x04\x90\xb5\x18\x01R\rsenderAddress\"\xdb\x01\n" +
-	"\rDepositOption\x12:\n" +
-	"\x05chain\x18\n" +
-	" \x01(\x0e2\x18.tzero.v1.pay.BlockchainB\n" +
-	"\xbaH\a\x82\x01\x04\x10\x01 \x00R\x05chain\x122\n" +
-	"\x0fdeposit_address\x18\x14 \x01(\tB\t\xbaH\x06r\x04\x90\xb5\x18\x01R\x0edepositAddress\x12(\n" +
-	"\vpayment_uri\x18\x1e \x01(\tB\a\xbaH\x04r\x02\x10\x01R\n" +
-	"paymentUri\x120\n" +
-	"\x0etoken_contract\x18( \x01(\tB\t\xbaH\x06r\x04\x90\xb5\x18\x01R\rtokenContract\"\xc6\x01\n" +
+	"\x0esender_address\x18\x1e \x01(\tB\t\xbaH\x06r\x04\x90\xb5\x18\x01R\rsenderAddress\"\xc6\x01\n" +
 	"\x18OnChainSettlementDetails\x122\n" +
 	"\x10on_chain_tx_hash\x18\n" +
 	" \x01(\tB\t\xbaH\x06r\x04\x88\xb5\x18\x01R\ronChainTxHash\x12:\n" +
@@ -439,7 +409,12 @@ const file_tzero_v1_pay_common_proto_rawDesc = "" +
 	"\x1dFUNDS_DISPOSITION_UNSPECIFIED\x10\x00\x12(\n" +
 	"$FUNDS_DISPOSITION_RETURNED_TO_SENDER\x10\n" +
 	"\x12(\n" +
-	"$FUNDS_DISPOSITION_RETAINED_BY_ISSUER\x10\x14B\xae\x01\n" +
+	"$FUNDS_DISPOSITION_RETAINED_BY_ISSUER\x10\x14*\x96\x01\n" +
+	"\x14PaymentFailureReason\x12&\n" +
+	"\"PAYMENT_FAILURE_REASON_UNSPECIFIED\x10\x00\x12*\n" +
+	"&PAYMENT_FAILURE_REASON_AMOUNT_MISMATCH\x10\n" +
+	"\x12*\n" +
+	"&PAYMENT_FAILURE_REASON_ISSUER_DECLINED\x10\x14B\xae\x01\n" +
 	"\x10com.tzero.v1.payB\vCommonProtoP\x01Z;github.com/t-0-network/usdt-pay-sdk/go/sdk/gen/tzero/v1/pay\xa2\x02\x03TVP\xaa\x02\fTzero.V1.Pay\xca\x02\fTzero\\V1\\Pay\xe2\x02\x18Tzero\\V1\\Pay\\GPBMetadata\xea\x02\x0eTzero::V1::Payb\x06proto3"
 
 var (
@@ -454,25 +429,24 @@ func file_tzero_v1_pay_common_proto_rawDescGZIP() []byte {
 	return file_tzero_v1_pay_common_proto_rawDescData
 }
 
-var file_tzero_v1_pay_common_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_tzero_v1_pay_common_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_tzero_v1_pay_common_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_tzero_v1_pay_common_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_tzero_v1_pay_common_proto_goTypes = []any{
 	(Blockchain)(0),                  // 0: tzero.v1.pay.Blockchain
 	(FundsDisposition)(0),            // 1: tzero.v1.pay.FundsDisposition
-	(*Decimal)(nil),                  // 2: tzero.v1.pay.Decimal
-	(*UsdtOnChainPayment)(nil),       // 3: tzero.v1.pay.UsdtOnChainPayment
-	(*DepositOption)(nil),            // 4: tzero.v1.pay.DepositOption
+	(PaymentFailureReason)(0),        // 2: tzero.v1.pay.PaymentFailureReason
+	(*Decimal)(nil),                  // 3: tzero.v1.pay.Decimal
+	(*UsdtOnChainPayment)(nil),       // 4: tzero.v1.pay.UsdtOnChainPayment
 	(*OnChainSettlementDetails)(nil), // 5: tzero.v1.pay.OnChainSettlementDetails
 }
 var file_tzero_v1_pay_common_proto_depIdxs = []int32{
 	0, // 0: tzero.v1.pay.UsdtOnChainPayment.chain:type_name -> tzero.v1.pay.Blockchain
-	0, // 1: tzero.v1.pay.DepositOption.chain:type_name -> tzero.v1.pay.Blockchain
-	0, // 2: tzero.v1.pay.OnChainSettlementDetails.chain:type_name -> tzero.v1.pay.Blockchain
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	0, // 1: tzero.v1.pay.OnChainSettlementDetails.chain:type_name -> tzero.v1.pay.Blockchain
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_tzero_v1_pay_common_proto_init() }
@@ -486,8 +460,8 @@ func file_tzero_v1_pay_common_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_tzero_v1_pay_common_proto_rawDesc), len(file_tzero_v1_pay_common_proto_rawDesc)),
-			NumEnums:      2,
-			NumMessages:   4,
+			NumEnums:      3,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

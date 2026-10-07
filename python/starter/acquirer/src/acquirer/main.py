@@ -12,6 +12,7 @@ from uuid import uuid4
 
 import uvicorn
 from t0_usdt_pay_sdk import create_asgi_app, create_client, handler
+from t0_usdt_pay_sdk.api.tzero.v1.pay import common_pb2
 from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer import acquirer_pb2
 from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer.acquirer_connect import (
     AcquirerCallbackServiceASGIApplication,
@@ -69,7 +70,13 @@ async def run_demo_sale(t0: AcquirerServiceClient) -> None:
             intent.value.payment_intent_id,
         )
         for opt in intent.value.usdt_on_chain.deposit_options:
-            logger.info("  deposit option: %s", opt.payment_uri)
+            logger.info(
+                "  deposit option: chain=%s address=%s contract=%s decimals=%d",
+                common_pb2.Blockchain.Name(opt.chain),
+                opt.deposit_address,
+                opt.token_contract,
+                opt.token_decimals,
+            )
     elif isinstance(intent, Unknown):
         logger.warning("CreatePaymentIntent unanswered — retry the same idempotency_key")
     elif isinstance(intent, Rejected):

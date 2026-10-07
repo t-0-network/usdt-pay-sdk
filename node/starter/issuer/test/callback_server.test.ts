@@ -55,7 +55,6 @@ test("CreatePaymentInstructions answers with the example deposit options", async
 
   for (const opt of options) {
     assert.ok(opt.depositAddress, "depositAddress must not be empty");
-    assert.ok(opt.paymentUri, "paymentUri must not be empty");
     assert.ok(opt.tokenContract, "tokenContract must not be empty");
   }
 

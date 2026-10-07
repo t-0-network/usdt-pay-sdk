@@ -25,7 +25,7 @@ import {
   IssuerCallbackService,
   payRegistry,
   publicKeyFromPrivateKey,
-  DepositOptionSchema,
+  CreatePaymentInstructionsResponse_Success_DepositOptionSchema,
   UsdtOnChainPaymentSchema,
 } from "../src/index.js";
 import { TimestampSchema } from "@bufbuild/protobuf/wkt";
@@ -350,10 +350,9 @@ describe("createRequestDecoder", () => {
         case: "success",
         value: create(CreatePaymentInstructionsResponse_SuccessSchema, {
           depositOptions: [
-            create(DepositOptionSchema, {
+            create(CreatePaymentInstructionsResponse_Success_DepositOptionSchema, {
               chain: Blockchain.TRON,
               depositAddress: "TN2x2mHMRe8ufaM75sMnZGBfPGv7gM4jnk",
-              paymentUri: "usdt-tron:TN2x2mHMRe8ufaM75sMnZGBfPGv7gM4jnk?amount=10.00",
               tokenContract: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
             }),
           ],

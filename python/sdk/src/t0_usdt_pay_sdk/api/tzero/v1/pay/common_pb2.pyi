@@ -19,6 +19,12 @@ class FundsDisposition(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     FUNDS_DISPOSITION_UNSPECIFIED: _ClassVar[FundsDisposition]
     FUNDS_DISPOSITION_RETURNED_TO_SENDER: _ClassVar[FundsDisposition]
     FUNDS_DISPOSITION_RETAINED_BY_ISSUER: _ClassVar[FundsDisposition]
+
+class PaymentFailureReason(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
+    __slots__ = ()
+    PAYMENT_FAILURE_REASON_UNSPECIFIED: _ClassVar[PaymentFailureReason]
+    PAYMENT_FAILURE_REASON_AMOUNT_MISMATCH: _ClassVar[PaymentFailureReason]
+    PAYMENT_FAILURE_REASON_ISSUER_DECLINED: _ClassVar[PaymentFailureReason]
 BLOCKCHAIN_UNSPECIFIED: Blockchain
 BLOCKCHAIN_TRON: Blockchain
 BLOCKCHAIN_ETH: Blockchain
@@ -26,6 +32,9 @@ BLOCKCHAIN_BSC: Blockchain
 FUNDS_DISPOSITION_UNSPECIFIED: FundsDisposition
 FUNDS_DISPOSITION_RETURNED_TO_SENDER: FundsDisposition
 FUNDS_DISPOSITION_RETAINED_BY_ISSUER: FundsDisposition
+PAYMENT_FAILURE_REASON_UNSPECIFIED: PaymentFailureReason
+PAYMENT_FAILURE_REASON_AMOUNT_MISMATCH: PaymentFailureReason
+PAYMENT_FAILURE_REASON_ISSUER_DECLINED: PaymentFailureReason
 
 class Decimal(_message.Message):
     __slots__ = ("unscaled", "exponent")
@@ -44,18 +53,6 @@ class UsdtOnChainPayment(_message.Message):
     on_chain_tx_hash: str
     sender_address: str
     def __init__(self, chain: _Optional[_Union[Blockchain, str]] = ..., on_chain_tx_hash: _Optional[str] = ..., sender_address: _Optional[str] = ...) -> None: ...
-
-class DepositOption(_message.Message):
-    __slots__ = ("chain", "deposit_address", "payment_uri", "token_contract")
-    CHAIN_FIELD_NUMBER: _ClassVar[int]
-    DEPOSIT_ADDRESS_FIELD_NUMBER: _ClassVar[int]
-    PAYMENT_URI_FIELD_NUMBER: _ClassVar[int]
-    TOKEN_CONTRACT_FIELD_NUMBER: _ClassVar[int]
-    chain: Blockchain
-    deposit_address: str
-    payment_uri: str
-    token_contract: str
-    def __init__(self, chain: _Optional[_Union[Blockchain, str]] = ..., deposit_address: _Optional[str] = ..., payment_uri: _Optional[str] = ..., token_contract: _Optional[str] = ...) -> None: ...
 
 class OnChainSettlementDetails(_message.Message):
     __slots__ = ("on_chain_tx_hash", "chain", "destination_address")

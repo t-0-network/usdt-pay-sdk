@@ -83,10 +83,14 @@ endpoint's mode. Fiat mode: `SettlementCompleted` never fires. USDt mode: skip
    intent is ever created under one key, repeating a key returns that intent unchanged,
    and retrying a *declined* sale takes a fresh key under the same `paymentRef`.
    Keying `CreatePaymentIntent` on `paymentRef` opens a second intent on every retry.
-   Render each deposit option's `paymentUri` (from `getUsdtOnChain().getDepositOptionsList()`,
-   once `getInstructionsCase()` says `USDT_ON_CHAIN`) as a QR image **as-is** — it is
-   chain-native, and rebuilding it from the address and the amount is how you end up
-   with a QR that pays the wrong thing.
+   Build a QR for each deposit option (from `getUsdtOnChain().getDepositOptionsList()`,
+   once `getInstructionsCase()` says `USDT_ON_CHAIN`) from its `chain`, `depositAddress`,
+   `tokenContract` and `tokenDecimals` and the intent's `settlementAmount`. A wallet URI
+   carries the amount in the token's base units, `settlementAmount × 10^tokenDecimals`,
+   scaled by **that option's own** `tokenDecimals` — USDt is 6 decimals on some chains
+   and 18 on others. On EVM chains the URI is
+   `ethereum:<tokenContract>@<chainId>/transfer?address=<depositAddress>&uint256=<base units>`
+   (`chainId` 1 for ETH, 56 for BSC).
 3. **2.3** Deploy and give your t-0 onboarding contact the base URL Phase 3's
    callbacks should reach. It has to be openable from outside, so a laptop on
    `localhost:8080` needs a tunnel or a deployed host first.
@@ -106,9 +110,11 @@ Implement the callbacks in `handler/AcquirerCallbackHandler.java`.
 4. **3.4** `PaymentExpired` — cancel the pending sale and take the QR off the POS.
 5. **3.5** `PaymentFailed` — the issuer reported the deposit as unprocessable.
    Cancel the pending sale, take the QR off the POS, and communicate the outcome
-   to the customer based on `disposition`: `RETURNED_TO_SENDER` means the issuer
-   refunds to the sender address; `RETAINED_BY_ISSUER` means the customer
-   resolves out of band.
+   to the customer based on `reason` and `disposition`. `reason`: `AMOUNT_MISMATCH`
+   means the customer sent a different amount; `ISSUER_DECLINED` means the issuer
+   declined the deposit, with no further detail. `disposition`: `RETURNED_TO_SENDER`
+   means the issuer refunds to the sender address; `RETAINED_BY_ISSUER` means the
+   customer resolves out of band.
 
 ### Phase 4 — confirm the fiat leg
 

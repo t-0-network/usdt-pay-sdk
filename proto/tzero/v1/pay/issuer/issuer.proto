@@ -9,6 +9,7 @@ package tzero.v1.pay.issuer;
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 import "tzero/v1/pay/common.proto";
+import "tzero/v1/pay/validate.proto";
 
 /**
  * t-0 endpoints the Issuer calls to report what it did with a customer deposit
@@ -28,10 +29,10 @@ service IssuerService {
 
 /**
  * Issuer-implemented endpoint t-0 calls to reserve deposit addresses and obtain
- * the deposit options (chain-native payment URIs) for an intent.
+ * the deposit options for an intent.
  */
 service IssuerCallbackService {
-  /** Reserves one deposit address per supported chain and returns the deposit options with their payment URIs. */
+  /** Reserves one deposit address per supported chain and returns the deposit options. */
   rpc CreatePaymentInstructions(CreatePaymentInstructionsRequest) returns (CreatePaymentInstructionsResponse) {
     option idempotency_level = IDEMPOTENT;
   }
@@ -84,6 +85,12 @@ message PaymentReceivedRequest {
   message Unprocessable {
     /** Where the funds go; final when reported. */
     tzero.v1.pay.FundsDisposition disposition = 10 [(buf.validate.field).enum = {
+      defined_only: true
+      not_in: [0]
+    }];
+
+    /** Why the deposit will not be processed; relayed to the Acquirer. */
+    tzero.v1.pay.PaymentFailureReason reason = 20 [(buf.validate.field).enum = {
       defined_only: true
       not_in: [0]
     }];
@@ -231,10 +238,25 @@ message CreatePaymentInstructionsResponse {
 
   message Success {
     /** One deposit option per chain the Issuer supports for this intent. */
-    repeated tzero.v1.pay.DepositOption deposit_options = 30 [(buf.validate.field).repeated = {min_items: 1}];
+    repeated DepositOption deposit_options = 30 [(buf.validate.field).repeated = {min_items: 1}];
 
     /** Absolute expiry of the reservation; must be at or after the requested expires_at, else t-0 discards the instructions and declines the payment. */
     google.protobuf.Timestamp expires_at = 20 [(buf.validate.field).required = true];
+
+    /** One selectable deposit option: the chain, the one-time address reserved on it, and the USDt token contract. */
+    message DepositOption {
+      /** Chain this deposit option pays on. */
+      tzero.v1.pay.Blockchain chain = 10 [(buf.validate.field).enum = {
+        defined_only: true
+        not_in: [0]
+      }];
+
+      /** One-time deposit address reserved for this intent on `chain`. */
+      string deposit_address = 20 [(buf.validate.field).string.(tzero.v1.pay.valid_address) = true];
+
+      /** USDt token contract on `chain` the deposit must be made in. */
+      string token_contract = 40 [(buf.validate.field).string.(tzero.v1.pay.valid_address) = true];
+    }
   }
 
   message Failure {

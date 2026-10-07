@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -52,16 +53,13 @@ func main() {
 
 	switch os.Args[1] {
 	case "init":
-		if err := initCmd.Parse(os.Args[2:]); err != nil {
+		// flag.Parse stops at the first non-flag. Walk one positional at a
+		// time so a flag that follows the name is still applied:
+		//   t0 init demo --lang=node
+		//   t0 init --lang=node demo
+		names, err := positionals(initCmd, os.Args[2:])
+		if err != nil {
 			os.Exit(2)
-		}
-		// Go's flag package stops at the first non-flag arg. Re-parse
-		// remaining args so flags work in any position:
-		//   t0 init demo --lang=node   (positional first)
-		//   t0 init --lang=node demo   (flags first)
-		projectName := initCmd.Arg(0)
-		if remaining := initCmd.Args(); len(remaining) > 1 {
-			initCmd.Parse(remaining[1:])
 		}
 		noColor = *noColorFlag
 
@@ -69,21 +67,23 @@ func main() {
 			fmt.Printf("%s init %s\n", Config.ProductName, Version)
 			return
 		}
-		if projectName == "" {
+		if len(names) == 0 {
 			fmt.Fprintf(os.Stderr, "%s project name is required\n\n", color(red, "[ERROR]"))
 			fmt.Fprintf(os.Stderr, "Usage: %s <project-name> --lang=<language>\n", Config.Command)
 			os.Exit(2)
 		}
+		if len(names) != 1 {
+			fmt.Fprintf(os.Stderr, "%s expected exactly one project name\n", color(red, "[ERROR]"))
+			os.Exit(2)
+		}
 
-		projectName = sanitizeProjectName(projectName)
+		projectName := sanitizeProjectName(names[0])
 		if projectName == "" {
 			fmt.Fprintf(os.Stderr, "%s invalid project name — use only lowercase letters, numbers, hyphens, underscores\n", color(red, "[ERROR]"))
 			os.Exit(1)
 		}
-
-		pascal := toPascalCase(projectName)
-		if pascal == "" || (pascal[0] >= '0' && pascal[0] <= '9') {
-			fmt.Fprintf(os.Stderr, "%s project name must start with a letter (got %q)\n", color(red, "[ERROR]"), projectName)
+		if !validProjectName(projectName) {
+			fmt.Fprintf(os.Stderr, "%s project name must start with a letter and end with a letter or digit (got %q)\n", color(red, "[ERROR]"), projectName)
 			os.Exit(1)
 		}
 
@@ -305,17 +305,30 @@ func printUsage() {
 	fmt.Println("  --version            Show version")
 }
 
+// positionals parses args with fs, one positional argument at a time, so flags
+// placed after a positional are still seen. fs keeps flag values across calls.
+func positionals(fs *flag.FlagSet, args []string) ([]string, error) {
+	var names []string
+	for len(args) > 0 {
+		if err := fs.Parse(args); err != nil {
+			return nil, err
+		}
+		rest := fs.Args()
+		if len(rest) == 0 {
+			break
+		}
+		names = append(names, rest[0])
+		args = rest[1:]
+	}
+	return names, nil
+}
+
 func isValidLang(lang string) bool {
-	return Config.hasLang(lang)
+	return slices.Contains(Config.Languages, lang)
 }
 
 func contains(list []string, s string) bool {
-	for _, v := range list {
-		if v == s {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(list, s)
 }
 
 func color(code, text string) string {

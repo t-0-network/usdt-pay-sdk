@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"io"
 	"os"
 	"path/filepath"
@@ -243,6 +244,37 @@ func TestProcessPlaceholders_JavaRepository(t *testing.T) {
 	}
 }
 
+func TestPositionals_FlagsAfterTheName(t *testing.T) {
+	fs := flag.NewFlagSet("init", flag.ContinueOnError)
+	lang := fs.String("lang", "", "")
+	dir := fs.String("dir", "", "")
+
+	names, err := positionals(fs, []string{"--lang=go", "demo", "--dir=xdir"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(names) != 1 || names[0] != "demo" {
+		t.Fatalf("names = %q, want [demo]", names)
+	}
+	if *lang != "go" || *dir != "xdir" {
+		t.Fatalf("lang=%q dir=%q", *lang, *dir)
+	}
+
+	fs = flag.NewFlagSet("init", flag.ContinueOnError)
+	fs.String("lang", "", "")
+	dir = fs.String("dir", "", "")
+	names, err = positionals(fs, []string{"--lang=go", "demo", "extra", "--dir=xdir"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(names) != 2 || names[0] != "demo" || names[1] != "extra" {
+		t.Fatalf("names = %q, want [demo extra]", names)
+	}
+	if *dir != "xdir" {
+		t.Fatalf("dir = %q, want xdir (the flag after the extra name must still be parsed)", *dir)
+	}
+}
+
 func TestWriteEnvFile_RecordsPublicKey(t *testing.T) {
 	kp := KeyPair{PrivateKey: "0x" + strings.Repeat("ab", 32), PublicKey: "0x04" + strings.Repeat("cd", 64)}
 
@@ -300,6 +332,17 @@ func TestWriteEnvFile_RecordsPublicKey(t *testing.T) {
 		info, _ := os.Stat(filepath.Join(dir, ".env"))
 		if perm := info.Mode().Perm(); perm != 0o600 {
 			t.Errorf(".env mode = %o, want 0600", perm)
+		}
+	})
+
+	t.Run("no active key line: error, nothing written", func(t *testing.T) {
+		dir := t.TempDir()
+		os.WriteFile(filepath.Join(dir, ".env.example"), []byte("# PROVIDER_PRIVATE_KEY=commented\nPORT=8080\n"), 0o644)
+		if err := writeEnvFile(dir, kp); err == nil {
+			t.Fatal("expected an error when .env.example has no active key line")
+		}
+		if _, err := os.Stat(filepath.Join(dir, ".env")); err == nil {
+			t.Error(".env written although the private key had nowhere to go")
 		}
 	})
 

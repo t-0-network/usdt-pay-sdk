@@ -3,6 +3,7 @@ import datetime
 from buf.validate import validate_pb2 as _validate_pb2
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from tzero.v1.pay import common_pb2 as _common_pb2
+from tzero.v1.pay import validate_pb2 as _validate_pb2_1
 from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
@@ -93,9 +94,20 @@ class CreatePaymentIntentResponse(_message.Message):
         __slots__ = ("payment_intent_id", "expires_at", "settlement_amount", "usdt_on_chain", "fiat", "onchain")
         class UsdtOnChainInstructions(_message.Message):
             __slots__ = ("deposit_options",)
+            class DepositOption(_message.Message):
+                __slots__ = ("chain", "deposit_address", "token_contract", "token_decimals")
+                CHAIN_FIELD_NUMBER: _ClassVar[int]
+                DEPOSIT_ADDRESS_FIELD_NUMBER: _ClassVar[int]
+                TOKEN_CONTRACT_FIELD_NUMBER: _ClassVar[int]
+                TOKEN_DECIMALS_FIELD_NUMBER: _ClassVar[int]
+                chain: _common_pb2.Blockchain
+                deposit_address: str
+                token_contract: str
+                token_decimals: int
+                def __init__(self, chain: _Optional[_Union[_common_pb2.Blockchain, str]] = ..., deposit_address: _Optional[str] = ..., token_contract: _Optional[str] = ..., token_decimals: _Optional[int] = ...) -> None: ...
             DEPOSIT_OPTIONS_FIELD_NUMBER: _ClassVar[int]
-            deposit_options: _containers.RepeatedCompositeFieldContainer[_common_pb2.DepositOption]
-            def __init__(self, deposit_options: _Optional[_Iterable[_Union[_common_pb2.DepositOption, _Mapping]]] = ...) -> None: ...
+            deposit_options: _containers.RepeatedCompositeFieldContainer[CreatePaymentIntentResponse.Success.UsdtOnChainInstructions.DepositOption]
+            def __init__(self, deposit_options: _Optional[_Iterable[_Union[CreatePaymentIntentResponse.Success.UsdtOnChainInstructions.DepositOption, _Mapping]]] = ...) -> None: ...
         class OnchainSettlement(_message.Message):
             __slots__ = ()
             def __init__(self) -> None: ...
@@ -262,12 +274,13 @@ class PaymentExpiredResponse(_message.Message):
     def __init__(self) -> None: ...
 
 class PaymentFailedRequest(_message.Message):
-    __slots__ = ("payment_intent_id", "payment_ref", "amount_usdt", "usdt_on_chain", "disposition", "failed_at", "fiat_settlement")
+    __slots__ = ("payment_intent_id", "payment_ref", "amount_usdt", "usdt_on_chain", "disposition", "reason", "failed_at", "fiat_settlement")
     PAYMENT_INTENT_ID_FIELD_NUMBER: _ClassVar[int]
     PAYMENT_REF_FIELD_NUMBER: _ClassVar[int]
     AMOUNT_USDT_FIELD_NUMBER: _ClassVar[int]
     USDT_ON_CHAIN_FIELD_NUMBER: _ClassVar[int]
     DISPOSITION_FIELD_NUMBER: _ClassVar[int]
+    REASON_FIELD_NUMBER: _ClassVar[int]
     FAILED_AT_FIELD_NUMBER: _ClassVar[int]
     FIAT_SETTLEMENT_FIELD_NUMBER: _ClassVar[int]
     payment_intent_id: int
@@ -275,9 +288,10 @@ class PaymentFailedRequest(_message.Message):
     amount_usdt: _common_pb2.Decimal
     usdt_on_chain: _common_pb2.UsdtOnChainPayment
     disposition: _common_pb2.FundsDisposition
+    reason: _common_pb2.PaymentFailureReason
     failed_at: _timestamp_pb2.Timestamp
     fiat_settlement: FiatSettlement
-    def __init__(self, payment_intent_id: _Optional[int] = ..., payment_ref: _Optional[str] = ..., amount_usdt: _Optional[_Union[_common_pb2.Decimal, _Mapping]] = ..., usdt_on_chain: _Optional[_Union[_common_pb2.UsdtOnChainPayment, _Mapping]] = ..., disposition: _Optional[_Union[_common_pb2.FundsDisposition, str]] = ..., failed_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., fiat_settlement: _Optional[_Union[FiatSettlement, _Mapping]] = ...) -> None: ...
+    def __init__(self, payment_intent_id: _Optional[int] = ..., payment_ref: _Optional[str] = ..., amount_usdt: _Optional[_Union[_common_pb2.Decimal, _Mapping]] = ..., usdt_on_chain: _Optional[_Union[_common_pb2.UsdtOnChainPayment, _Mapping]] = ..., disposition: _Optional[_Union[_common_pb2.FundsDisposition, str]] = ..., reason: _Optional[_Union[_common_pb2.PaymentFailureReason, str]] = ..., failed_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., fiat_settlement: _Optional[_Union[FiatSettlement, _Mapping]] = ...) -> None: ...
 
 class PaymentFailedResponse(_message.Message):
     __slots__ = ()
