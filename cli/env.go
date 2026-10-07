@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -39,6 +40,9 @@ func writeEnvFile(projectDir string, kp KeyPair) error {
 			break
 		}
 	}
+	if keyIdx < 0 {
+		return fmt.Errorf(".env.example has no active PROVIDER_PRIVATE_KEY or PRIVATE_KEY line")
+	}
 
 	// Record the matching public key next to the private key, so it can be
 	// found later without re-running init: in the template's marker when it
@@ -50,12 +54,11 @@ func writeEnvFile(projectDir string, kp KeyPair) error {
 			break
 		}
 	}
-	switch {
-	case markerIdx >= 0:
+	if markerIdx >= 0 {
 		lines[markerIdx] = "# " + kp.PublicKey
-	case keyIdx >= 0:
+	} else {
 		comment := "# Public key for the line above (share it with t-0): " + kp.PublicKey
-		lines = append(lines[:keyIdx+1], append([]string{comment}, lines[keyIdx+1:]...)...)
+		lines = slices.Insert(lines, keyIdx+1, comment)
 	}
 
 	envPath := filepath.Join(projectDir, ".env")
