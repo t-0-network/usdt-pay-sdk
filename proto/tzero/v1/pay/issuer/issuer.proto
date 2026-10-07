@@ -264,8 +264,6 @@ message CreatePaymentInstructionsResponse {
 
     enum Reason {
       REASON_UNSPECIFIED = 0;
-      // The Issuer is unavailable to allocate.
-      REASON_ISSUER_UNAVAILABLE = 10;
       // No free one-time deposit addresses.
       REASON_ADDRESS_POOL_EMPTY = 20;
       // The amount falls outside the acceptable range.
