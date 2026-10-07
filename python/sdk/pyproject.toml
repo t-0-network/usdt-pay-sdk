@@ -10,7 +10,7 @@ authors = [
 dependencies = [
     "t0-provider-sdk==1.1.41",
     "connectrpc>=0.11.1",
-    "protobuf>=7.34.1",
+    "protobuf>=7.36.2",
     "protovalidate>=2.0",
 ]
 
