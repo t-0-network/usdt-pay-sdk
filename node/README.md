@@ -4,7 +4,7 @@ TypeScript SDK and starter for the **t-0 USDt pay flow**.
 
 ## Starter
 
-Node 22 or newer. Scaffold with the [CLI](../cli/README.md):
+Node 22.12 or newer. Scaffold with the [CLI](../cli/README.md):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/t-0-network/usdt-pay-sdk/master/cli/install.sh | sh -s -- init --lang=node --role=issuer my-issuer

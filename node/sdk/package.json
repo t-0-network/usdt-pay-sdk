@@ -10,7 +10,7 @@
   "license": "MIT",
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12.0"
   },
   "files": [
     "lib/**/*"
@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.15.0",
-    "@t-0/provider-sdk": "1.2.0"
+    "@t-0/provider-sdk": "1.2.1"
   },
   "devDependencies": {
     "@connectrpc/connect": "^2.2.0",

@@ -9,7 +9,7 @@ This README says what to build — for what every field and decline code means, 
 
 ## Prerequisites
 
-- Node 22+.
+- Node 22.12+.
 - The t-0 network public key. It comes from your t-0 onboarding contact, along with
   a `TZERO_ENDPOINT` you can reach.
 

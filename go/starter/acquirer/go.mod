@@ -3,10 +3,10 @@ module github.com/t-0-network/usdt-pay-sdk/go/starter/acquirer
 go 1.27.0
 
 require (
-	connectrpc.com/connect v1.20.0
+	connectrpc.com/connect v1.21.0
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
-	github.com/t-0-network/provider-sdk/go v1.2.0
+	github.com/t-0-network/provider-sdk/go v1.2.1
 	github.com/t-0-network/usdt-pay-sdk/go/sdk v0.2.9
 	google.golang.org/protobuf v1.36.12
 )
@@ -17,7 +17,7 @@ require (
 	cel.dev/cel-go v0.32.0 // indirect
 	cel.dev/expr v0.25.3 // indirect
 	connectrpc.com/grpchealth v1.5.0 // indirect
-	connectrpc.com/validate v0.6.0 // indirect
+	connectrpc.com/validate v0.7.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.5.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1 // indirect
