@@ -36,8 +36,8 @@ github.com/rodaine/protogofakeit v0.1.1 h1:ZKouljuRM3A+TArppfBqnH8tGZHOwM/pjvtXe
 github.com/rodaine/protogofakeit v0.1.1/go.mod h1:pXn/AstBYMaSfc1/RqH3N82pBuxtWgejz1AlYpY1mI0=
 github.com/stretchr/testify v1.12.1 h1:EuwCh5fleGS7H32xRwO3wRGT7DxrDhLAT6FF8MpWDWE=
 github.com/stretchr/testify v1.12.1/go.mod h1:MDEgiDPPsNp5cuIrHPPCyornHKgEVbtFUmoNlxoYthg=
-github.com/t-0-network/provider-sdk/go v1.2.1 h1:brWv1ysEEz64rPD6T3EvaAObZ4kWQhOTFAMHz91WKk0=
-github.com/t-0-network/provider-sdk/go v1.2.1/go.mod h1:U3Bgu5jn6sA/0IBhq+DG/I/bnRvJFXXbpMTB4nfVcoI=
+github.com/t-0-network/provider-sdk/go v1.3.0 h1:e43fcvH7I1M/Lj7FuFSTAJ2D1aEMEpUmAFdsH19nLR4=
+github.com/t-0-network/provider-sdk/go v1.3.0/go.mod h1:U3Bgu5jn6sA/0IBhq+DG/I/bnRvJFXXbpMTB4nfVcoI=
 github.com/t-0-network/usdt-pay-sdk/go/sdk v0.2.9 h1:qLlrcdn7kzO7HyaNfHUxjmGVMHyYFySV8preP+iDWIg=
 github.com/t-0-network/usdt-pay-sdk/go/sdk v0.2.9/go.mod h1:gLbsGN1AUEebi+c5YsjOuo8b0nsNJu5rXH2G8zi02GA=
 go.yaml.in/yaml/v3 v3.0.5 h1:N6y/pJk8buWs9NY5ERU2HSMfm+IuD/OtfdAnq6kESPw=

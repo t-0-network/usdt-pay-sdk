@@ -651,7 +651,7 @@ wheels = [
 
 [[package]]
 name = "t0-provider-sdk"
-version = "1.2.0"
+version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "coincurve" },
@@ -662,9 +662,9 @@ dependencies = [
     { name = "pycryptodome" },
     { name = "pyqwest" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7a/aa/1deed039efa83b01d111e8a3a5759d89921f23cf02658e04fb05f28f788c/t0_provider_sdk-1.2.0.tar.gz", hash = "sha256:0715380405bb0feae52c415ca4936a2002ef6d34bffb2634f2ab05b0ac931fd7", size = 137468, upload-time = "2026-10-06T17:24:57.019Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e7/e6/4c1d2a7e360f8f19f66016f8ea7b4fcf8441c4e443aa08d74cb4d3186e85/t0_provider_sdk-1.3.0.tar.gz", hash = "sha256:5fbe78c7bfc1323103009c8ac12af2f312f13e6fa91d8492478b3da9d3223a23", size = 156816, upload-time = "2026-10-08T08:04:28.093Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/58/4b/76ae9bbee579eb11330272f57a3ecac77717c70812759a313e8e7d3fe230/t0_provider_sdk-1.2.0-py3-none-any.whl", hash = "sha256:8b7bf1b08f9e0b1dcaed4b7677b069a528e73cbf533db2987733b43aaad429e2", size = 139485, upload-time = "2026-10-06T17:24:55.529Z" },
+    { url = "https://files.pythonhosted.org/packages/a2/77/de063c8470848bd43c9b7146712ac6ee606c5c89ad042634d83e1ffc51cb/t0_provider_sdk-1.3.0-py3-none-any.whl", hash = "sha256:c18a7886ee5c80ce26e164b29fea4aa92d544146a99f42a9472ed1611dfc4b49", size = 148711, upload-time = "2026-10-08T08:04:26.675Z" },
 ]
 
 [[package]]
@@ -674,16 +674,14 @@ source = { editable = "sdk" }
 dependencies = [
     { name = "connectrpc" },
     { name = "protobuf" },
-    { name = "protovalidate" },
     { name = "t0-provider-sdk" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "connectrpc", specifier = ">=0.11.1" },
+    { name = "connectrpc", specifier = ">=0.12.1" },
     { name = "protobuf", specifier = ">=7.36.2" },
-    { name = "protovalidate", specifier = ">=2.0" },
-    { name = "t0-provider-sdk", specifier = "==1.2.0" },
+    { name = "t0-provider-sdk", specifier = "==1.3.0" },
 ]
 
 [[package]]
@@ -705,6 +703,7 @@ dev = [
     { name = "gunicorn" },
     { name = "mypy" },
     { name = "protoc-gen-connectrpc" },
+    { name = "protovalidate" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "ruff" },
@@ -718,7 +717,8 @@ dev = [
 dev = [
     { name = "gunicorn", specifier = ">=23.0.0" },
     { name = "mypy", specifier = ">=2.3.1" },
-    { name = "protoc-gen-connectrpc", specifier = ">=0.11.1" },
+    { name = "protoc-gen-connectrpc", specifier = ">=0.12.1" },
+    { name = "protovalidate", specifier = ">=2.0" },
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "pytest-asyncio", specifier = ">=1.4.0" },
     { name = "ruff", specifier = ">=0.16.8" },

@@ -180,7 +180,7 @@ On success (`result.ok === true`), `result.request` is the typed message, `resul
 <details>
 <summary>Lower-level primitives</summary>
 
-The individual building blocks are also exported: `createRequestVerifier`, `rejectRequest`, `NetworkHeaders`, `DEFAULT_TOLERANCE_MS`, `verifySignature`, `computeDigest`, `keccak256`, `publicKeysEqual`. You can import them from the `./crypto` subpath: `import { createRequestVerifier } from "@t-0/usdt-pay-sdk/crypto"`.
+The individual building blocks are also exported: `createRequestVerifier`, `rejectRequest`, `NetworkHeaders`, `verifySignature`, `computeDigest`, `keccak256`, `publicKeysEqual`. You can import them from the `./crypto` subpath: `import { createRequestVerifier } from "@t-0/usdt-pay-sdk/crypto"`.
 </details>
 
 ## Calling t-0

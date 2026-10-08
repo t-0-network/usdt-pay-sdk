@@ -19,8 +19,11 @@ dependencies {
     // Crypto (Signer, SignatureVerifier) and the signed transport (ProviderServer,
     // BlockingNetworkClient) come from the provider SDK. It also brings grpc,
     // protobuf-java and protovalidate along as `api` dependencies, which is what the
-    // generated pay stubs compile and run against.
-    api("network.t-0:provider-sdk-java:$providerSdkVersion")
+    // generated pay stubs compile and run against. `strictly`, so a consumer's graph
+    // cannot resolve a different provider-sdk under this SDK.
+    api("network.t-0:provider-sdk-java") {
+        version { strictly(providerSdkVersion) }
+    }
 
     // javax.annotation for generated gRPC code
     compileOnly("javax.annotation:javax.annotation-api:1.3.2")

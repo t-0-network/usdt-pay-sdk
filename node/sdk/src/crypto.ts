@@ -46,7 +46,6 @@ export function createRequestDecoder(opts: Pick<CreateVerifierOptions, "networkP
 
 export {
   createRequestVerifier,
-  DEFAULT_TOLERANCE_MS,
   rejectRequest,
   verifySignature,
   computeDigest,
