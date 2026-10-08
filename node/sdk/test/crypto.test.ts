@@ -298,6 +298,10 @@ describe("createRequestDecoder", () => {
     const fields = parsed.violations.map((v: { field: string }) => v.field);
     assert.ok(fields.some((f: string) => f.includes("on_chain_tx_hash")), "expected valid_tx_hash violation");
     assert.ok(fields.some((f: string) => f.includes("sender_address")), "expected valid_address violation");
+    const ruleIdOf = (field: string) =>
+      parsed.violations.find((v: { field: string; ruleId?: string }) => v.field === field)?.ruleId;
+    assert.equal(ruleIdOf("on_chain_tx_hash"), "string.valid_tx_hash");
+    assert.equal(ruleIdOf("sender_address"), "string.valid_address");
   });
 
   test("bad signature → 401", () => {
