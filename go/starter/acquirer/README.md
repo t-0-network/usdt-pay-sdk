@@ -32,11 +32,33 @@ sale: if you settle in USDt you skip `GetPaymentQuote` entirely and send the
 amount in USDt on `CreatePaymentIntent`, so do not read your own first call off it —
 [What you implement](#what-you-implement) says which half is yours.
 
+The callback server speaks HTTP/1.1 and h2c (HTTP/2 without TLS) and serves the
+Connect, gRPC and gRPC-Web protocols. It does not terminate TLS itself.
+
 To run the tests:
 
 ```bash
 go test ./...
 ```
+
+## Environment variables
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `PROVIDER_PRIVATE_KEY` | Yes | Generated into `.env` by `usdt-pay init` | Your secp256k1 private key (hex). Every request you send to t-0 is signed with it |
+| `NETWORK_PUBLIC_KEY` | Yes | None; `.env` starts with the sandbox key | t-0's network public key. Every callback is verified against it |
+| `TZERO_ENDPOINT` | No | `https://usdt-pay-api-sandbox.t-0.network` | t-0 API endpoint |
+| `PORT` | No | `8080` | Port the callback server listens on, an integer from 1 to 65535 |
+
+The app reads `.env` from the working directory when it exists; without it, the
+values come from the environment (for example `docker run --env-file`). A variable
+that is set in the environment wins over `.env`, even when it is set to an empty
+value. Surrounding whitespace is trimmed from the two keys and from `PORT`. An
+empty value counts as unset for `TZERO_ENDPOINT` and `PORT`.
+
+`godotenv`, which reads `.env`, takes no variables of its own. The calls to t-0 go
+through Go's default HTTP transport, so `HTTPS_PROXY`, `HTTP_PROXY` and `NO_PROXY`
+(or their lowercase forms) send them through a proxy.
 
 ## What you implement
 
@@ -161,7 +183,14 @@ three you got:
 | `Rejected` | t-0 refuses this payload | fix the fields, resend the **same** key |
 | `Unknown` | no answer; it may or may not have committed | retry the **same** key, unchanged |
 
+`outcome.Accepted()` returns the payload and `true` for `Accepted`.
 `outcome.ShouldRetry()` is true only for `Unknown`.
+
+A call that returns an error is classified by its code. `invalid_argument`,
+`unauthenticated`, `permission_denied`, `unimplemented` and `failed_precondition`
+mean t-0 read the request and refused it, so they are `Rejected`, with `Reason` set
+to `<code>: <message>`. Every other code, and a call that failed in transport, is
+`Unknown`.
 
 ## Testing your integration
 
@@ -183,15 +212,20 @@ resp, err := h.PaymentAuthorized(ctx, connect.NewRequest(&acquirer.PaymentAuthor
 }))
 ```
 
-**Outbound — use `connectrpc.com/connect/connecttest`.** Stand up an in-memory
-server with a fake service and hand the helper a client pointed at it:
+**Outbound — use `net/http/httptest`.** Stand up a local server with a fake
+service and hand the helper a client pointed at it:
 
 ```go
 _, handler := acquirerconnect.NewAcquirerServiceHandler(&fakeAcquirerService{})
 server := httptest.NewServer(handler)
+defer server.Close()
 t0 := acquirerconnect.NewAcquirerServiceClient(server.Client(), server.URL)
 
-result := internal.FetchQuote(ctx, t0, "COP", internal.DecimalFromString("100000"))
+amount, err := internal.DecimalFromString("100000")
+if err != nil {
+    t.Fatal(err)
+}
+result := internal.FetchQuote(ctx, t0, "COP", amount)
 ```
 
 Point `TZERO_ENDPOINT` at a sandbox only once both sides pass on their own.
@@ -208,9 +242,9 @@ internal/
 ├── get_payment_quote.go          # prices a fiat sale
 ├── create_payment_intent.go      # opens an intent, returns payment instructions
 ├── settlement_received.go        # you confirm the fiat landed
-├── outcome.go                    # accepted / rejected / unknown
+├── outcome.go                    # accepted / rejected / unknown, and RPC errors → outcome
 ├── decimals.go                   # unscaled × 10^exponent ↔ string
-└── times.go                      # protobuf Timestamp ↔ time.Time
+└── times.go                      # protobuf Timestamp → ISO 8601 string
 ```
 
 ## Docker
@@ -221,3 +255,4 @@ docker run -p 8080:8080 --env-file .env usdt-pay-acquirer
 ```
 
 The image carries no `.env` on purpose: your private key does not belong in a layer.
+It is built on `gcr.io/distroless/base:nonroot` and runs as a non-root user.

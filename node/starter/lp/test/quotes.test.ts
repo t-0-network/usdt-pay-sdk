@@ -2,12 +2,8 @@ import assert from "node:assert/strict";
 import { setTimeout } from "node:timers/promises";
 import { after, test } from "node:test";
 import { timestampDate } from "@bufbuild/protobuf/wkt";
-import {
-  createClient,
-  createRouterTransport,
-  type ServiceImpl,
-} from "@connectrpc/connect";
-import { LpService, type PublishQuoteRequest } from "@t-0/usdt-pay-sdk";
+import { createClient, createRouterTransport } from "@connectrpc/connect";
+import { LpService, type PublishQuoteRequest, type ServiceImpl } from "@t-0/usdt-pay-sdk";
 import { decimalFromString } from "../src/internal/decimals.js";
 import { startQuotePublisher } from "../src/quotes.js";
 

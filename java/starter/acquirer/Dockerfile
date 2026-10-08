@@ -14,6 +14,10 @@ FROM eclipse-temurin:21-jre-noble
 WORKDIR /app
 COPY --from=build /src/build/install/acquirer/ ./
 
+# Not root: the app needs no privilege, and only reads what is under /app.
+RUN useradd --create-home appuser
+USER appuser
+
 EXPOSE 8080
 
 # Configuration comes from the environment: docker run --env-file .env ...

@@ -24,7 +24,7 @@ func FetchQuote(
 	}))
 	if err != nil {
 		log.Printf("GetPaymentQuote failed: %v", err)
-		return Unknown[*acquirer.GetPaymentQuoteResponse_Success]{Detail: err.Error()}
+		return OutcomeFromError[*acquirer.GetPaymentQuoteResponse_Success](err)
 	}
 
 	msg := resp.Msg
@@ -37,7 +37,7 @@ func FetchQuote(
 			DecimalToString(s.GetSettlementAmount()),
 			DecimalToString(s.GetFxRate()),
 			FormatTimestamp(s.GetExpiresAt()))
-		return Accepted[*acquirer.GetPaymentQuoteResponse_Success]{Payload: s}
+		return Accepted[*acquirer.GetPaymentQuoteResponse_Success]{Value: s}
 
 	case *acquirer.GetPaymentQuoteResponse_Failure_:
 		reason := msg.GetFailure().GetReason().String()

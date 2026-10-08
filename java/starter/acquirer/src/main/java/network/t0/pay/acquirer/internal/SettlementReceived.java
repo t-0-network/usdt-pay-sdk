@@ -67,8 +67,9 @@ public final class SettlementReceived {
             }
         } catch (StatusRuntimeException e) {
             log.error("SettlementReceived failed for {}: {}", bankTransferRef, e.getStatus());
-            // TODO: Step 4.2 — retry with backoff, same (lpId, bankTransferRef) pair.
-            return new Outcome.Unknown<>(e.getStatus().toString());
+            // TODO: Step 4.2 — when the outcome says shouldRetry, retry with backoff,
+            //       same (lpId, bankTransferRef) pair.
+            return Outcome.fromError(e);
         }
     }
 

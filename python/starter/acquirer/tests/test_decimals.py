@@ -61,9 +61,28 @@ def test_rejects_scientific_notation():
         decimal_from_string("1e9")
 
 
+def test_eight_fraction_digits():
+    d = decimal_from_string("0.12345678")
+    assert d.unscaled == 12345678
+    assert d.exponent == -8
+
+
 def test_rejects_too_many_decimals():
-    with pytest.raises(ValueError, match="exponent"):
+    with pytest.raises(ValueError) as raised:
         decimal_from_string("1.123456789")
+    assert str(raised.value) == "1.123456789 needs exponent -9, outside the contract's [-8, 8] — round it first"
+
+
+@pytest.mark.parametrize("value", ["9223372036854775807", "-9223372036854775808", "92233720368547758.07"])
+def test_int64_bounds(value):
+    assert decimal_to_string(decimal_from_string(value)) == value
+
+
+@pytest.mark.parametrize("value", ["9223372036854775808", "-9223372036854775809", "92233720368547758.08"])
+def test_rejects_beyond_int64(value):
+    with pytest.raises(ValueError) as raised:
+        decimal_from_string(value)
+    assert str(raised.value) == f"{value} does not fit the contract's 64-bit unscaled value"
 
 
 def test_zero():
@@ -85,8 +104,17 @@ def test_zero():
         "1,000",
         "100.0 ",
         "\n100",
+        "+100",
+        "1_000",
+        ".5",
+        "5.",
+        "-",
+        "١٠٠",
+        "１００",
+        "1.٥",
     ],
 )
 def test_rejects_malformed_input(bad_input):
-    with pytest.raises(ValueError, match="not a plain decimal"):
+    with pytest.raises(ValueError) as raised:
         decimal_from_string(bad_input)
+    assert str(raised.value) == f"'{bad_input}' is not a plain decimal number"

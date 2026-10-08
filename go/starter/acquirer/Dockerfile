@@ -12,7 +12,8 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /service ./cmd
 
-FROM gcr.io/distroless/base:latest
+# Runs as the image's non-root user (uid 65532).
+FROM gcr.io/distroless/base:nonroot
 
 WORKDIR /app
 COPY --from=builder /service /service

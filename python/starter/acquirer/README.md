@@ -15,19 +15,44 @@ uv sync
 uv run python -m acquirer.main
 ```
 
-It prints your public key, runs one demo sale through `get_payment_quote` →
-`create_payment_intent`, then starts the callback server. That demo is a
-fiat-mode sale for 100 000 COP — replace it in `main.py` once the round trip
-works. The demo runs before the server starts because uvicorn's `serve()`
-blocks; nothing depends on the callback server being up when
-`CreatePaymentIntent` is sent.
+It prints your public key, starts the callback server, and once the server is
+listening runs one demo sale through `get_payment_quote` →
+`create_payment_intent`. That demo is a fiat-mode sale for 100 000 COP —
+replace it in `main.py` once the round trip works.
 
-Sync mode (gunicorn or waitress):
+The callback server is uvicorn, on `PORT` on all interfaces (IPv4, and IPv6
+where the host has it). It speaks HTTP/1.1 and serves the Connect and gRPC-Web
+protocols. It does not serve gRPC, which needs HTTP/2.
 
-```bash
-uv sync
-uv run gunicorn acquirer.wsgi:app --bind 0.0.0.0:8080
-```
+SIGINT (Ctrl+C) or SIGTERM shuts it down: the server stops accepting calls,
+waits up to 15 s for the calls in flight, cancels the demo sale if it is still
+waiting on t-0, and exits with status 0.
+
+## Environment variables
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `PROVIDER_PRIVATE_KEY` | Yes | Generated into `.env` by the CLI | Your secp256k1 private key (hex). Every request you send to t-0 is signed with it. |
+| `NETWORK_PUBLIC_KEY` | Yes | The sandbox key, in `.env` | t-0's public key. Every callback must verify against it. |
+| `TZERO_ENDPOINT` | No | `https://usdt-pay-api-sandbox.t-0.network` | The t-0 pay API. |
+| `PORT` | No | `8080` | The callback server's port, 1 to 65535. |
+
+Surrounding whitespace is trimmed from the two keys and from `PORT`. An empty
+`TZERO_ENDPOINT` or `PORT` counts as unset.
+
+The starter reads `.env` from the working directory when it exists. Without
+it, the starter says so on stderr and takes the values from the environment
+(for example `docker run --env-file .env`). A variable set in the environment
+wins over the same one in `.env`.
+
+The libraries the starter runs on read a few more:
+
+| Variable | Read by | Effect |
+|---|---|---|
+| `PYTHON_DOTENV_DISABLED` | python-dotenv | `1`, `true`, `t`, `yes` or `y` (in any case) skips `.env`. |
+| `FORWARDED_ALLOW_IPS` | uvicorn | The proxy addresses trusted to set `X-Forwarded-For` and `X-Forwarded-Proto`. Default `127.0.0.1,::1`. |
+| `WEB_CONCURRENCY` | uvicorn | Its worker count. The starter runs one server in its own process, so the count has no effect, but a value that is not an integer makes the start fail. |
+| `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, `NO_PROXY`, and the lowercase forms | pyqwest, the HTTP client that sends the calls to t-0 | Send the calls to t-0 through a proxy. |
 
 ## What you implement
 
@@ -160,28 +185,15 @@ redelivers it.
 uv run pytest
 ```
 
-The tests spin up the real ASGI/WSGI app on a free port with signed requests.
-
-## Sync or async
-
-The starter ships both:
-
-- **Async** — `main.py`, uvicorn, `AcquirerCallbacks`, `create_payment_intent`
-- **Sync** — `wsgi.py`, gunicorn/waitress, `AcquirerCallbacksSync`,
-  `create_payment_intent_sync`
-
-Both share the same outbound helpers (`build_request` / `outcome_from_response`
-are pure, tested once).
+The tests spin up the real ASGI app on a free port with signed requests.
 
 ## Layout
 
 ```
 src/acquirer/
-├── main.py            async entry (uvicorn)
-├── wsgi.py            sync entry (gunicorn/waitress)
+├── main.py            entry point (uvicorn)
 ├── config.py          .env → Config
-├── handler.py         async callbacks
-├── handler_sync.py    sync callbacks
+├── handler.py         callbacks
 └── internal/
     ├── outcome.py             Accepted / Rejected / Unknown
     ├── decimals.py            decimal_from_string / decimal_to_string

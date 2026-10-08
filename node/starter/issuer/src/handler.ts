@@ -1,12 +1,12 @@
 import { create } from "@bufbuild/protobuf";
 import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
-import type { ServiceImpl } from "@connectrpc/connect";
 import {
   Blockchain,
   CreatePaymentInstructionsResponseSchema,
   type CreatePaymentInstructionsResponse_Success_DepositOption as DepositOption,
   CreatePaymentInstructionsResponse_Success_DepositOptionSchema as DepositOptionSchema,
   type IssuerCallbackService,
+  type ServiceImpl,
 } from "@t-0/usdt-pay-sdk";
 import { decimalToString } from "./internal/decimals.js";
 

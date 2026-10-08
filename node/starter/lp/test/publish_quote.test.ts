@@ -1,15 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { createClient, createRouterTransport } from "@connectrpc/connect";
 import {
   Code,
   ConnectError,
-  createClient,
-  createRouterTransport,
-  type ServiceImpl,
-} from "@connectrpc/connect";
-import {
   LpService,
   PublishQuoteResponse_Failure_Reason,
+  type ServiceImpl,
 } from "@t-0/usdt-pay-sdk";
 import { decimalFromString } from "../src/internal/decimals.js";
 import { publishQuotes } from "../src/internal/publish_quote.js";

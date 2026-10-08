@@ -1,8 +1,8 @@
 import { create } from "@bufbuild/protobuf";
-import type { ServiceImpl } from "@connectrpc/connect";
 import {
   type LpCallbackService,
   ExecuteQuoteResponseSchema,
+  type ServiceImpl,
 } from "@t-0/usdt-pay-sdk";
 import { decimalToString } from "./internal/decimals.js";
 

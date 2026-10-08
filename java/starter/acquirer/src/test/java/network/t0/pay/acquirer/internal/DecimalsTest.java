@@ -21,9 +21,50 @@ class DecimalsTest {
     }
 
     @Test
+    void readsAStringDigitForDigit() {
+        Decimal negative = Decimals.of("-0.5");
+        assertEquals(-5L, negative.getUnscaled());
+        assertEquals(-1, negative.getExponent());
+
+        // Trailing zeros are digits like any other: 1.50 is 150 × 10^-2.
+        Decimal trailing = Decimals.of("1.50");
+        assertEquals(150L, trailing.getUnscaled());
+        assertEquals(-2, trailing.getExponent());
+
+        assertEquals(-8, Decimals.of("0.00000001").getExponent());
+    }
+
+    @Test
+    void refusesAStringThatIsNotAPlainDecimal() {
+        // Exponent notation, a sign other than "-", and anything but ASCII digits.
+        for (String value : new String[] {"1e3", "1E+9", "+5", "", ".5", "5.", "1,5", " 5", "٥"}) {
+            var e = assertThrows(IllegalArgumentException.class, () -> Decimals.of(value), value);
+            assertEquals("'" + value + "' is not a plain decimal number", e.getMessage());
+        }
+    }
+
+    @Test
+    void refusesAStringWithMoreThanEightFractionDigits() {
+        // Exactly 1, but written with nine fraction digits — and a string is taken as
+        // written. Strip the zeros yourself, or go through of(BigDecimal).
+        var e = assertThrows(IllegalArgumentException.class, () -> Decimals.of("1.000000000"));
+        assertEquals("1.000000000 needs exponent -9, outside the contract's [-8, 8] — round it first",
+                e.getMessage());
+    }
+
+    @Test
+    void refusesAStringTooLargeForTheUnscaledLong() {
+        var e = assertThrows(IllegalArgumentException.class, () -> Decimals.of("92233720368547758.08"));
+        assertEquals("92233720368547758.08 does not fit the contract's 64-bit unscaled value", e.getMessage());
+
+        // The largest unscaled value still goes through.
+        assertEquals(Long.MAX_VALUE, Decimals.of("92233720368547758.07").getUnscaled());
+    }
+
+    @Test
     void keepsExactValuesWhoseTrailingZerosOverflowTheExponentRange() {
         // 1.000000000 has scale 9 — out of range — but is exactly 1.
-        assertEquals(BigDecimal.ONE, Decimals.toBigDecimal(Decimals.of("1.000000000")));
+        assertEquals(BigDecimal.ONE, Decimals.toBigDecimal(Decimals.of(new BigDecimal("1.000000000"))));
     }
 
     @Test

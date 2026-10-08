@@ -17,14 +17,16 @@ MAX_EXPONENT = 8
 INT64_MIN = -(2**63)
 INT64_MAX = 2**63 - 1
 
-_PLAIN_DECIMAL = re.compile(r"^-?\d+(\.\d+)?$")
+# ASCII digits only: Python's \d also matches other scripts' digits, which int() accepts.
+# No exponent notation and no "+".
+_PLAIN_DECIMAL = re.compile(r"^-?[0-9]+(\.[0-9]+)?$")
 
 
 def decimal_from_string(value: str) -> common_pb2.Decimal:
     """Parse a plain decimal string into a proto ``Decimal``.
 
-    Raises ``ValueError`` if the value carries more precision or more magnitude
-    than the contract can hold.
+    Raises ``ValueError`` if the value is not a plain decimal, or carries more
+    precision or more magnitude than the contract can hold.
     """
     if not _PLAIN_DECIMAL.fullmatch(value):
         raise ValueError(f"'{value}' is not a plain decimal number")
@@ -37,7 +39,7 @@ def decimal_from_string(value: str) -> common_pb2.Decimal:
     if exponent < MIN_EXPONENT:
         raise ValueError(
             f"{value} needs exponent {exponent}, outside the contract's "
-            f"[{MIN_EXPONENT}, {MAX_EXPONENT}] -- round it first"
+            f"[{MIN_EXPONENT}, {MAX_EXPONENT}] — round it first"
         )
 
     unscaled = int(whole + fraction)

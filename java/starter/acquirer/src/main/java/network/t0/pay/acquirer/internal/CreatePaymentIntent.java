@@ -108,9 +108,10 @@ public final class CreatePaymentIntent {
                 }
             }
         } catch (StatusRuntimeException e) {
-            // You do not know whether t-0 opened the intent. Retry the same idempotencyKey.
+            // Rejected when t-0 refused the request as sent; otherwise Unknown — you do
+            // not know whether t-0 opened the intent, so retry the same idempotencyKey.
             log.error("CreatePaymentIntent failed for sale {}: {}", paymentRef, e.getStatus());
-            return new Outcome.Unknown<>(e.getStatus().toString());
+            return Outcome.fromError(e);
         }
     }
 

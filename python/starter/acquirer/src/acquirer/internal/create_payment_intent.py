@@ -3,10 +3,7 @@
 from __future__ import annotations
 
 from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer import acquirer_pb2
-from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer.acquirer_connect import (
-    AcquirerServiceClient,
-    AcquirerServiceClientSync,
-)
+from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer.acquirer_connect import AcquirerServiceClient
 
 from acquirer.internal.outcome import Accepted, Outcome, Rejected, Unknown, outcome_from_error
 
@@ -59,27 +56,6 @@ async def create_payment_intent(
     )
     try:
         resp = await t0.create_payment_intent(req)
-    except Exception as e:
-        return outcome_from_error(e)
-    return outcome_from_response(resp)
-
-
-def create_payment_intent_sync(
-    t0: AcquirerServiceClientSync,
-    *,
-    payment_ref: str,
-    idempotency_key: str,
-    amount: acquirer_pb2.CreatePaymentIntentRequest.SettlementAmount | acquirer_pb2.LocalAmount,
-    quote_id: int | None = None,
-) -> Outcome[acquirer_pb2.CreatePaymentIntentResponse.Success]:
-    req = build_request(
-        payment_ref=payment_ref,
-        idempotency_key=idempotency_key,
-        amount=amount,
-        quote_id=quote_id,
-    )
-    try:
-        resp = t0.create_payment_intent(req)
     except Exception as e:
         return outcome_from_error(e)
     return outcome_from_response(resp)

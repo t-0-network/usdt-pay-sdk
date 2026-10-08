@@ -7,7 +7,7 @@
 #
 # .dockerignore beside this file keeps .env, .git and the host node_modules out of the
 # context, which is what makes the COPY below safe.
-FROM node:22-alpine AS build
+FROM node:24-alpine AS build
 
 WORKDIR /app
 # The lockfile, and `npm ci` rather than `npm install`: this image must run the exact
@@ -18,7 +18,7 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM node:22-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 COPY --from=build /app ./

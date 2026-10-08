@@ -16,8 +16,8 @@
         <appender-ref ref="CONSOLE"/>
     </root>
 
-    <!-- Application logging -->
-    <logger name="network.t0" level="DEBUG"/>
+    <!-- This starter and the t-0 SDKs. -->
+    <logger name="network.t0" level="INFO"/>
 
     <!-- gRPC logging (set to WARN to reduce noise) -->
     <logger name="io.grpc" level="WARN"/>
