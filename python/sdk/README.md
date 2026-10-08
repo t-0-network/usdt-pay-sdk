@@ -91,9 +91,13 @@ t0 = create_client(endpoint, private_key_hex, AcquirerServiceClient)
 response = await t0.create_payment_intent(request)
 ```
 
-`endpoint` is required: the underlying provider client defaults to a different t-0
-API, and a pay participant that omitted it would sign perfectly valid requests and
-send them to the wrong host.
+`endpoint` is the pay API's base URL; always pass it. `None` gives provider-sdk's
+default, `https://api.t-0.network`, which is a different t-0 API, so a client built
+from an unset variable signs valid requests and sends them to the wrong host. An
+empty string raises `ValueError`.
+
+Every call gets provider-sdk's default deadline; `timeout_ms=` on a call replaces it
+for that call: `await t0.create_payment_intent(request, timeout_ms=30_000)`.
 
 `signer` takes a hex private key, or a `SignFn` when the key lives in an HSM
 or KMS and never reaches this process.

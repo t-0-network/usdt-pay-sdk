@@ -34,9 +34,11 @@ def create_wsgi_app(network_public_key: str, *build_handlers: BuildHandlerSync) 
 
 __all__ = [
     "DEFAULT_MAX_BODY_SIZE",
+    "ASGIApp",
     "BuildHandler",
     "BuildHandlerSync",
     "NetworkPublicKeyRequiredError",
+    "WSGIApp",
     "create_asgi_app",
     "create_wsgi_app",
     "handler",

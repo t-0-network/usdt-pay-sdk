@@ -39,7 +39,8 @@ t0, err := usdtpay.CreateClient(endpoint, privateKeyHex,
 ```
 
 When the key lives in an HSM or KMS and never reaches this process, build the
-client with provider-sdk directly and give it the signer instead of a key:
+client with provider-sdk directly and give it a `crypto.SignFn` (from
+`github.com/t-0-network/provider-sdk/go/crypto`) instead of a key:
 
 ```go
 t0, err := network.NewServiceClient("", acquirerconnect.NewAcquirerServiceClient,
@@ -53,6 +54,23 @@ shutdown, err := usdtpay.StartServer(":8080", networkPublicKey,
     provider.Handler(acquirerconnect.NewAcquirerCallbackServiceHandler, handler))
 defer shutdown(context.Background())
 ```
+
+Every response is validated against the contract's `buf.validate` constraints on
+the way out. To check one inside a handler first, for instance to answer with the
+`failure` arm instead of an opaque `CodeInternal`, call provider-sdk's
+`provider.Validate`:
+
+```go
+resp, err := provider.Validate(&issuer.CreatePaymentInstructionsResponse{ /* ... */ })
+if err != nil {
+    return nil, err
+}
+return connect.NewResponse(resp), nil
+```
+
+An invalid response gives `CodeInternal` "response validation failed: <field path>:
+<message>", the error the server would return for it. The contract's custom rules
+(`valid_address`, `valid_tx_hash`) resolve with no setup.
 
 Requires Go 1.27 or newer. The API reference, with the generated protobuf stubs, is
 on [pkg.go.dev](https://pkg.go.dev/github.com/t-0-network/usdt-pay-sdk/go/sdk).

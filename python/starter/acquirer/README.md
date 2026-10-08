@@ -83,12 +83,10 @@ event), and never see `SettlementCompleted`.
 
 ## Phase 1 — keys and server
 
-The CLI generated a keypair and recorded both halves in `.env`. Send the public
-key and your callback base URL to the t-0 onboarding contact. They give you
-back:
-
-- `NETWORK_PUBLIC_KEY` — put it in `.env`. Every inbound callback is verified
-  against it; without it the server rejects everything.
+The CLI generated a keypair, recorded both halves in `.env`, and pre-filled
+`NETWORK_PUBLIC_KEY` with the sandbox key. Send the public key and your callback
+base URL to the t-0 onboarding contact. They give you back the production
+`NETWORK_PUBLIC_KEY`; every inbound callback is verified against it.
 
 Start the server. Health is mounted and signature-verified, so only t-0 can
 reach it.
@@ -163,6 +161,12 @@ never consumes the key: correct the fields and resend the same key. Exception:
 a **declined** `CreatePaymentIntent` is retried under a **fresh**
 `idempotency_key` with the same `payment_ref`. An `Unknown` outcome retries the
 same key unchanged.
+
+A call that fails is classified by its code. `INVALID_ARGUMENT`,
+`UNAUTHENTICATED`, `PERMISSION_DENIED`, `UNIMPLEMENTED` and
+`FAILED_PRECONDITION` mean t-0 read the request and refused it, so they are
+`Rejected`, with `reason` set to `<CODE>: <message>`. Every other code, and a call
+that failed in transport, is `Unknown`. `should_retry` is true only for `Unknown`.
 
 **Inbound:** write first, ack second. A return without a durable write throws
 the event away, and nothing redelivers it.

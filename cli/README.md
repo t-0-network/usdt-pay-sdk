@@ -67,7 +67,7 @@ Optional flags, before or after the project name:
 - `NETWORK_PUBLIC_KEY` pre-filled with the sandbox key in `.env`; production comes from your t-0
   onboarding contact.
 - The public key to share with t-0 and the next steps, printed at the end: `cd` into the
-  project, fill in `NETWORK_PUBLIC_KEY`, run it.
+  project, get the production `NETWORK_PUBLIC_KEY` from your onboarding contact, run it.
 
 Then follow the README in the new project.
 

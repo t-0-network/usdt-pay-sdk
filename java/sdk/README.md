@@ -95,8 +95,11 @@ helpers on `Executors.newVirtualThreadPerTaskExecutor()` and a blocked call cost
 you a continuation, not a platform thread. Straight-line code and non-blocking
 scaling are not a trade here.
 
-Every call gets provider-sdk's default deadline. For other deadlines, or any other
-client option, use provider-sdk's `BlockingNetworkClient` directly.
+Every call gets provider-sdk's default deadline. For one call, take a stub with its
+own deadline: `t0.stub(30, TimeUnit.SECONDS).createPaymentIntent(request)`. Take it
+at the call site and don't keep it, because the deadline starts when the stub is
+made. For a different default deadline, or any other client option, build the client
+with provider-sdk's `BlockingNetworkClient.create` instead.
 
 ## Non-blocking
 

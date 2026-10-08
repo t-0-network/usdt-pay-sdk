@@ -215,7 +215,7 @@ Next Steps:
   1. Navigate to your project:
      cd <dir>
 
-  2. Add NETWORK_PUBLIC_KEY to .env — your t-0 onboarding contact gives you this
+  2. NETWORK_PUBLIC_KEY in .env is the sandbox key — your t-0 onboarding contact gives you the production one
 
   3. Run the application:
      ./gradlew run
@@ -273,7 +273,7 @@ cli/scaffold_test.go
 ```
 
 A bug in any of them is fixed in provider-sdk first; the next sync carries it here. A local patch
-survives exactly until that sync. `go.mod` is one of the eight, which is why the module path
+survives exactly until that sync. `go.mod` is one of them, which is why the module path
 reads `github.com/t-0-network/provider-sdk/cli`.
 
 Everything else under `cli/` is repo-owned:
@@ -297,7 +297,7 @@ var Config = CLIConfig{
 	RoleRequired: true,
 	DefaultRole:  "",
 	Languages:    []string{"go", "java", "node", "python"},
-	NextSteps:    []string{"Add NETWORK_PUBLIC_KEY to .env — your t-0 onboarding contact gives you this"},
+	NextSteps:    []string{"NETWORK_PUBLIC_KEY in .env is the sandbox key — your t-0 onboarding contact gives you the production one"},
 	RunSteps: map[string]RunStep{
 		"go/acquirer": {
 			Label:   "Run the application:",

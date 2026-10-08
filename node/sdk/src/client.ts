@@ -19,14 +19,14 @@ import { createClient as createProviderClient, type Client, type SignerFunction 
  * second argument replaces it for that call.
  *
  * @param endpoint  t-0 API base URL — e.g. `https://usdt-pay-api-sandbox.t-0.network`
- * @param signer    your secp256k1 private key as hex, or a signing function if the
+ * @param signer    your secp256k1 private key as hex or raw bytes, or a signing function if the
  *                  key lives in an HSM or KMS and never reaches this process
  * @param service   the service descriptor for your role — `IssuerService`,
  *                  `AcquirerService` or `LpService`
  */
 export function createClient<T extends DescService>(
   endpoint: string,
-  signer: string | SignerFunction,
+  signer: string | Buffer | SignerFunction,
   service: T,
 ): Client<T> {
   return createProviderClient(signer, endpoint, service);

@@ -55,14 +55,14 @@ func (u Unknown[T]) ShouldRetry() bool { return true }
 // retryable is how you get an infinite loop against a request that has a typo
 // in it.
 func OutcomeFromError[T any](err error) Outcome[T] {
-	switch code := connect.CodeOf(err); code {
-	case connect.CodeInvalidArgument,
-		connect.CodeUnauthenticated,
-		connect.CodePermissionDenied,
-		connect.CodeUnimplemented,
-		connect.CodeFailedPrecondition:
-		var connectErr *connect.Error
-		if errors.As(err, &connectErr) {
+	var connectErr *connect.Error
+	if errors.As(err, &connectErr) {
+		switch code := connectErr.Code(); code {
+		case connect.CodeInvalidArgument,
+			connect.CodeUnauthenticated,
+			connect.CodePermissionDenied,
+			connect.CodeUnimplemented,
+			connect.CodeFailedPrecondition:
 			return Rejected[T]{Reason: code.String() + ": " + connectErr.Message()}
 		}
 	}

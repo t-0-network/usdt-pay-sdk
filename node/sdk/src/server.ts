@@ -36,12 +36,12 @@ export type { Router } from "@t-0/provider-sdk";
  * (Effect, Hono, …), drop a level: `@t-0/usdt-pay-sdk/crypto` has the request
  * decoder this handler uses, for wiring up yourself.
  *
- * @param networkPublicKey t-0's public key — inbound calls that do not verify
- *                         against it are refused
+ * @param networkPublicKey t-0's public key, as hex or raw bytes — inbound calls that
+ *                         do not verify against it are refused
  * @param register         mounts your callback handlers
  */
 export function createHandler(
-  networkPublicKey: string,
+  networkPublicKey: string | Buffer,
   register: (router: Router) => void,
 ): (request: http.IncomingMessage, response: http.ServerResponse) => void {
   return createProviderHandler(networkPublicKey, register, {
@@ -81,15 +81,15 @@ export function createHandler(
  * check as everything else, so only t-0 can call it.
  *
  * @param port             the port to listen on; t-0 must be able to reach it
- * @param networkPublicKey t-0's public key — inbound calls that do not verify
- *                         against it are refused
+ * @param networkPublicKey t-0's public key, as hex or raw bytes — inbound calls that
+ *                         do not verify against it are refused
  * @param register         mounts your callback handlers
  * @returns the listening server. `close()` it to shut down; `address()` reports the
  *          bound port, which is what you want when `port` was 0.
  */
 export function createServer(
   port: number,
-  networkPublicKey: string,
+  networkPublicKey: string | Buffer,
   register: (router: Router) => void,
 ): Promise<http.Server> {
   const server = http.createServer(createHandler(networkPublicKey, register));

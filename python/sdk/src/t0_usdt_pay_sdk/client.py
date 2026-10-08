@@ -13,8 +13,8 @@ T = TypeVar("T")
 def create_client(endpoint: str, signer: str | SignFn, client_class: type[T]) -> T:
     """Create an async ConnectRPC client for a t-0 pay service.
 
-    ``endpoint`` is the pay API's base URL — the underlying provider client defaults to
-    ``api.t-0.network``, which is a different API.
+    ``endpoint`` is the pay API's base URL; always pass it. ``None`` gives the provider
+    client's default, ``api.t-0.network``, which is a different API.
 
     ``signer`` is either a hex private key or a ``SignFn`` for HSM/KMS use.
     """

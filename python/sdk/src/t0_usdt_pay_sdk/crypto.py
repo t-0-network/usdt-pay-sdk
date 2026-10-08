@@ -24,6 +24,7 @@ from t0_provider_sdk.provider.interceptor import (
     SignatureErrorInterceptorSync,
 )
 from t0_provider_sdk.provider.middleware import (
+    VerifySignatureFn,
     new_verify_signature,
     signature_error_var,
 )
@@ -42,6 +43,7 @@ __all__ = [
     "SignatureVerificationError",
     "TimestampOutOfRangeError",
     "UnknownPublicKeyError",
+    "VerifySignatureFn",
     "legacy_keccak256",
     "new_signer_from_hex",
     "new_verify_signature",

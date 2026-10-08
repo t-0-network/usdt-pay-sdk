@@ -4,7 +4,7 @@ TypeScript SDK for the **t-0 USDt pay flow** — the contract under
 `proto/tzero/v1/pay/`. Generated Connect clients and servers for all three roles,
 over a transport that signs what you send and verifies what arrives.
 
-Start from a scaffolded project rather than from here: `usdt-pay init --lang=node --role=issuer` or `--role=lp`
+Start from a scaffolded project rather than from here: `usdt-pay init --lang=node --role=issuer <project-name>` or `--role=lp`
 (install and every flag: [`cli/README.md`](https://github.com/t-0-network/usdt-pay-sdk/blob/master/cli/README.md)).
 The project's README is the integration guide:
 [issuer](https://github.com/t-0-network/usdt-pay-sdk/blob/master/node/starter/issuer/README.md) ·
@@ -233,8 +233,8 @@ send them to the wrong host.
 Every call gets provider-sdk's default deadline; a `{ timeoutMs }` in a call's second
 argument replaces it for that call.
 
-`signer` takes a hex private key, or a `SignerFunction` when the key lives in an HSM
-or KMS and never reaches this process.
+`signer` takes a hex private key or its raw bytes, or a `SignerFunction` when the key
+lives in an HSM or KMS and never reaches this process.
 
 ## The public key t-0 knows you by
 
