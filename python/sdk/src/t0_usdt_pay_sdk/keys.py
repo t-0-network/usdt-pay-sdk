@@ -1,11 +1,9 @@
-"""Key utilities for the pay contract."""
+"""Key utilities for the pay contract.
 
-from t0_provider_sdk.crypto.keys import private_key_from_hex, public_key_to_bytes
+``public_key_from_private_key`` derives the uncompressed public key (``0x04…``, 65 bytes as
+hex) from a hex private key. It is provider-sdk's.
+"""
 
+from t0_provider_sdk.crypto import public_key_from_private_key
 
-def public_key_from_private_key(private_key_hex: str) -> str:
-    """Derive the uncompressed public key from a hex private key.
-
-    Returns ``0x04…`` (65 bytes as hex).
-    """
-    return "0x" + public_key_to_bytes(private_key_from_hex(private_key_hex).public_key).hex()
+__all__ = ["public_key_from_private_key"]

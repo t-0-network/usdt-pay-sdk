@@ -31,3 +31,22 @@ test("generated modules re-exported from index.ts have disjoint export names", (
     }
   }
 });
+
+// Names a project needs from provider-sdk or @connectrpc/connect are re-exported, so
+// user code imports only this package and installs one copy of connect.
+test("the root re-exports what a handler and a client need", async () => {
+  const root = await import("../src/index.js");
+  assert.equal(typeof root.SDK_VERSION, "string");
+  assert.equal(typeof root.DEFAULT_MAX_BODY_SIZE, "number");
+  assert.equal(typeof root.validate, "function");
+  assert.equal(typeof root.ConnectError, "function");
+  assert.equal(root.Code.Internal, 13);
+  assert.equal(typeof root.publicKeyFromPrivateKey, "function");
+});
+
+test("publicKeyFromPrivateKey is the same function from the root and from ./crypto", async () => {
+  const root = await import("../src/index.js");
+  const crypto = await import("../src/crypto.js");
+  assert.equal(typeof crypto.publicKeyFromPrivateKey, "function");
+  assert.equal(root.publicKeyFromPrivateKey, crypto.publicKeyFromPrivateKey);
+});

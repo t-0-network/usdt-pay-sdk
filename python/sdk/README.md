@@ -52,6 +52,35 @@ secp256k1, and the SDK wires the raw-body hasher in for you.
 Mount one service per role edge you implement — `AcquirerCallbackService`,
 `IssuerCallbackService`, `LpCallbackService`.
 
+A request body larger than `DEFAULT_MAX_BODY_SIZE` is refused. An empty network
+public key raises `NetworkPublicKeyRequiredError` (a `ValueError`), and a malformed
+one a `ValueError` with "invalid network public key: …", both when the app is built.
+
+### Errors and response checks in a handler
+
+`ConnectError` and `Code` are exported at the top level, so a handler raises and a
+client catches them with no second import:
+
+```python
+from t0_usdt_pay_sdk import Code, ConnectError
+
+raise ConnectError(Code.UNAVAILABLE, "address pool is unreachable")
+```
+
+The server validates every response on the way out. To check a response inside the
+handler first, for instance to answer with the `failure` arm instead of an opaque
+`INTERNAL`, call `validate`:
+
+```python
+from t0_usdt_pay_sdk import validate
+
+return validate(response)
+```
+
+An invalid response raises `ConnectError` with `Code.INTERNAL` and "response validation
+failed: <field path>: <message>", the error the server would return for it. The
+contract's custom rules (`valid_address`, `valid_tx_hash`) resolve with no setup.
+
 ## Calling t-0
 
 ```python
@@ -74,12 +103,16 @@ For sync code, use `create_client_sync` with the `*ClientSync` class.
 ## Standalone signature verification
 
 For integrators mounting into their own stack, the `crypto` module exposes the same
-primitives the SDK uses internally:
+primitives the SDK uses internally. The middleware itself is provider-sdk's: import it
+from `t0_provider_sdk`.
 
 ```python
+from t0_provider_sdk.provider.middleware import signature_verification_middleware  # ASGI
+from t0_provider_sdk.provider.middleware_wsgi import signature_verification_middleware_wsgi  # WSGI
 from t0_usdt_pay_sdk.crypto import (
-    signature_verification_middleware,  # ASGI
-    signature_verification_middleware_wsgi,  # WSGI
+    PUBLIC_KEY_HEADER,  # X-Public-Key
+    SIGNATURE_HEADER,  # X-Signature
+    SIGNATURE_TIMESTAMP_HEADER,  # X-Signature-Timestamp
     SignatureErrorInterceptor,  # async interceptor — REJECTS
     SignatureErrorInterceptorSync,  # sync interceptor — REJECTS
     signature_error_var,  # the contextvar the middleware records to

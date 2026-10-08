@@ -15,10 +15,16 @@ _api_dir = str(Path(__file__).parent / "api")
 if _api_dir not in sys.path:
     sys.path.insert(0, _api_dir)
 
+from connectrpc.code import Code  # noqa: E402
+from connectrpc.errors import ConnectError  # noqa: E402
+
 import t0_usdt_pay_sdk.registry  # noqa: F401, E402 — registers pay descriptors
 from t0_usdt_pay_sdk._version import __version__  # noqa: E402
 from t0_usdt_pay_sdk.client import create_client, create_client_sync  # noqa: E402
 from t0_usdt_pay_sdk.crypto import (  # noqa: E402
+    PUBLIC_KEY_HEADER,
+    SIGNATURE_HEADER,
+    SIGNATURE_TIMESTAMP_HEADER,
     SignatureErrorInterceptor,
     SignatureErrorInterceptorSync,
     SignFn,
@@ -26,14 +32,14 @@ from t0_usdt_pay_sdk.crypto import (  # noqa: E402
     new_signer_from_hex,
     new_verify_signature,
     signature_error_var,
-    signature_verification_middleware,
-    signature_verification_middleware_wsgi,
     verify_signature,
 )
 from t0_usdt_pay_sdk.keys import public_key_from_private_key  # noqa: E402
 from t0_usdt_pay_sdk.server import (  # noqa: E402
+    DEFAULT_MAX_BODY_SIZE,
     BuildHandler,
     BuildHandlerSync,
+    NetworkPublicKeyRequiredError,
     create_asgi_app,
     create_wsgi_app,
     handler,
@@ -43,8 +49,15 @@ from t0_usdt_pay_sdk.server import (  # noqa: E402
 
 __all__ = [
     "__version__",
+    "DEFAULT_MAX_BODY_SIZE",
+    "PUBLIC_KEY_HEADER",
+    "SIGNATURE_HEADER",
+    "SIGNATURE_TIMESTAMP_HEADER",
     "BuildHandler",
     "BuildHandlerSync",
+    "Code",
+    "ConnectError",
+    "NetworkPublicKeyRequiredError",
     "SignFn",
     "SignatureErrorInterceptor",
     "SignatureErrorInterceptorSync",
@@ -59,8 +72,6 @@ __all__ = [
     "new_verify_signature",
     "public_key_from_private_key",
     "signature_error_var",
-    "signature_verification_middleware",
-    "signature_verification_middleware_wsgi",
     "validate",
     "verify_signature",
 ]

@@ -51,7 +51,37 @@ Mount one service per role edge you implement —
 `IssuerCallbackServiceGrpc.IssuerCallbackServiceImplBase`,
 `LpCallbackServiceGrpc.LpCallbackServiceImplBase`.
 
+Every response is validated against the contract's `buf.validate` constraints on
+the way out. To check a response inside the handler first, for instance to answer
+with the `failure` arm instead of an opaque `INTERNAL`, call provider-sdk's
+`Validate.check`:
+
+```java
+observer.onNext(Validate.check(response));
+```
+
+An invalid response throws `ResponseValidationException`, which the server turns
+into `INTERNAL` "response validation failed: <field path>: <message>". The
+contract's custom rules (`valid_address`, `valid_tx_hash`) resolve with no setup.
+
+The public key t-0 knows you by is `Signer.publicKeyFromPrivateKey(privateKey)`.
+Send it to the t-0 team — that is step 1 of every role's integration.
+
 ## Calling t-0
+
+`UsdtPayClient` builds a client for the t-0 endpoints your role calls, and signs
+every request with your key:
+
+```java
+try (var t0 = UsdtPayClient.create(endpoint, Signer.fromHex(privateKey),
+        AcquirerServiceGrpc::newBlockingStub)) {
+    var response = t0.stub().createPaymentIntent(request);
+}
+```
+
+`endpoint` is the pay API's base URL: provider-sdk's default is a different t-0
+API. When the key lives in an HSM or KMS and never reaches this process, pass your
+own `DigestSigner` instead of a `Signer`.
 
 All 14 endpoints are unary request/response — nothing in this protocol streams,
 which is why the starters use the blocking stub everywhere, and why you probably
@@ -65,7 +95,8 @@ helpers on `Executors.newVirtualThreadPerTaskExecutor()` and a blocked call cost
 you a continuation, not a platform thread. Straight-line code and non-blocking
 scaling are not a trade here.
 
-Every call gets provider-sdk's default deadline.
+Every call gets provider-sdk's default deadline. For other deadlines, or any other
+client option, use provider-sdk's `BlockingNetworkClient` directly.
 
 ## Non-blocking
 
@@ -112,11 +143,11 @@ future.
 `newBlockingV2Stub` is the same blocking call with a *checked* exception — its
 methods `throws StatusException`, so forgetting to handle a failed call is a
 compile error instead of a production surprise. It extends
-`AbstractBlockingStub`, so it drops into `BlockingNetworkClient` with nothing
+`AbstractBlockingStub`, so it drops into `UsdtPayClient` with nothing
 else changed:
 
 ```java
-var t0 = BlockingNetworkClient.create(endpoint, signer, AcquirerServiceGrpc::newBlockingV2Stub);
+var t0 = UsdtPayClient.create(endpoint, signer, AcquirerServiceGrpc::newBlockingV2Stub);
 ```
 
 For unary calls the exception type is the *only* difference:

@@ -35,10 +35,42 @@ encoding is not canonical, so a re-serialized message is a different message to
 secp256k1, and `createServer` wires the raw-body hasher in for you.
 
 The returned value is a listening `http.Server`: `close()` it to shut down, and read
-`address()` when you passed port 0.
+`address()` when you passed port 0. A request body larger than
+`DEFAULT_MAX_BODY_SIZE` (exported from this package) is refused.
 
 Mount one service per role edge you implement — `IssuerCallbackService`,
 `AcquirerCallbackService`, `LpCallbackService`.
+
+### Writing a handler
+
+The handler type, the error a handler throws and its codes are exported from this
+package, so a project needs no direct `@connectrpc/connect` dependency:
+
+```ts
+import { Code, ConnectError, type ServiceImpl, type IssuerCallbackService } from "@t-0/usdt-pay-sdk";
+
+export const issuerCallbackHandler: ServiceImpl<typeof IssuerCallbackService> = {
+  async createPaymentInstructions(request) {
+    throw new ConnectError("address pool is unreachable", Code.Unavailable);
+  },
+};
+```
+
+The server validates every response on the way out. To check a response inside the
+handler first, for instance to answer with the `failure` arm instead of an opaque
+`Code.Internal`, call `validate` with the pay registry:
+
+```ts
+import { payRegistry, validate, CreatePaymentInstructionsResponseSchema } from "@t-0/usdt-pay-sdk";
+
+return validate(CreatePaymentInstructionsResponseSchema, response, { registry: payRegistry });
+```
+
+The registry is required: without it the contract's custom rules (`valid_address`,
+`valid_tx_hash`) cannot be resolved, and every message that uses one fails with
+"response validation error". An invalid response throws a `ConnectError` with
+`Code.Internal` and "response validation failed: <field path>: <message>", the error
+the server would return for it.
 
 ## Mounting into a server you already run
 
@@ -180,7 +212,7 @@ On success (`result.ok === true`), `result.request` is the typed message, `resul
 <details>
 <summary>Lower-level primitives</summary>
 
-The individual building blocks are also exported: `createRequestVerifier`, `rejectRequest`, `NetworkHeaders`, `verifySignature`, `computeDigest`, `keccak256`, `publicKeysEqual`. You can import them from the `./crypto` subpath: `import { createRequestVerifier } from "@t-0/usdt-pay-sdk/crypto"`.
+The individual building blocks are also exported: `createRequestVerifier`, `rejectRequest`, `NetworkHeaders`, `verifySignature`, `computeDigest`, `keccak256`, `publicKeysEqual`, `publicKeyFromPrivateKey`. You can import them from the `./crypto` subpath: `import { createRequestVerifier } from "@t-0/usdt-pay-sdk/crypto"`.
 </details>
 
 ## Calling t-0
@@ -213,7 +245,13 @@ console.log(publicKeyFromPrivateKey(process.env.PROVIDER_PRIVATE_KEY!));
 ```
 
 Send it to the t-0 team — that is step 1 of every role's integration. Calling it at
-startup also fails a malformed key there rather than on the first request.
+startup also fails a malformed key there rather than on the first request. It is
+also exported from `@t-0/usdt-pay-sdk/crypto`.
+
+## Version
+
+`SDK_VERSION` is this package's version. The server reports it in its health
+responses and logs.
 
 ## Generated code
 

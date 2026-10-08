@@ -38,8 +38,13 @@ t0, err := usdtpay.CreateClient(endpoint, privateKeyHex,
     acquirerconnect.NewAcquirerServiceClient)
 ```
 
-When the key lives in an HSM or KMS and never reaches this process, pass a
-`crypto.SignFn` to `usdtpay.CreateClientWithSigner` instead of the hex key.
+When the key lives in an HSM or KMS and never reaches this process, build the
+client with provider-sdk directly and give it the signer instead of a key:
+
+```go
+t0, err := network.NewServiceClient("", acquirerconnect.NewAcquirerServiceClient,
+    network.WithBaseURL(endpoint), network.WithSignatureFunction(signFn))
+```
 
 Start a callback server:
 

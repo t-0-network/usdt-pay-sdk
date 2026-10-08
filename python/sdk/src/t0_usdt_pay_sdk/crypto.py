@@ -26,10 +26,6 @@ from t0_provider_sdk.provider.interceptor import (
 from t0_provider_sdk.provider.middleware import (
     new_verify_signature,
     signature_error_var,
-    signature_verification_middleware,
-)
-from t0_provider_sdk.provider.middleware_wsgi import (
-    signature_verification_middleware_wsgi,
 )
 
 __all__ = [
@@ -50,7 +46,5 @@ __all__ = [
     "new_signer_from_hex",
     "new_verify_signature",
     "signature_error_var",
-    "signature_verification_middleware",
-    "signature_verification_middleware_wsgi",
     "verify_signature",
 ]

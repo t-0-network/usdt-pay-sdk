@@ -31,7 +31,7 @@ on Maven Central — see [sdk/](sdk/) for Gradle and Maven dependency snippets.
 Create a client, make a call:
 
 ```java
-var t0 = BlockingNetworkClient.create(endpoint, signer, AcquirerServiceGrpc::newBlockingStub);
+var t0 = UsdtPayClient.create(endpoint, Signer.fromHex(privateKey), AcquirerServiceGrpc::newBlockingStub);
 
 var response = t0.stub().createPaymentIntent(request);
 ```

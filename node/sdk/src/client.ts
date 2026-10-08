@@ -29,7 +29,5 @@ export function createClient<T extends DescService>(
   signer: string | SignerFunction,
   service: T,
 ): Client<T> {
-  // A missing endpoint would make the provider client fall back to its default API; an
-  // empty one makes it refuse.
-  return createProviderClient(signer, endpoint ?? "", service);
+  return createProviderClient(signer, endpoint, service);
 }

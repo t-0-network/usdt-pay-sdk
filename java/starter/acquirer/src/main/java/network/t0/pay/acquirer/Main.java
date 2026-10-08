@@ -5,6 +5,7 @@ import network.t0.pay.acquirer.handler.AcquirerCallbackHandler;
 import network.t0.pay.acquirer.internal.CreatePaymentIntent;
 import network.t0.pay.acquirer.internal.Decimals;
 import network.t0.pay.acquirer.internal.GetPaymentQuote;
+import network.t0.pay.client.UsdtPayClient;
 import network.t0.pay.proto.tzero.v1.pay.acquirer.AcquirerServiceGrpc;
 import network.t0.sdk.crypto.Signer;
 import network.t0.sdk.network.BlockingNetworkClient;
@@ -58,8 +59,8 @@ public final class Main {
         Signer signer = Signer.fromHex(config.privateKey());
 
         // Outbound: GetPaymentQuote, CreatePaymentIntent, SettlementReceived.
-        // BlockingNetworkClient signs each request with your private key.
-        var t0 = BlockingNetworkClient.create(
+        // UsdtPayClient signs each request with your private key.
+        var t0 = UsdtPayClient.create(
                 config.tzeroEndpoint(), signer, AcquirerServiceGrpc::newBlockingStub);
 
         // Inbound: PaymentAuthorized, SettlementInitiated, SettlementCompleted, PaymentExpired.
@@ -151,7 +152,7 @@ public final class Main {
 
         // Print the public key early — Phase 1 needs it before NETWORK_PUBLIC_KEY
         // arrives, so a missing network key must not block the print.
-        log.info("Acquirer public key: {}", Signer.fromHex(privateKey).getPublicKeyHexPrefixed());
+        log.info("Acquirer public key: {}", Signer.publicKeyFromPrivateKey(privateKey));
         // TODO: Step 1.2 — send this public key to the t-0 team so they can verify your calls.
 
         if (networkPublicKey == null || networkPublicKey.isBlank()) {
