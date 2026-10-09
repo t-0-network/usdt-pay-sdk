@@ -44,9 +44,22 @@ test("the root re-exports what a handler and a client need", async () => {
   assert.equal(typeof root.publicKeyFromPrivateKey, "function");
 });
 
-test("publicKeyFromPrivateKey is the same function from the root and from ./crypto", async () => {
-  const root = await import("../src/index.js");
-  const crypto = await import("../src/crypto.js");
-  assert.equal(typeof crypto.publicKeyFromPrivateKey, "function");
-  assert.equal(root.publicKeyFromPrivateKey, crypto.publicKeyFromPrivateKey);
+// ./crypto exports everything the root does except the code that runs on node:http.
+// provider-sdk exports validate and DEFAULT_MAX_BODY_SIZE only from its root, which
+// loads node:http, so they stay root-only here too.
+test("./crypto exports every root name but the node:http ones, as the same bindings", async () => {
+  const root: Record<string, unknown> = await import("../src/index.js");
+  const crypto: Record<string, unknown> = await import("../src/crypto.js");
+  const rootOnly = Object.keys(root).filter((key) => !(key in crypto));
+  assert.deepEqual(rootOnly.sort(), [
+    "DEFAULT_MAX_BODY_SIZE",
+    "createClient",
+    "createHandler",
+    "createServer",
+    "validate",
+  ]);
+  for (const key of Object.keys(crypto)) {
+    assert.ok(key in root, `./crypto exports "${key}", which the root does not`);
+    assert.equal(root[key], crypto[key], `"${key}" is a different binding in the root and in ./crypto`);
+  }
 });

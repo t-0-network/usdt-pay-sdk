@@ -115,14 +115,16 @@ handler, behind the same signature check — mounting the handler mounts it.
 
 For frameworks that don't use Node's `http.createServer` (Hono, Effect, Koa, Fastify, etc.), use `createRequestDecoder` for one-call signature verification + Content-Type-aware decoding + protovalidation. It returns an either-type result: success with the decoded message and a response encoder, or failure with a ready-to-send HTTP error.
 
+Import from the `@t-0/usdt-pay-sdk/crypto` subpath. It exports everything the package root does except the code that runs on `node:http`: `createClient`, `createHandler`, `createServer`, `validate` and `DEFAULT_MAX_BODY_SIZE`. So the generated messages, `payRegistry`, `Code`, `ConnectError` and `SDK_VERSION` come from there too, and the root's Connect node adapter is never loaded.
+
 ```ts
 import { create } from "@bufbuild/protobuf";
-import { createRequestDecoder } from "@t-0/usdt-pay-sdk/crypto";
 import {
+  createRequestDecoder,
   CreatePaymentInstructionsRequestSchema,
   CreatePaymentInstructionsResponse_Failure_Reason,
   CreatePaymentInstructionsResponseSchema,
-} from "@t-0/usdt-pay-sdk";
+} from "@t-0/usdt-pay-sdk/crypto";
 
 const decode = createRequestDecoder({
   networkPublicKey: process.env.NETWORK_PUBLIC_KEY!, // from your t-0 onboarding contact
@@ -157,12 +159,12 @@ app.post("/tzero.v1.pay.issuer.IssuerCallbackService/CreatePaymentInstructions",
 // Raw Node http example:
 import http from "node:http";
 import { create } from "@bufbuild/protobuf";
-import { createRequestDecoder } from "@t-0/usdt-pay-sdk/crypto";
 import {
+  createRequestDecoder,
   CreatePaymentInstructionsRequestSchema,
   CreatePaymentInstructionsResponse_Failure_Reason,
   CreatePaymentInstructionsResponseSchema,
-} from "@t-0/usdt-pay-sdk";
+} from "@t-0/usdt-pay-sdk/crypto";
 
 const decode = createRequestDecoder({
   networkPublicKey: process.env.NETWORK_PUBLIC_KEY!, // from your t-0 onboarding contact
@@ -212,7 +214,7 @@ On success (`result.ok === true`), `result.request` is the typed message, `resul
 <details>
 <summary>Lower-level primitives</summary>
 
-The individual building blocks are also exported: `createRequestVerifier`, `rejectRequest`, `NetworkHeaders`, `verifySignature`, `computeDigest`, `keccak256`, `publicKeysEqual`, `publicKeyFromPrivateKey`. You can import them from the `./crypto` subpath: `import { createRequestVerifier } from "@t-0/usdt-pay-sdk/crypto"`.
+The individual building blocks are also exported, from the root and from the `./crypto` subpath: `createRequestVerifier`, `rejectRequest`, `NetworkHeaders`, `verifySignature`, `computeDigest`, `keccak256`, `publicKeysEqual`, `publicKeyFromPrivateKey`.
 </details>
 
 ## Calling t-0
