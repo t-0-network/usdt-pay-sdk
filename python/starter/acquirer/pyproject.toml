@@ -6,7 +6,7 @@ description = "Acquirer integration for the t-0 USDt pay flow"
 dependencies = [
     "t0-usdt-pay-sdk>=0.2.9",
     "uvicorn>=0.53.0",
-    "python-dotenv>=1.1.0",
+    "python-dotenv>=1.2.4",
 ]
 
 [dependency-groups]
