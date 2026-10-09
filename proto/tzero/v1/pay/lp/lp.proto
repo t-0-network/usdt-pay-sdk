@@ -54,7 +54,10 @@ message PublishQuoteRequest {
   }];
 
   message Quote {
-    /** LP's identifier for this quote; idempotency key, unique per LP. */
+    /**
+     * LP's identifier for this quote; idempotency key, unique per LP. Mint a fresh quote_ref for
+     * every new quote.
+     */
     string quote_ref = 10 [(buf.validate.field).string = {
       min_len: 1
       max_len: 64
