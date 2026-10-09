@@ -73,13 +73,13 @@ Send it to the t-0 team — that is step 1 of every role's integration.
 every request with your key:
 
 ```java
-try (var t0 = UsdtPayClient.create(endpoint, Signer.fromHex(privateKey),
+try (var t0 = UsdtPayClient.create(baseUrl, Signer.fromHex(privateKey),
         AcquirerServiceGrpc::newBlockingStub)) {
     var response = t0.stub().createPaymentIntent(request);
 }
 ```
 
-`endpoint` is the pay API's base URL: provider-sdk's default is a different t-0
+`baseUrl` is the pay API's base URL: provider-sdk's default is a different t-0
 API. When the key lives in an HSM or KMS and never reaches this process, pass your
 own `DigestSigner` instead of a `Signer`.
 
@@ -104,10 +104,10 @@ with provider-sdk's `BlockingNetworkClient.create` instead.
 ## Non-blocking
 
 `FutureNetworkClient` is the reference non-blocking client — same signing, same
-endpoint. Every RPC is unary, so each call hands back one `ListenableFuture`:
+base URL. Every RPC is unary, so each call hands back one `ListenableFuture`:
 
 ```java
-var t0 = FutureNetworkClient.create(endpoint, signer, AcquirerServiceGrpc::newFutureStub);
+var t0 = FutureNetworkClient.create(baseUrl, signer, AcquirerServiceGrpc::newFutureStub);
 ListenableFuture<CreatePaymentIntentResponse> pending = t0.stub().createPaymentIntent(request);
 ```
 
@@ -150,7 +150,7 @@ compile error instead of a production surprise. It extends
 else changed:
 
 ```java
-var t0 = UsdtPayClient.create(endpoint, signer, AcquirerServiceGrpc::newBlockingV2Stub);
+var t0 = UsdtPayClient.create(baseUrl, signer, AcquirerServiceGrpc::newBlockingV2Stub);
 ```
 
 For unary calls the exception type is the *only* difference:

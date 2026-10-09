@@ -103,7 +103,7 @@ after(() => {
 const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 
 test("a signed SDK call passes createRequestVerifier and round-trips the protobuf body", async () => {
-  const t0 = createClient(base, NETWORK_PRIVATE_KEY, IssuerCallbackService);
+  const t0 = createClient(NETWORK_PRIVATE_KEY, base, IssuerCallbackService);
   const response = await t0.createPaymentInstructions({ paymentIntentId: 42n });
   assert.equal(response.result.case, "failure");
   assert.equal(
@@ -113,7 +113,7 @@ test("a signed SDK call passes createRequestVerifier and round-trips the protobu
 });
 
 test("a call signed with the wrong key gets rejectRequest's unauthenticated answer", async () => {
-  const impostor = createClient(base, "0x" + "22".repeat(32), IssuerCallbackService);
+  const impostor = createClient("0x" + "22".repeat(32), base, IssuerCallbackService);
   await assert.rejects(
     impostor.createPaymentInstructions({ paymentIntentId: 42n }),
     (err: unknown) => err instanceof ConnectError && err.code === Code.Unauthenticated,

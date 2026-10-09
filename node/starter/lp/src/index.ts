@@ -26,7 +26,7 @@ async function main(): Promise<void> {
   // TODO: Step 1.2 — send this public key to the t-0 team so they can verify your calls.
 
   // Outbound: everything you call on t-0 (PublishQuote, FiatSettlementSent).
-  const t0 = createClient(config.tzeroEndpoint, config.privateKey, LpService);
+  const t0 = createClient(config.privateKey, config.tzeroEndpoint, LpService);
 
   // Inbound: the one callback t-0 pushes to you (ExecuteQuote).
   // Every inbound signature is verified against NETWORK_PUBLIC_KEY.

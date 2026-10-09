@@ -34,7 +34,7 @@ go get github.com/t-0-network/usdt-pay-sdk/go/sdk
 Create a client, make a call:
 
 ```go
-t0, err := usdtpay.CreateClient(endpoint, privateKeyHex,
+t0, err := usdtpay.CreateClient(baseURL, privateKeyHex,
     acquirerconnect.NewAcquirerServiceClient)
 ```
 
@@ -44,7 +44,7 @@ client with provider-sdk directly and give it a `crypto.SignFn` (from
 
 ```go
 t0, err := network.NewServiceClient("", acquirerconnect.NewAcquirerServiceClient,
-    network.WithBaseURL(endpoint), network.WithSignatureFunction(signFn))
+    network.WithBaseURL(baseURL), network.WithSignatureFunction(signFn))
 ```
 
 Start a callback server:

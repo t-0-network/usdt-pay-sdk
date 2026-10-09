@@ -100,7 +100,7 @@ test("createServer refuses a response that breaks a custom rule", async () => {
   const server = await createServer(0, NETWORK_PUBLIC_KEY, (r) => {
     r.service(IssuerCallbackService, { createPaymentInstructions: () => badInstructions() });
   });
-  const t0 = createClient(await listen(server), NETWORK_PRIVATE_KEY, IssuerCallbackService);
+  const t0 = createClient(NETWORK_PRIVATE_KEY, await listen(server), IssuerCallbackService);
 
   await assert.rejects(
     t0.createPaymentInstructions(validInstructionsRequest()),
@@ -112,7 +112,7 @@ test("createHandler refuses a response that breaks a custom rule", async () => {
   const handler = createHandler(NETWORK_PUBLIC_KEY, (r) => {
     r.service(IssuerCallbackService, { createPaymentInstructions: () => badInstructions() });
   });
-  const t0 = createClient(await listen(http.createServer(handler)), NETWORK_PRIVATE_KEY, IssuerCallbackService);
+  const t0 = createClient(NETWORK_PRIVATE_KEY, await listen(http.createServer(handler)), IssuerCallbackService);
 
   await assert.rejects(
     t0.createPaymentInstructions(validInstructionsRequest()),
@@ -134,7 +134,7 @@ test("createHandler refuses a request that breaks a custom rule, before the hand
       paymentFailed: () => ({}),
     });
   });
-  const t0 = createClient(await listen(http.createServer(handler)), NETWORK_PRIVATE_KEY, AcquirerCallbackService);
+  const t0 = createClient(NETWORK_PRIVATE_KEY, await listen(http.createServer(handler)), AcquirerCallbackService);
 
   await assert.rejects(
     t0.paymentAuthorized(badAuthorized()),

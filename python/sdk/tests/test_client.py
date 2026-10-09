@@ -10,14 +10,14 @@ from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer.acquirer_connect import (
 )
 
 
-def test_create_client_rejects_empty_endpoint():
+def test_create_client_rejects_empty_base_url():
     with pytest.raises(ValueError, match="base URL is not set"):
-        create_client("", "0x" + "ab" * 32, AcquirerCallbackServiceClient)
+        create_client("0x" + "ab" * 32, AcquirerCallbackServiceClient, base_url="")
 
 
-def test_create_client_sync_rejects_empty_endpoint():
+def test_create_client_sync_rejects_empty_base_url():
     with pytest.raises(ValueError, match="base URL is not set"):
-        create_client_sync("", "0x" + "ab" * 32, AcquirerCallbackServiceClientSync)
+        create_client_sync("0x" + "ab" * 32, AcquirerCallbackServiceClientSync, base_url="")
 
 
 def test_create_client_accepts_sign_fn():
@@ -25,5 +25,5 @@ def test_create_client_accepts_sign_fn():
     from t0_provider_sdk.crypto.signer import new_signer
 
     sign_fn = new_signer(PrivateKey())
-    assert create_client("http://localhost:9999", sign_fn, AcquirerCallbackServiceClient) is not None
-    assert create_client_sync("http://localhost:9999", sign_fn, AcquirerCallbackServiceClientSync) is not None
+    assert create_client(sign_fn, AcquirerCallbackServiceClient, base_url="http://localhost:9999") is not None
+    assert create_client_sync(sign_fn, AcquirerCallbackServiceClientSync, base_url="http://localhost:9999") is not None

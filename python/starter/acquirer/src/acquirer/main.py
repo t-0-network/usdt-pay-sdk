@@ -117,7 +117,7 @@ async def main() -> None:
     # contact; put the NETWORK_PUBLIC_KEY you get back into .env.
 
     # Outbound: everything you call on t-0.
-    t0 = create_client(config.tzero_endpoint, config.private_key, AcquirerServiceClient)
+    t0 = create_client(config.private_key, AcquirerServiceClient, base_url=config.tzero_endpoint)
 
     # Inbound: the five callbacks t-0 pushes to you. Every inbound signature is
     # verified against NETWORK_PUBLIC_KEY, which the SDK parses here.

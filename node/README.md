@@ -37,7 +37,7 @@ Create a client, make a call:
 ```ts
 import { createClient, IssuerService } from "@t-0/usdt-pay-sdk";
 
-const t0 = createClient(endpoint, privateKeyHex, IssuerService);
+const t0 = createClient(privateKeyHex, baseUrl, IssuerService);
 const response = await t0.paymentReceived(request);
 ```
 

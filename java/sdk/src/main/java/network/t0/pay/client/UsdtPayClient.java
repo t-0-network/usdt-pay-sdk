@@ -12,7 +12,7 @@ import java.util.function.Function;
  * private key; t-0 knows you by the matching public key.
  *
  * <pre>{@code
- * try (var t0 = UsdtPayClient.create(endpoint, Signer.fromHex(privateKey),
+ * try (var t0 = UsdtPayClient.create(baseUrl, Signer.fromHex(privateKey),
  *         AcquirerServiceGrpc::newBlockingStub)) {
  *     var quote = t0.stub().getPaymentQuote(request);
  * }
@@ -25,7 +25,7 @@ import java.util.function.Function;
 public final class UsdtPayClient {
 
     /**
-     * @param endpoint    t-0 API base URL, e.g. {@code https://usdt-pay-api-sandbox.t-0.network};
+     * @param baseUrl     t-0 API base URL, e.g. {@code https://usdt-pay-api-sandbox.t-0.network};
      *                    the provider SDK's default is a different API
      * @param signer      your secp256k1 key, as a {@code Signer}, or a {@code DigestSigner}
      *                    when the key lives in an HSM or KMS and never reaches this process
@@ -34,10 +34,10 @@ public final class UsdtPayClient {
      * @return the client; {@code close()} it to shut its channel down
      */
     public static <S extends AbstractBlockingStub<S>> BlockingNetworkClient<S> create(
-            String endpoint,
+            String baseUrl,
             DigestSigner signer,
             Function<Channel, S> stubFactory) {
-        return BlockingNetworkClient.create(endpoint, signer, stubFactory);
+        return BlockingNetworkClient.create(baseUrl, signer, stubFactory);
     }
 
     private UsdtPayClient() {

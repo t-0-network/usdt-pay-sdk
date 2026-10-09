@@ -220,13 +220,13 @@ The individual building blocks are also exported: `createRequestVerifier`, `reje
 ```ts
 import { createClient, IssuerService } from "@t-0/usdt-pay-sdk";
 
-const t0 = createClient(endpoint, privateKeyHex, IssuerService);
+const t0 = createClient(privateKeyHex, baseUrl, IssuerService);
 const response = await t0.paymentReceived(request);
 ```
 
 All 14 endpoints are unary request/response — nothing in this contract streams.
 
-`endpoint` is required: the underlying provider client defaults to a different t-0
+`baseUrl` is required: the underlying provider client defaults to a different t-0
 API, and a pay participant that omitted it would sign perfectly valid requests and
 send them to the wrong host.
 

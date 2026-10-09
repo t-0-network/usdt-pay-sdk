@@ -87,11 +87,11 @@ contract's custom rules (`valid_address`, `valid_tx_hash`) resolve with no setup
 from t0_usdt_pay_sdk import create_client
 from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer.acquirer_connect import AcquirerServiceClient
 
-t0 = create_client(endpoint, private_key_hex, AcquirerServiceClient)
+t0 = create_client(private_key_hex, AcquirerServiceClient, base_url=base_url)
 response = await t0.create_payment_intent(request)
 ```
 
-`endpoint` is the pay API's base URL; always pass it. `None` gives provider-sdk's
+`base_url` is the pay API's base URL; always pass it. `None` gives provider-sdk's
 default, `https://api.t-0.network`, which is a different t-0 API, so a client built
 from an unset variable signs valid requests and sends them to the wrong host. An
 empty string raises `ValueError`.

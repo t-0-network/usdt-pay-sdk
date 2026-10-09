@@ -24,8 +24,8 @@ after(() => {
 });
 
 const t0 = createClient(
-  `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
   NETWORK_PRIVATE_KEY,
+  `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
   LpCallbackService,
 );
 
@@ -49,8 +49,8 @@ test("ExecuteQuote answers accepted", async () => {
 
 test("a call signed by anyone but t-0 never reaches the handler", async () => {
   const impostor = createClient(
-    `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
     "0x" + "22".repeat(32),
+    `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
     LpCallbackService,
   );
 
