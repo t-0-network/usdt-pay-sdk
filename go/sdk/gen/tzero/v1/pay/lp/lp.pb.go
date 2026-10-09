@@ -692,7 +692,9 @@ func (*ExecuteQuoteResponse_Rejected_) isExecuteQuoteResponse_Result() {}
 
 type PublishQuoteRequest_Quote struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// * LP's identifier for this quote; idempotency key, unique per LP.
+	// *
+	// LP's identifier for this quote; idempotency key, unique per LP. Mint a fresh quote_ref for
+	// every new quote.
 	QuoteRef string `protobuf:"bytes,10,opt,name=quote_ref,json=quoteRef,proto3" json:"quote_ref,omitempty"`
 	// * ISO 4217 currency the quote prices (e.g. COP).
 	LocalCurrency string `protobuf:"bytes,20,opt,name=local_currency,json=localCurrency,proto3" json:"local_currency,omitempty"`
