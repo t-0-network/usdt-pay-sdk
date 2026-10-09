@@ -5,8 +5,11 @@ import {
   IssuerCallbackService,
   IssuerService,
 } from "@t-0/usdt-pay-sdk";
-import { ConfigurationError, loadConfig } from "./config.js";
+import { loadConfig, serverSetupError, startupFailureLines } from "./config.js";
 import { issuerCallbackHandler } from "./handler.js";
+
+/** How long a shutdown waits for in-flight calls before it drops their connections. */
+const DRAIN_LIMIT_MS = 15_000;
 
 /**
  * Issuer starter for the t-0 USDt pay flow.
@@ -21,16 +24,28 @@ async function main(): Promise<void> {
   console.log(`Issuer public key: ${config.publicKey}`);
   // TODO: Step 1.2 — send this public key to the t-0 team so they can verify your calls.
 
-  // Outbound: everything you call on t-0 (PaymentReceived, SettlementSent). Each internal/ helper sets its
-  // own timeout — a Connect deadline is per call, so there is nothing to install here.
-  const t0 = createClient(config.tzeroEndpoint, config.privateKey, IssuerService);
+  // Outbound: everything you call on t-0 (PaymentReceived, SettlementSent).
+  const t0 = createClient(config.privateKey, config.tzeroEndpoint, IssuerService);
 
   // Inbound: the one callback t-0 pushes to you (CreatePaymentInstructions).
   // Every inbound signature is verified against NETWORK_PUBLIC_KEY.
-  const server = await createServer(config.port, config.networkPublicKey, (router) => {
-    router.service(IssuerCallbackService, issuerCallbackHandler);
-  });
+  //
+  // createServer checks that key before it returns its promise, and throws right here
+  // when it is malformed. The promise is awaited outside the try, so a port that cannot
+  // be bound is reported as what it is, not as a key error.
+  let listening: Promise<Server>;
+  try {
+    listening = createServer(config.port, config.networkPublicKey, (router) => {
+      router.service(IssuerCallbackService, issuerCallbackHandler);
+    });
+  } catch (error) {
+    throw serverSetupError(error);
+  }
+  const server = await listening;
   console.log(`Callback server listening on port ${config.port}`);
+
+  // Installed before anything below can await, so a signal is handled from here on.
+  shutdownOn(server);
 
   // ──────────────────────────────────────────────────────────────────
   // Phase 3 — report what you see on-chain.
@@ -48,29 +63,35 @@ async function main(): Promise<void> {
   // chain watcher.
   // ──────────────────────────────────────────────────────────────────
   void t0;
-
-  shutdownOn(server);
 }
 
+/**
+ * SIGINT and SIGTERM stop taking calls, let the in-flight ones finish, and exit 0. A
+ * call still running after DRAIN_LIMIT_MS has its connection dropped, and the process
+ * exits 0 all the same. A second signal during the drain changes nothing.
+ */
 function shutdownOn(server: Server): void {
-  for (const signal of ["SIGINT", "SIGTERM"] as const) {
-    process.once(signal, () => {
-      console.log("Shutting down");
-      server.close(() => process.exit(0));
-      // close() waits on open connections, and t-0 holds its callback connection
-      // alive between calls. Drop the idle ones, give in-flight requests 10s, leave.
-      server.closeIdleConnections();
-      setTimeout(() => process.exit(0), 10_000).unref();
-    });
-  }
+  let shuttingDown = false;
+  const shutDown = () => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log("Shutting down");
+    server.close(() => process.exit(0));
+    // close() waits on open connections, and t-0 holds its callback connection
+    // alive between calls: drop the idle ones so in-flight requests are all it waits for.
+    server.closeIdleConnections();
+    setTimeout(() => {
+      server.closeAllConnections();
+      process.exit(0);
+    }, DRAIN_LIMIT_MS).unref();
+  };
+  process.on("SIGINT", shutDown);
+  process.on("SIGTERM", shutDown);
 }
 
 main().catch((error: unknown) => {
-  if (error instanceof ConfigurationError) {
-    console.error(error.message);
-    console.error(error.help);
-  } else {
-    console.error("Issuer failed to start", error);
+  for (const line of startupFailureLines("Issuer", error)) {
+    console.error(line);
   }
   process.exit(1);
 });

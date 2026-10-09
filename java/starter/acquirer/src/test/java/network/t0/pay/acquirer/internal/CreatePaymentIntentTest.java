@@ -109,7 +109,7 @@ class CreatePaymentIntentTest {
         Outcome<CreatePaymentIntentResponse.Success> outcome = create(t0);
 
         assertInstanceOf(Outcome.Accepted.class, outcome);
-        assertEquals(4242, outcome.value().orElseThrow().getPaymentIntentId());
+        assertEquals(4242, outcome.accepted().orElseThrow().getPaymentIntentId());
         assertFalse(outcome.shouldRetry());
 
         // The caller's key reaches the wire unchanged. It is what makes the Unknown
@@ -170,5 +170,20 @@ class CreatePaymentIntentTest {
 
         assertInstanceOf(Outcome.Unknown.class, outcome);
         assertTrue(outcome.shouldRetry());
+    }
+
+    /**
+     * The opposite failure: t-0 read the request and refused it. Resending the same
+     * bytes would be refused forever, so it is not a retry.
+     */
+    @Test
+    void refusedRequestBecomesRejected_notUnknown() throws IOException {
+        var t0 = t0(observer -> observer.onError(
+                Status.INVALID_ARGUMENT.withDescription("local.currency: must be ISO 4217").asRuntimeException()));
+
+        Outcome<CreatePaymentIntentResponse.Success> outcome = create(t0);
+
+        assertEquals(new Outcome.Rejected<>("INVALID_ARGUMENT: local.currency: must be ISO 4217"), outcome);
+        assertFalse(outcome.shouldRetry());
     }
 }

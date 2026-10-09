@@ -1,11 +1,11 @@
 package network.t0.pay.acquirer;
 
 import io.github.cdimascio.dotenv.Dotenv;
-import network.t0.pay.client.CallDeadline;
 import network.t0.pay.acquirer.handler.AcquirerCallbackHandler;
 import network.t0.pay.acquirer.internal.CreatePaymentIntent;
 import network.t0.pay.acquirer.internal.Decimals;
 import network.t0.pay.acquirer.internal.GetPaymentQuote;
+import network.t0.pay.client.UsdtPayClient;
 import network.t0.pay.proto.tzero.v1.pay.acquirer.AcquirerServiceGrpc;
 import network.t0.sdk.crypto.Signer;
 import network.t0.sdk.network.BlockingNetworkClient;
@@ -13,15 +13,19 @@ import network.t0.pay.server.UsdtPayServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
 
+import java.io.FileDescriptor;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.io.UncheckedIOException;
 import java.net.BindException;
-import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Acquirer starter for the t-0 USDt pay flow.
@@ -36,10 +40,6 @@ public final class Main {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
-    /** Uncompressed secp256k1 point: 65 bytes as hex, 0x prefix optional. */
-    private static final Pattern NETWORK_PUBLIC_KEY_PATTERN =
-            Pattern.compile("(0x)?[0-9a-fA-F]{130}");
-
     public static void main(String[] args) {
         // First, before anything logs: grpc-java logs through java.util.logging, which
         // logback does not intercept on its own — its records bypass logback.xml
@@ -49,35 +49,40 @@ public final class Main {
         SLF4JBridgeHandler.removeHandlersForRootLogger();
         SLF4JBridgeHandler.install();
 
+        // Startup errors go to stderr as plain lines, not through logback, so nothing
+        // but the message is on them. UTF-8 whatever the locale, like logback's own
+        // output: System.err encodes in the locale's charset, which turns the em dash
+        // into "?" in a container with no locale set.
+        PrintStream err = new PrintStream(new FileOutputStream(FileDescriptor.err), true, StandardCharsets.UTF_8);
+
         try {
-            run();
+            run(err);
         } catch (ConfigurationException e) {
-            log.error("{}", e.getMessage());
-            log.error("{}", e.getHelpMessage());
+            printConfigurationError(err, e);
             System.exit(1);
         } catch (Exception e) {
-            log.error("Acquirer failed to start", e);
+            err.println(startupFailure(e));
             System.exit(1);
         }
     }
 
-    private static void run() {
-        Config config = loadConfig();
+    private static void run(PrintStream err) {
+        // A variable set in the environment wins over the same one in .env.
+        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+        Config config = Config.load(dotenv::get, Path.of(".env").toAbsolutePath(), err);
         Signer signer = Signer.fromHex(config.privateKey());
 
         // Outbound: GetPaymentQuote, CreatePaymentIntent, SettlementReceived.
-        // BlockingNetworkClient signs each request with your private key, and
-        // CallDeadline bounds every call at 10s. A call that needs a different
-        // deadline sets one at its own call site and this steps aside —
-        // see GetPaymentQuote.
-        var t0 = BlockingNetworkClient.create(
-                config.tzeroEndpoint(), signer,
-                channel -> AcquirerServiceGrpc.newBlockingStub(channel)
-                        .withInterceptors(new CallDeadline(Duration.ofSeconds(10))));
+        // UsdtPayClient signs each request with your private key.
+        var t0 = UsdtPayClient.create(
+                config.tzeroEndpoint(), signer, AcquirerServiceGrpc::newBlockingStub);
 
         // Inbound: PaymentAuthorized, SettlementInitiated, SettlementCompleted, PaymentExpired.
         // Every inbound signature is verified against NETWORK_PUBLIC_KEY.
         UsdtPayServer server = startCallbackServer(config);
+
+        // Before the demo sale, so a Ctrl-C while it waits on t-0 still shuts down cleanly.
+        stopOnSignal(server, t0);
 
         // ──────────────────────────────────────────────────────────────────
         // Phase 2 — price a sale, then open an intent for it.
@@ -108,7 +113,7 @@ public final class Main {
             log.warn("No answer from GetPaymentQuote — the lookup is safe to retry");
         }
 
-        quoted.value()
+        quoted.accepted()
                 .ifPresent(quote -> {
                     var intent = CreatePaymentIntent.create(
                             t0.stub(), paymentRef, idempotencyKey, localCurrency, localAmount, quote.getQuoteId());
@@ -129,90 +134,26 @@ public final class Main {
         // TODO: Step 2.3 — deploy this service and give the t-0 team its base URL,
         //       so the Phase 3 callbacks can reach you.
 
-        waitForShutdown(server, t0);
-    }
-
-    private static Config loadConfig() {
-        // Dotenv reads .env from the process working directory, so run the binary
-        // from the directory holding your .env. Say where we looked — otherwise a
-        // .env one directory up looks exactly like a .env that is not filled in.
-        Path env = Path.of(".env").toAbsolutePath();
-        boolean hasEnvFile = Files.exists(env);
-        if (!hasEnvFile) {
-            log.info("No .env at {} — taking configuration from the environment instead", env);
-        }
-        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
-
-        String privateKey = dotenv.get("PROVIDER_PRIVATE_KEY");
-        String networkPublicKey = dotenv.get("NETWORK_PUBLIC_KEY");
-        String endpoint = dotenv.get("TZERO_ENDPOINT", "https://usdt-pay-api-sandbox.t-0.network");
-
-        if (privateKey == null || privateKey.isBlank()) {
-            // Never "copy the example over it". A scaffolded project's .env already
-            // holds the generated key, its public half is with the t-0 team, and the
-            // private half exists nowhere else — overwriting it ends the integration.
-            // With no .env in sight the likelier cause is the working directory, since
-            // that is where it is read from.
-            throw new ConfigurationException(
-                    "PROVIDER_PRIVATE_KEY is not set",
-                    hasEnvFile
-                            ? "Add it to " + env + ", editing that file in place."
-                            : "There is no .env here. Run this from your project directory, whose "
-                                    + ".env holds the key generated for you — or, in a project you "
-                                    + "built by hand, set PROVIDER_PRIVATE_KEY in the environment.");
-        }
-
-        // Print the public key early — Phase 1 needs it before NETWORK_PUBLIC_KEY
-        // arrives, so a missing network key must not block the print.
-        log.info("Acquirer public key: {}", Signer.fromHex(privateKey).getPublicKeyHexPrefixed());
-        // TODO: Step 1.2 — send this public key to the t-0 team so they can verify your calls.
-
-        if (networkPublicKey == null || networkPublicKey.isBlank()) {
-            throw new ConfigurationException(
-                    "NETWORK_PUBLIC_KEY is not set",
-                    "Ask the t-0 team for the network public key and put it in .env.");
-        }
-
-        // Checked here so a typo reports as configuration, with somewhere to go for
-        // the right value. The signature verifier does reject a malformed key on its
-        // own, but not until the callback server starts and only as an
-        // IllegalArgumentException about hex length.
-        if (!NETWORK_PUBLIC_KEY_PATTERN.matcher(networkPublicKey).matches()) {
-            throw new ConfigurationException(
-                    "NETWORK_PUBLIC_KEY is not a valid uncompressed secp256k1 public key",
-                    "Expected 130 hex characters (65 bytes), optionally 0x-prefixed; got "
-                            + networkPublicKey.length() + " characters.");
-        }
-
-        // Last, so the keys — which nobody can guess for you — are reported before a
-        // setting that has a working default.
-        int port = parsePort(dotenv.get("PORT", "8080"));
-
-        return new Config(privateKey, networkPublicKey, endpoint, port);
-    }
-
-    /**
-     * Checked here so a typo reports as configuration. Left to {@code Integer.parseInt}
-     * it surfaces as a NumberFormatException under "Acquirer failed to start", which
-     * names neither the setting nor the value.
-     */
-    private static int parsePort(String value) {
+        // Serve the callbacks until SIGINT or SIGTERM stops the server.
         try {
-            int port = Integer.parseInt(value.trim());
-            if (port >= 1 && port <= 65535) {
-                return port;
-            }
-        } catch (NumberFormatException e) {
-            // Same error as out-of-range: to whoever set PORT it is the same mistake.
+            server.awaitTermination();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
-        throw new ConfigurationException(
-                "PORT is not a valid port number: " + value,
-                "Set PORT to an integer between 1 and 65535, or leave it unset for 8080.");
     }
 
-    private static UsdtPayServer startCallbackServer(Config config) {
+    static UsdtPayServer startCallbackServer(Config config) {
+        UsdtPayServer.Builder builder;
         try {
-            UsdtPayServer server = UsdtPayServer.create(config.port(), config.networkPublicKey())
+            builder = UsdtPayServer.create(config.port(), config.networkPublicKey());
+        } catch (IllegalArgumentException e) {
+            // The SDK parses the key here, before anything binds, and says what is
+            // wrong with it: "invalid network public key: <reason>".
+            throw new ConfigurationException(e.getMessage(), Config.NETWORK_PUBLIC_KEY_HELP);
+        }
+
+        try {
+            UsdtPayServer server = builder
                     .withService(new AcquirerCallbackHandler())
                     .start();
 
@@ -230,46 +171,51 @@ public final class Main {
                             "Something else is listening on it. Set PORT in .env to a free port.");
                 }
             }
-            throw new RuntimeException("Failed to start the callback server", e);
+            throw new UncheckedIOException("the callback server did not start: " + e.getMessage(), e);
         }
     }
 
-    private static void waitForShutdown(
-            UsdtPayServer server,
-            BlockingNetworkClient<AcquirerServiceGrpc.AcquirerServiceBlockingStub> t0) {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            log.info("Shutting down");
-            server.shutdown();
-            t0.shutdown();
-            try {
-                server.awaitTermination(10, TimeUnit.SECONDS);
-                t0.awaitTermination(10, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+    /**
+     * SIGINT (Ctrl-C) and SIGTERM (docker stop, Kubernetes) close the server — it takes
+     * no new calls and gives the ones in flight the SDK's grace period — then the
+     * client, and exit 0. Left to the JVM they exit 130 and 143, which a supervisor
+     * reads as a crash.
+     *
+     * <p>This replaces a shutdown hook rather than adding to one, so nothing closes
+     * twice; logback's and gRPC's own hooks still run on the way out.
+     */
+    private static void stopOnSignal(UsdtPayServer server, BlockingNetworkClient<?> t0) {
+        AtomicBoolean stopping = new AtomicBoolean();
+        SignalHandler stop = signal -> {
+            // A second Ctrl-C while the first is still draining changes nothing.
+            if (!stopping.compareAndSet(false, true)) {
+                return;
             }
-        }));
+            log.info("Shutting down");
+            try {
+                server.close();
+                // A demo call still waiting on t-0 gets the client's grace period, then
+                // is cancelled and comes back as Unknown.
+                t0.close();
+            } finally {
+                System.exit(0);
+            }
+        };
+        Signal.handle(new Signal("TERM"), stop);
+        Signal.handle(new Signal("INT"), stop);
+    }
 
-        try {
-            server.awaitTermination();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+    /** Two lines and nothing else on them: what is wrong, then what to do about it. */
+    static void printConfigurationError(PrintStream err, ConfigurationException e) {
+        err.println("ERROR: " + e.getMessage());
+        err.println(e.getHelpMessage());
+    }
+
+    /** One line, no stack trace: the frames say less than the message does. */
+    static String startupFailure(Exception e) {
+        return "Acquirer failed to start: " + (e.getMessage() != null ? e.getMessage() : e.toString());
     }
 
     private Main() {
-    }
-
-    /** Configuration is missing or unusable — the process cannot start. */
-    private static class ConfigurationException extends RuntimeException {
-        private final String helpMessage;
-
-        ConfigurationException(String message, String helpMessage) {
-            super(message);
-            this.helpMessage = helpMessage;
-        }
-
-        String getHelpMessage() {
-            return helpMessage;
-        }
     }
 }

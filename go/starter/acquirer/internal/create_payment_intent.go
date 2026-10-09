@@ -36,7 +36,7 @@ func CreateIntent(
 	}))
 	if err != nil {
 		log.Printf("CreatePaymentIntent failed for sale %s: %v", paymentRef, err)
-		return Unknown[*acquirer.CreatePaymentIntentResponse_Success]{Detail: err.Error()}
+		return OutcomeFromError[*acquirer.CreatePaymentIntentResponse_Success](err)
 	}
 
 	msg := resp.Msg
@@ -68,7 +68,7 @@ func CreateIntent(
 					opt.GetTokenContract(), opt.GetTokenDecimals())
 			}
 		}
-		return Accepted[*acquirer.CreatePaymentIntentResponse_Success]{Payload: s}
+		return Accepted[*acquirer.CreatePaymentIntentResponse_Success]{Value: s}
 
 	case *acquirer.CreatePaymentIntentResponse_Failure_:
 		reason := msg.GetFailure().GetReason().String()

@@ -215,7 +215,7 @@ Next Steps:
   1. Navigate to your project:
      cd <dir>
 
-  2. Add NETWORK_PUBLIC_KEY to .env — your t-0 onboarding contact gives you this
+  2. NETWORK_PUBLIC_KEY in .env is the sandbox key — your t-0 onboarding contact gives you the production one
 
   3. Run the application:
      ./gradlew run
@@ -246,8 +246,8 @@ src/main/java/network/t0/pay/acquirer/   src/main/resources/   src/test/java/
 |---|---|---|---|---|---|
 | `go` / `acquirer` | `go/starter/acquirer/` | Acquirer callback server and client: prices the sale, opens the intent, learns when it settles. Go 1.27, SDK `github.com/t-0-network/usdt-pay-sdk/go/sdk` | `go.mod`, `cmd/main.go` | `go run ./cmd` | `go test ./...` |
 | `java` / `acquirer` | `java/starter/acquirer/` | Acquirer callback server and client: prices the sale, opens the intent, learns when it settles. Gradle, Java 21 toolchain, SDK `network.t-0:usdt-pay-sdk-java` from Maven Central, pinned by `usdtPaySdkVersion` in `gradle.properties` | `build.gradle.kts`, `settings.gradle.kts`, `gradlew`, `src/main/java/network/t0/pay/acquirer/Main.java` | `./gradlew run` | `./gradlew test` |
-| `node` / `issuer` | `node/starter/issuer/` | Issuer callback server and client: reserves deposit addresses, reports the customer's USDt, settles on-chain. npm, Node 22, SDK `@t-0/usdt-pay-sdk` from the npm registry | `package.json`, `tsconfig.json`, `src/index.ts` | `npm install && npm run dev` | `npm test` |
-| `node` / `lp` | `node/starter/lp/` | LP callback server and client: publishes standing quotes, accepts executions, reports fiat settlements. npm, Node 22, SDK `@t-0/usdt-pay-sdk` from the npm registry | `package.json`, `tsconfig.json`, `src/index.ts` | `npm install && npm run dev` | `npm test` |
+| `node` / `issuer` | `node/starter/issuer/` | Issuer callback server and client: reserves deposit addresses, reports the customer's USDt, settles on-chain. npm, Node 20.19+ or 22.12+, SDK `@t-0/usdt-pay-sdk` from the npm registry | `package.json`, `tsconfig.json`, `src/index.ts` | `npm install && npm run dev` | `npm test` |
+| `node` / `lp` | `node/starter/lp/` | LP callback server and client: publishes standing quotes, accepts executions, reports fiat settlements. npm, Node 20.19+ or 22.12+, SDK `@t-0/usdt-pay-sdk` from the npm registry | `package.json`, `tsconfig.json`, `src/index.ts` | `npm install && npm run dev` | `npm test` |
 | `python` / `acquirer` | `python/starter/acquirer/` | Acquirer callback server and client: prices the sale, opens the intent, learns when it settles. uv, Python 3.13, SDK `t0-usdt-pay-sdk` from PyPI | `pyproject.toml`, `src/acquirer/main.py` | `uv sync && uv run python -m acquirer.main` | `uv run pytest` |
 
 Each scaffold ships its README — the integration guide for the role.
@@ -273,7 +273,7 @@ cli/scaffold_test.go
 ```
 
 A bug in any of them is fixed in provider-sdk first; the next sync carries it here. A local patch
-survives exactly until that sync. `go.mod` is one of the eight, which is why the module path
+survives exactly until that sync. `go.mod` is one of them, which is why the module path
 reads `github.com/t-0-network/provider-sdk/cli`.
 
 Everything else under `cli/` is repo-owned:
@@ -297,7 +297,7 @@ var Config = CLIConfig{
 	RoleRequired: true,
 	DefaultRole:  "",
 	Languages:    []string{"go", "java", "node", "python"},
-	NextSteps:    []string{"Add NETWORK_PUBLIC_KEY to .env — your t-0 onboarding contact gives you this"},
+	NextSteps:    []string{"NETWORK_PUBLIC_KEY in .env is the sandbox key — your t-0 onboarding contact gives you the production one"},
 	RunSteps: map[string]RunStep{
 		"go/acquirer": {
 			Label:   "Run the application:",

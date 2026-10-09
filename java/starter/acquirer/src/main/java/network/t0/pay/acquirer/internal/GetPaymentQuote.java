@@ -8,8 +8,6 @@ import network.t0.pay.proto.tzero.v1.pay.acquirer.GetPaymentQuoteResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * GetPaymentQuote — prices an upcoming fiat sale against your LP's standing
  * quotes. Fiat-settlement acquirers only; on-chain-settled acquirers skip this
@@ -23,22 +21,16 @@ public final class GetPaymentQuote {
 
     private static final Logger log = LoggerFactory.getLogger(GetPaymentQuote.class);
 
-    /** A quote is only useful while the customer is still standing there. */
-    private static final int TIMEOUT_SECONDS = 5;
-
     public static Outcome<GetPaymentQuoteResponse.Success> fetch(
             AcquirerServiceGrpc.AcquirerServiceBlockingStub t0,
             String localCurrency,
             Decimal localAmount) {
 
         try {
-            // Tighter than the 10s default Main installs: a deadline set here lands on
-            // the CallOptions, and CallDeadline leaves a call that already has one alone.
-            GetPaymentQuoteResponse response = t0.withDeadlineAfter(TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                    .getPaymentQuote(GetPaymentQuoteRequest.newBuilder()
-                            .setLocalCurrency(localCurrency)
-                            .setLocalAmount(localAmount)
-                            .build());
+            GetPaymentQuoteResponse response = t0.getPaymentQuote(GetPaymentQuoteRequest.newBuilder()
+                    .setLocalCurrency(localCurrency)
+                    .setLocalAmount(localAmount)
+                    .build());
 
             switch (response.getResultCase()) {
                 case SUCCESS -> {
@@ -69,7 +61,7 @@ public final class GetPaymentQuote {
             }
         } catch (StatusRuntimeException e) {
             log.error("GetPaymentQuote failed: {}", e.getStatus());
-            return new Outcome.Unknown<>(e.getStatus().toString());
+            return Outcome.fromError(e);
         }
     }
 

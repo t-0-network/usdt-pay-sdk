@@ -33,7 +33,7 @@ func ConfirmSettlement(
 	}))
 	if err != nil {
 		log.Printf("SettlementReceived failed for %s: %v", bankTransferRef, err)
-		return Unknown[*acquirer.SettlementReceivedResponse_Accepted]{Detail: err.Error()}
+		return OutcomeFromError[*acquirer.SettlementReceivedResponse_Accepted](err)
 	}
 
 	msg := resp.Msg
@@ -41,7 +41,7 @@ func ConfirmSettlement(
 	case *acquirer.SettlementReceivedResponse_Accepted_:
 		log.Printf("Settlement %s from LP %d confirmed: %s %s",
 			bankTransferRef, lpID, DecimalToString(amountReceived), localCurrency)
-		return Accepted[*acquirer.SettlementReceivedResponse_Accepted]{Payload: msg.GetAccepted()}
+		return Accepted[*acquirer.SettlementReceivedResponse_Accepted]{Value: msg.GetAccepted()}
 
 	case *acquirer.SettlementReceivedResponse_Rejected_:
 		reason := msg.GetRejected().GetReason().String()

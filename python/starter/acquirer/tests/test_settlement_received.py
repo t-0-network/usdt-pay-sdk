@@ -95,9 +95,9 @@ async def fake_t0():
         await asyncio.sleep(0.05)
 
     client = create_client(
-        f"http://127.0.0.1:{port}",
         ACQUIRER_PRIVATE_KEY,
         AcquirerServiceClient,
+        base_url=f"http://127.0.0.1:{port}",
     )
     yield client
 

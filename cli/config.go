@@ -7,7 +7,7 @@ var Config = CLIConfig{
 	RoleRequired: true,
 	DefaultRole:  "",
 	Languages:    []string{"go", "java", "node", "python"},
-	NextSteps:    []string{"Add NETWORK_PUBLIC_KEY to .env — your t-0 onboarding contact gives you this"},
+	NextSteps:    []string{"NETWORK_PUBLIC_KEY in .env is the sandbox key — your t-0 onboarding contact gives you the production one"},
 	RunSteps: map[string]RunStep{
 		"go/acquirer": {
 			Label:   "Run the application:",

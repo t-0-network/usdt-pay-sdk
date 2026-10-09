@@ -3,10 +3,7 @@
 from __future__ import annotations
 
 from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer import acquirer_pb2
-from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer.acquirer_connect import (
-    AcquirerServiceClient,
-    AcquirerServiceClientSync,
-)
+from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer.acquirer_connect import AcquirerServiceClient
 
 from acquirer.internal.decimals import decimal_from_string
 from acquirer.internal.outcome import Accepted, Outcome, Rejected, Unknown, outcome_from_error
@@ -43,21 +40,7 @@ async def get_payment_quote(
 ) -> Outcome[acquirer_pb2.GetPaymentQuoteResponse.Success]:
     req = build_request(local_currency=local_currency, local_amount=local_amount)
     try:
-        resp = await t0.get_payment_quote(req, timeout_ms=10_000)
-    except Exception as e:
-        return outcome_from_error(e)
-    return outcome_from_response(resp)
-
-
-def get_payment_quote_sync(
-    t0: AcquirerServiceClientSync,
-    *,
-    local_currency: str,
-    local_amount: str,
-) -> Outcome[acquirer_pb2.GetPaymentQuoteResponse.Success]:
-    req = build_request(local_currency=local_currency, local_amount=local_amount)
-    try:
-        resp = t0.get_payment_quote(req, timeout_ms=10_000)
+        resp = await t0.get_payment_quote(req)
     except Exception as e:
         return outcome_from_error(e)
     return outcome_from_response(resp)

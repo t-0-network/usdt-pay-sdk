@@ -49,9 +49,9 @@ async def server_and_client():
         await asyncio.sleep(0.05)
 
     client = create_client(
-        f"http://127.0.0.1:{port}",
         NETWORK_PRIVATE_KEY,
         AcquirerCallbackServiceClient,
+        base_url=f"http://127.0.0.1:{port}",
     )
     yield client
 

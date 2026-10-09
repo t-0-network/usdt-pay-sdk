@@ -1,4 +1,4 @@
-"""Public API surface: __all__ and endpoint validation."""
+"""Public API surface: __all__ and network key validation."""
 
 from __future__ import annotations
 
@@ -9,11 +9,21 @@ import t0_usdt_pay_sdk
 def test_all_is_complete():
     expected = {
         "__version__",
+        "DEFAULT_MAX_BODY_SIZE",
+        "PUBLIC_KEY_HEADER",
+        "SIGNATURE_HEADER",
+        "SIGNATURE_TIMESTAMP_HEADER",
+        "ASGIApp",
         "BuildHandler",
         "BuildHandlerSync",
+        "Code",
+        "ConnectError",
+        "NetworkPublicKeyRequiredError",
         "SignFn",
         "SignatureErrorInterceptor",
         "SignatureErrorInterceptorSync",
+        "VerifySignatureFn",
+        "WSGIApp",
         "create_asgi_app",
         "create_client",
         "create_client_sync",
@@ -25,8 +35,6 @@ def test_all_is_complete():
         "new_verify_signature",
         "public_key_from_private_key",
         "signature_error_var",
-        "signature_verification_middleware",
-        "signature_verification_middleware_wsgi",
         "validate",
         "verify_signature",
     }
@@ -38,25 +46,21 @@ def test_all_entries_are_importable():
         assert hasattr(t0_usdt_pay_sdk, name), f"{name} in __all__ but not an attribute"
 
 
-def test_create_client_rejects_empty_endpoint():
-    from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer.acquirer_connect import AcquirerServiceClient
+def test_reexports_are_the_provider_sdk_and_connectrpc_objects():
+    from connectrpc.code import Code
+    from connectrpc.errors import ConnectError
+    from t0_provider_sdk.crypto import public_key_from_private_key
 
-    with pytest.raises(ValueError, match="endpoint is required"):
-        t0_usdt_pay_sdk.create_client("", "0x" + "ab" * 32, AcquirerServiceClient)
-
-
-def test_create_client_sync_rejects_empty_endpoint():
-    from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer.acquirer_connect import AcquirerServiceClientSync
-
-    with pytest.raises(ValueError, match="endpoint is required"):
-        t0_usdt_pay_sdk.create_client_sync("  ", "0x" + "ab" * 32, AcquirerServiceClientSync)
+    assert t0_usdt_pay_sdk.ConnectError is ConnectError
+    assert t0_usdt_pay_sdk.Code is Code
+    assert t0_usdt_pay_sdk.public_key_from_private_key is public_key_from_private_key
 
 
 def test_create_asgi_app_rejects_empty_key():
-    with pytest.raises(ValueError, match="network_public_key is required"):
+    with pytest.raises(t0_usdt_pay_sdk.NetworkPublicKeyRequiredError, match="network public key is not set"):
         t0_usdt_pay_sdk.create_asgi_app("")
 
 
 def test_create_wsgi_app_rejects_empty_key():
-    with pytest.raises(ValueError, match="network_public_key is required"):
+    with pytest.raises(ValueError, match="network public key is not set"):
         t0_usdt_pay_sdk.create_wsgi_app("")

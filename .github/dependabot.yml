@@ -41,9 +41,9 @@ updates:
     ignore:
       - dependency-name: "@t-0/provider-sdk"                       # pinned exact, bump deliberately
       - dependency-name: "@t-0/usdt-pay-sdk"                       # starter, release-owned
+      - dependency-name: "@connectrpc/connect"                     # exact, moves with provider-sdk's pin
     patterns:
       - "@bufbuild/*"
-      - "@connectrpc/*"
       - "@types/*"
       - "typescript"
       - "tsx"
@@ -99,7 +99,5 @@ updates:
       - "ruff"
       - "mypy"
       - "uvicorn"
-      - "waitress"
-      - "gunicorn"
       - "python-dotenv"
       - "hatchling"

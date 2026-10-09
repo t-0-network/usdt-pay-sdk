@@ -13,16 +13,16 @@ and decline code means, see the
 
 - Java 21+. If your JDK is older the Gradle build still works — it provisions a 21
   toolchain on its own — but the binary it produces needs a 21 runtime.
-- The t-0 network public key — an uncompressed secp256k1 key, `0x04…` and 130 hex
-  digits. It comes from your t-0 onboarding contact, along with a `TZERO_ENDPOINT`
-  you can reach.
+- The t-0 network public key. It comes from your t-0 onboarding contact, along with
+  a `TZERO_ENDPOINT` you can reach.
 
 ## Run it
 
 `usdt-pay init` ([usdt-pay-sdk](https://github.com/t-0-network/usdt-pay-sdk))
 created this project and wrote `.env` with a fresh `PROVIDER_PRIVATE_KEY`; the
-matching public key is on the comment line under it. Fill in `NETWORK_PUBLIC_KEY`
-with the key your t-0 onboarding contact gives you, then build and start:
+matching public key is on the comment line under it. `NETWORK_PUBLIC_KEY` is
+pre-filled with the sandbox key; your t-0 onboarding contact gives you the
+production key. Build and start:
 
 ```bash
 ./gradlew run
@@ -39,6 +39,30 @@ To run the tests:
 ```bash
 ./gradlew test
 ```
+
+## Environment variables
+
+| Variable | Required | Default | What it is |
+|---|---|---|---|
+| `PROVIDER_PRIVATE_KEY` | Yes | none; `usdt-pay init` wrote one into `.env` | Your secp256k1 private key: 64 hex characters, with an optional `0x`. Every request you send to t-0 is signed with it. |
+| `NETWORK_PUBLIC_KEY` | Yes | none; `.env` starts with the sandbox key | t-0's network public key. A callback that does not verify against it is refused. |
+| `TZERO_ENDPOINT` | No | `https://usdt-pay-api-sandbox.t-0.network` | The t-0 API your calls go to. |
+| `PORT` | No | `8080` | The port the callback server listens on, from 1 to 65535. |
+
+The app reads `.env` from its working directory when the file exists, and a
+variable set in the environment wins over the same one in `.env`. With no `.env` it
+says so on stderr and takes everything from the environment (for example
+`docker run --env-file .env`). An empty `TZERO_ENDPOINT` or `PORT` counts as unset
+and takes the default. Surrounding whitespace is ignored in both keys and in `PORT`.
+
+The callback server speaks gRPC only, over HTTP/2 without TLS of its own. Whatever
+sits in front of it (a tunnel, a load balancer) has to pass gRPC through, and
+terminate TLS if t-0 reaches it over HTTPS.
+
+The `.env` loader (dotenv-java) reads no variables of its own. The `bin/acquirer`
+start script that `./gradlew installDist` builds, which is what the Docker image
+runs, also reads `JAVA_HOME`, and `JAVA_OPTS` and `ACQUIRER_OPTS` for JVM options
+such as `-Xmx512m`.
 
 ## What you implement
 
@@ -65,7 +89,7 @@ endpoint's mode. Fiat mode: `SettlementCompleted` never fires. USDt mode: skip
    (it is also recorded as a comment in `.env`, right under the private key).
 2. **1.2** Send that public key to your t-0 onboarding contact. Until they have it,
    every call you make is rejected. Onboarding runs through your t-0 contact, and
-   the same exchange is where `NETWORK_PUBLIC_KEY` comes back to you.
+   the same exchange is where the production `NETWORK_PUBLIC_KEY` comes back to you.
 3. **1.3** Confirm the callback server came up on `PORT`.
 
 ### Phase 2 — quote → intent
@@ -163,7 +187,14 @@ three you got:
 | `Rejected` | t-0 refuses this payload | fix the fields, resend the **same** key |
 | `Unknown` | no answer; it may or may not have committed | retry the **same** key, unchanged |
 
-`outcome.shouldRetry()` is true only for `Unknown`.
+A call that fails is classified by its gRPC status code. `INVALID_ARGUMENT`,
+`UNAUTHENTICATED`, `PERMISSION_DENIED`, `UNIMPLEMENTED` and `FAILED_PRECONDITION`
+mean t-0 read the request and refused it: `Rejected`, with the reason
+`<CODE>: <description>`. Every other code, a transport failure among them, is
+`Unknown`.
+
+`outcome.shouldRetry()` is true only for `Unknown`, and `outcome.accepted()` holds
+the payload only for `Accepted`.
 
 ## Testing your integration
 
@@ -227,7 +258,8 @@ Point `TZERO_ENDPOINT` at a sandbox only once both sides pass on their own.
 ```
 src/main/java/network/t0/pay/acquirer/
 ├── Main.java                            # entry point, phases in order
-├── Config.java                          # what .env supplies
+├── Config.java                          # what .env supplies, and its checks
+├── ConfigurationException.java          # a setting is missing or unusable
 ├── handler/AcquirerCallbackHandler.java # PaymentAuthorized, SettlementInitiated,
 │                                        # SettlementCompleted, PaymentExpired,
 │                                        # PaymentFailed
@@ -248,3 +280,6 @@ docker run -p 8080:8080 --env-file .env usdt-pay-acquirer
 ```
 
 The image carries no `.env` on purpose: your private key does not belong in a layer.
+It runs on a Java 21 runtime as a non-root user. `docker stop` sends SIGTERM, and
+the app stops taking calls, gives the ones in flight a few seconds to finish, and
+exits 0, as it does on Ctrl-C.

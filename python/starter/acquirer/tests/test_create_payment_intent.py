@@ -1,31 +1,26 @@
-"""CreatePaymentIntent tests: fake t-0 AcquirerService, async + sync."""
+"""CreatePaymentIntent tests: fake t-0 AcquirerService."""
 
 import asyncio
 import socket
-import threading
 
 import pytest
 import uvicorn
 from acquirer.internal.create_payment_intent import (
     build_request,
     create_payment_intent,
-    create_payment_intent_sync,
     outcome_from_response,
 )
 from acquirer.internal.outcome import Accepted, Rejected, Unknown
 from connectrpc.request import RequestContext
 from google.protobuf.timestamp_pb2 import Timestamp
-from t0_usdt_pay_sdk import create_asgi_app, create_client, create_client_sync, create_wsgi_app, handler, handler_sync
+from t0_usdt_pay_sdk import create_asgi_app, create_client, handler
 from t0_usdt_pay_sdk.api.tzero.v1.pay import common_pb2
 from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer import acquirer_pb2
 from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer.acquirer_connect import (
     AcquirerServiceASGIApplication,
     AcquirerServiceClient,
-    AcquirerServiceClientSync,
-    AcquirerServiceWSGIApplication,
 )
 from t0_usdt_pay_sdk.keys import public_key_from_private_key
-from waitress import create_server
 
 # The acquirer's key (the one sending requests to t-0)
 ACQUIRER_PRIVATE_KEY = "0x" + "11" * 32
@@ -76,39 +71,6 @@ class FakeAcquirerService:
         return resp
 
     async def settlement_received(self, request, ctx):
-        raise NotImplementedError
-
-
-class FakeAcquirerServiceSync:
-    """Sync fake t-0 AcquirerService."""
-
-    def get_payment_quote(self, request, ctx):
-        raise NotImplementedError
-
-    def create_payment_intent(
-        self,
-        request: acquirer_pb2.CreatePaymentIntentRequest,
-        ctx: RequestContext,
-    ) -> acquirer_pb2.CreatePaymentIntentResponse:
-        if request.payment_ref == "reject-me":
-            resp = acquirer_pb2.CreatePaymentIntentResponse()
-            resp.failure.reason = acquirer_pb2.CreatePaymentIntentResponse.Failure.REASON_AMOUNT_OUT_OF_RANGE
-            return resp
-
-        resp = acquirer_pb2.CreatePaymentIntentResponse()
-        success = resp.success
-        success.payment_intent_id = 12345
-        success.expires_at.CopyFrom(_now_ts())
-        success.settlement_amount.CopyFrom(common_pb2.Decimal(unscaled=1000, exponent=-2))
-        deposit = success.usdt_on_chain.deposit_options.add()
-        deposit.chain = common_pb2.BLOCKCHAIN_ETH
-        deposit.deposit_address = "0x" + "aa" * 20
-        deposit.token_contract = "0x" + "bb" * 20
-        deposit.token_decimals = 6
-        success.onchain.SetInParent()
-        return resp
-
-    def settlement_received(self, request, ctx):
         raise NotImplementedError
 
 
@@ -198,9 +160,9 @@ async def fake_t0_async():
         await asyncio.sleep(0.05)
 
     client = create_client(
-        f"http://127.0.0.1:{port}",
         ACQUIRER_PRIVATE_KEY,
         AcquirerServiceClient,
+        base_url=f"http://127.0.0.1:{port}",
     )
     yield client
 
@@ -234,52 +196,3 @@ async def test_create_payment_intent_rejected_async(fake_t0_async):
     )
     assert isinstance(result, Rejected)
     assert "AMOUNT_OUT_OF_RANGE" in result.reason
-
-
-@pytest.fixture()
-def fake_t0_sync():
-    port = _free_port()
-    fake = FakeAcquirerServiceSync()
-    app = create_wsgi_app(
-        ACQUIRER_PUBLIC_KEY,
-        handler_sync(AcquirerServiceWSGIApplication, fake),
-    )
-    server = create_server(app, host="127.0.0.1", port=port)
-    thread = threading.Thread(target=server.run, daemon=True)
-    thread.start()
-
-    client = create_client_sync(
-        f"http://127.0.0.1:{port}",
-        ACQUIRER_PRIVATE_KEY,
-        AcquirerServiceClientSync,
-    )
-    yield client
-
-    server.close()
-
-
-def test_create_payment_intent_accepted_sync(fake_t0_sync):
-    sa = acquirer_pb2.CreatePaymentIntentRequest.SettlementAmount(
-        value=common_pb2.Decimal(unscaled=1000, exponent=-2),
-    )
-    result = create_payment_intent_sync(
-        fake_t0_sync,
-        payment_ref="order-1",
-        idempotency_key="key-1",
-        amount=sa,
-    )
-    assert isinstance(result, Accepted)
-    assert result.value.payment_intent_id == 12345
-
-
-def test_create_payment_intent_rejected_sync(fake_t0_sync):
-    sa = acquirer_pb2.CreatePaymentIntentRequest.SettlementAmount(
-        value=common_pb2.Decimal(unscaled=1000, exponent=-2),
-    )
-    result = create_payment_intent_sync(
-        fake_t0_sync,
-        payment_ref="reject-me",
-        idempotency_key="key-r",
-        amount=sa,
-    )
-    assert isinstance(result, Rejected)

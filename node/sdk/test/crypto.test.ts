@@ -103,7 +103,7 @@ after(() => {
 const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 
 test("a signed SDK call passes createRequestVerifier and round-trips the protobuf body", async () => {
-  const t0 = createClient(base, NETWORK_PRIVATE_KEY, IssuerCallbackService);
+  const t0 = createClient(NETWORK_PRIVATE_KEY, base, IssuerCallbackService);
   const response = await t0.createPaymentInstructions({ paymentIntentId: 42n });
   assert.equal(response.result.case, "failure");
   assert.equal(
@@ -113,7 +113,7 @@ test("a signed SDK call passes createRequestVerifier and round-trips the protobu
 });
 
 test("a call signed with the wrong key gets rejectRequest's unauthenticated answer", async () => {
-  const impostor = createClient(base, "0x" + "22".repeat(32), IssuerCallbackService);
+  const impostor = createClient("0x" + "22".repeat(32), base, IssuerCallbackService);
   await assert.rejects(
     impostor.createPaymentInstructions({ paymentIntentId: 42n }),
     (err: unknown) => err instanceof ConnectError && err.code === Code.Unauthenticated,
@@ -298,6 +298,10 @@ describe("createRequestDecoder", () => {
     const fields = parsed.violations.map((v: { field: string }) => v.field);
     assert.ok(fields.some((f: string) => f.includes("on_chain_tx_hash")), "expected valid_tx_hash violation");
     assert.ok(fields.some((f: string) => f.includes("sender_address")), "expected valid_address violation");
+    const ruleIdOf = (field: string) =>
+      parsed.violations.find((v: { field: string; ruleId?: string }) => v.field === field)?.ruleId;
+    assert.equal(ruleIdOf("on_chain_tx_hash"), "string.valid_tx_hash");
+    assert.equal(ruleIdOf("sender_address"), "string.valid_address");
   });
 
   test("bad signature → 401", () => {
@@ -385,26 +389,6 @@ describe("createRequestDecoder", () => {
     assert.equal(parsed.code, "internal");
   });
 
-  test("toleranceMs passthrough", async () => {
-    const { priv, publicKeyHex } = newKeypair();
-
-    const msg = create(CreatePaymentInstructionsRequestSchema, validRequest);
-    const jsonBody = new TextEncoder().encode(
-      toJsonString(CreatePaymentInstructionsRequestSchema, msg, { registry: payRegistry }),
-    );
-    const headers = { ...sign(jsonBody, priv), "content-type": "application/json" };
-
-    // Wait for the signature to become stale relative to a 1ms tolerance
-    await new Promise((r) => setTimeout(r, 50));
-
-    const strictDecode = createRequestDecoder({ networkPublicKey: publicKeyHex, toleranceMs: 1 });
-    const strictResult = strictDecode(CreatePaymentInstructionsRequestSchema, { body: jsonBody, headers });
-    assert.equal(strictResult.ok, false, "1ms tolerance should reject a 50ms-old signature");
-
-    const relaxedDecode = createRequestDecoder({ networkPublicKey: publicKeyHex, toleranceMs: 600_000 });
-    const relaxedResult = relaxedDecode(CreatePaymentInstructionsRequestSchema, { body: jsonBody, headers });
-    assert.equal(relaxedResult.ok, true, "600s tolerance should accept the same signature");
-  });
 
   test("accepts fetch Headers object", () => {
     const { priv, publicKeyHex } = newKeypair();

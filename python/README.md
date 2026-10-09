@@ -35,7 +35,7 @@ Create a client, make a call:
 from t0_usdt_pay_sdk import create_client
 from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer.acquirer_connect import AcquirerServiceClient
 
-t0 = create_client(endpoint, private_key_hex, AcquirerServiceClient)
+t0 = create_client(private_key_hex, AcquirerServiceClient, base_url=base_url)
 response = await t0.create_payment_intent(request)
 ```
 

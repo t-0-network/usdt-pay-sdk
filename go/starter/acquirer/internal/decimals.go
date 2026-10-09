@@ -3,31 +3,48 @@ package internal
 import (
 	"fmt"
 	"math/big"
+	"regexp"
 	"strconv"
 	"strings"
 
 	pay "github.com/t-0-network/usdt-pay-sdk/go/sdk/gen/tzero/v1/pay"
 )
 
-// DecimalFromString converts a decimal string to the wire Decimal message.
-func DecimalFromString(s string) *pay.Decimal {
-	parts := strings.SplitN(s, ".", 2)
-	if len(parts) == 1 {
-		n, err := strconv.ParseInt(s, 10, 64)
-		if err != nil {
-			panic(fmt.Sprintf("invalid decimal: %s", s))
-		}
-		return &pay.Decimal{Unscaled: n, Exponent: 0}
+// The contract constrains exponent to this range; anything else is rejected on the wire.
+const (
+	minExponent = -8
+	maxExponent = 8
+)
+
+// An optional minus, ASCII digits, an optional fraction. No exponent notation:
+// 1e9 would have to be a float first, which is the point.
+var plainDecimal = regexp.MustCompile(`^-?[0-9]+(\.[0-9]+)?$`)
+
+// DecimalFromString converts a plain decimal string — "100000.00", "-0.5",
+// "7" — to the wire Decimal message. It returns an error if the value carries
+// more precision, or more magnitude, than the contract can hold. Round to the
+// precision you mean before calling this; truncating money silently is not
+// this function's decision to make.
+func DecimalFromString(value string) (*pay.Decimal, error) {
+	if !plainDecimal.MatchString(value) {
+		return nil, fmt.Errorf("'%s' is not a plain decimal number", value)
 	}
 
-	frac := parts[1]
-	scale := int32(len(frac))
-	combined := parts[0] + frac
-	n, err := strconv.ParseInt(combined, 10, 64)
-	if err != nil {
-		panic(fmt.Sprintf("invalid decimal: %s", s))
+	whole, fraction, _ := strings.Cut(value, ".")
+	exponent := -len(fraction)
+	if exponent < minExponent {
+		return nil, fmt.Errorf("%s needs exponent %d, outside the contract's [%d, %d] — round it first",
+			value, exponent, minExponent, maxExponent)
 	}
-	return &pay.Decimal{Unscaled: n, Exponent: -scale}
+
+	// "-0.5" splits to whole="-0", fraction="5", and ParseInt("-05") is -5. The
+	// pattern leaves a range error as the only one ParseInt can return.
+	unscaled, err := strconv.ParseInt(whole+fraction, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("%s does not fit the contract's 64-bit unscaled value", value)
+	}
+
+	return &pay.Decimal{Unscaled: unscaled, Exponent: int32(exponent)}, nil
 }
 
 // DecimalToString formats a wire Decimal as a plain decimal string.

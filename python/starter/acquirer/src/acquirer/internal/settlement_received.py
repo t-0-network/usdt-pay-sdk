@@ -6,10 +6,7 @@ from datetime import datetime
 
 from google.protobuf.timestamp_pb2 import Timestamp
 from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer import acquirer_pb2
-from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer.acquirer_connect import (
-    AcquirerServiceClient,
-    AcquirerServiceClientSync,
-)
+from t0_usdt_pay_sdk.api.tzero.v1.pay.acquirer.acquirer_connect import AcquirerServiceClient
 
 from acquirer.internal.decimals import decimal_from_string
 from acquirer.internal.outcome import Accepted, Outcome, Rejected, Unknown, outcome_from_error
@@ -63,30 +60,7 @@ async def settlement_received(
         received_at=received_at,
     )
     try:
-        resp = await t0.settlement_received(req, timeout_ms=15_000)
-    except Exception as e:
-        return outcome_from_error(e)
-    return outcome_from_response(resp)
-
-
-def settlement_received_sync(
-    t0: AcquirerServiceClientSync,
-    *,
-    lp_id: int,
-    bank_transfer_ref: str,
-    local_currency: str,
-    amount_received: str,
-    received_at: datetime,
-) -> Outcome[acquirer_pb2.SettlementReceivedResponse.Accepted]:
-    req = build_request(
-        lp_id=lp_id,
-        bank_transfer_ref=bank_transfer_ref,
-        local_currency=local_currency,
-        amount_received=amount_received,
-        received_at=received_at,
-    )
-    try:
-        resp = t0.settlement_received(req, timeout_ms=15_000)
+        resp = await t0.settlement_received(req)
     except Exception as e:
         return outcome_from_error(e)
     return outcome_from_response(resp)

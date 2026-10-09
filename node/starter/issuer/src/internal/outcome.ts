@@ -1,4 +1,4 @@
-import { Code, ConnectError } from "@connectrpc/connect";
+import { Code, ConnectError } from "@t-0/usdt-pay-sdk";
 
 /**
  * What a call to t-0 did, from the caller's point of view. Every state-changing
@@ -12,8 +12,8 @@ export type Outcome<T> =
   | { readonly kind: "accepted"; readonly value: T; readonly shouldRetry: false }
   /**
    * t-0 refused this payload and will keep refusing it — resending it unchanged is
-   * pointless. The key is *not* consumed: correct the fields named by `reason` (and
-   * `failingIds`, where the endpoint reports them) and resend under the same key.
+   * pointless. The key is *not* consumed: correct the fields named by `reason` and
+   * resend under the same key.
    *
    * Covers both the synchronous `failure` and the asynchronous `rejected` response
    * variants — from the caller's side they mean the same thing.
@@ -61,7 +61,7 @@ export const noResultVariant = (): Outcome<never> =>
  * A thrown call, classified. Transport failures are `unknown` — the call may still
  * have committed on t-0's side, so the key has to be retried.
  *
- * Four codes are not: they mean t-0 read the request and refused it, and the same
+ * Five codes are not: they mean t-0 read the request and refused it, and the same
  * bytes would be refused the same way forever. Treating those as retryable is how you
  * get an infinite loop against a request that has a typo in it.
  */
@@ -75,7 +75,8 @@ export function outcomeFromError(error: unknown): Outcome<never> {
     error.code === Code.InvalidArgument ||
     error.code === Code.Unauthenticated ||
     error.code === Code.PermissionDenied ||
-    error.code === Code.Unimplemented;
+    error.code === Code.Unimplemented ||
+    error.code === Code.FailedPrecondition;
 
   return permanent ? rejected(`${Code[error.code]}: ${error.rawMessage}`) : unknown(error.message);
 }

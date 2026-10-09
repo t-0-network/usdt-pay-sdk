@@ -91,11 +91,6 @@ public final class UsdtPayServer implements Closeable {
             return this;
         }
 
-        public Builder withMaxInboundMessageSize(int bytes) {
-            delegate.withMaxInboundMessageSize(bytes);
-            return this;
-        }
-
         public UsdtPayServer start() throws IOException {
             return new UsdtPayServer(delegate.start());
         }

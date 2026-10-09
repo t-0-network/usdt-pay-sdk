@@ -1,15 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { createClient, createRouterTransport } from "@connectrpc/connect";
 import {
   Code,
   ConnectError,
-  createClient,
-  createRouterTransport,
-  type ServiceImpl,
-} from "@connectrpc/connect";
-import {
   LpService,
   FiatSettlementSentResponse_Rejected_Reason,
+  type ServiceImpl,
 } from "@t-0/usdt-pay-sdk";
 import { decimalFromString } from "../src/internal/decimals.js";
 import { reportFiatSettlementSent } from "../src/internal/fiat_settlement_sent.js";
@@ -76,7 +73,9 @@ test("no answer becomes unknown, which must be retried under the same ref", asyn
 
 /**
  * FAILED_PRECONDITION means an execution has no durable result yet — the contract
- * says retry the same request. It must come back as `unknown` so the caller retries.
+ * says retry the same request (lp.proto, FiatSettlementSent). Every other helper
+ * treats the code as a refusal; this one must come back as `unknown` so the caller
+ * retries.
  */
 test("FAILED_PRECONDITION is unknown and retryable", async () => {
   const t0 = fakeT0(async () => {
@@ -87,6 +86,10 @@ test("FAILED_PRECONDITION is unknown and retryable", async () => {
 
   assert.equal(outcome.kind, "unknown");
   assert.equal(outcome.shouldRetry, true);
+  assert.equal(
+    outcome.kind === "unknown" && outcome.detail,
+    "[failed_precondition] execution pending",
+  );
 });
 
 test("a request t-0 refuses outright is rejected, not retried", async () => {

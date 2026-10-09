@@ -64,15 +64,15 @@ const request = {
 };
 
 test("the handler serves a signed call under an Express-style mount prefix", async () => {
-  const t0 = createClient(`${base}${PREFIX}`, NETWORK_PRIVATE_KEY, IssuerCallbackService);
+  const t0 = createClient(NETWORK_PRIVATE_KEY, `${base}${PREFIX}`, IssuerCallbackService);
   const response = await t0.createPaymentInstructions(request);
   assert.equal(response.result.case, "failure");
 });
 
 test("a call signed by anyone but t-0 is refused before the handler runs", async () => {
   const impostor = createClient(
-    `${base}${PREFIX}`,
     "0x" + "22".repeat(32),
+    `${base}${PREFIX}`,
     IssuerCallbackService,
   );
   await assert.rejects(

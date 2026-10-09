@@ -4,7 +4,7 @@ TypeScript SDK and starter for the **t-0 USDt pay flow**.
 
 ## Starter
 
-Node 22 or newer. Scaffold with the [CLI](../cli/README.md):
+Node 20.19+ or 22.12+. Scaffold with the [CLI](../cli/README.md):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/t-0-network/usdt-pay-sdk/master/cli/install.sh | sh -s -- init --lang=node --role=issuer my-issuer
@@ -37,8 +37,8 @@ Create a client, make a call:
 ```ts
 import { createClient, IssuerService } from "@t-0/usdt-pay-sdk";
 
-const t0 = createClient(endpoint, privateKeyHex, IssuerService);
-const response = await t0.paymentReceived(request, { timeoutMs: 10_000 });
+const t0 = createClient(privateKeyHex, baseUrl, IssuerService);
+const response = await t0.paymentReceived(request);
 ```
 
 Serve callbacks:

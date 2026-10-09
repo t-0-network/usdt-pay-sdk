@@ -5,9 +5,12 @@ import {
   LpCallbackService,
   LpService,
 } from "@t-0/usdt-pay-sdk";
-import { ConfigurationError, loadConfig } from "./config.js";
+import { loadConfig, serverSetupError, startupFailureLines } from "./config.js";
 import { lpCallbackHandler } from "./handler.js";
 import { startQuotePublisher } from "./quotes.js";
+
+/** How long a shutdown waits for in-flight calls before it drops their connections. */
+const DRAIN_LIMIT_MS = 15_000;
 
 /**
  * LP starter for the t-0 USDt pay flow.
@@ -22,15 +25,24 @@ async function main(): Promise<void> {
   console.log(`LP public key: ${config.publicKey}`);
   // TODO: Step 1.2 — send this public key to the t-0 team so they can verify your calls.
 
-  // Outbound: everything you call on t-0 (PublishQuote, FiatSettlementSent). Each internal/ helper sets its
-  // own timeout — a Connect deadline is per call, so there is nothing to install here.
-  const t0 = createClient(config.tzeroEndpoint, config.privateKey, LpService);
+  // Outbound: everything you call on t-0 (PublishQuote, FiatSettlementSent).
+  const t0 = createClient(config.privateKey, config.tzeroEndpoint, LpService);
 
   // Inbound: the one callback t-0 pushes to you (ExecuteQuote).
   // Every inbound signature is verified against NETWORK_PUBLIC_KEY.
-  const server = await createServer(config.port, config.networkPublicKey, (router) => {
-    router.service(LpCallbackService, lpCallbackHandler);
-  });
+  //
+  // createServer checks that key before it returns its promise, and throws right here
+  // when it is malformed. The promise is awaited outside the try, so a port that cannot
+  // be bound is reported as what it is, not as a key error.
+  let listening: Promise<Server>;
+  try {
+    listening = createServer(config.port, config.networkPublicKey, (router) => {
+      router.service(LpCallbackService, lpCallbackHandler);
+    });
+  } catch (error) {
+    throw serverSetupError(error);
+  }
+  const server = await listening;
   console.log(`Callback server listening on port ${config.port}`);
 
   // ──────────────────────────────────────────────────────────────────
@@ -39,7 +51,10 @@ async function main(): Promise<void> {
   // The demo loop publishes a fixed COP quote every minute so you can
   // see the round trip. Replace the constants with your pricing.
   // ──────────────────────────────────────────────────────────────────
-  const stop = startQuotePublisher(t0);
+  const stopQuotes = startQuotePublisher(t0);
+
+  // Installed before anything below can await, so a signal is handled from here on.
+  shutdownOn(server, stopQuotes);
 
   // ──────────────────────────────────────────────────────────────────
   // Phase 3 — ExecuteQuote (handler).
@@ -58,30 +73,37 @@ async function main(): Promise<void> {
   //       One transfer covers accepted executions of one acquirer in
   //       one currency; settlementAmount = the sum of their localAmounts.
   // ──────────────────────────────────────────────────────────────────
-
-  shutdownOn(server, stop);
 }
 
+/**
+ * SIGINT and SIGTERM stop the quote timer and taking calls, let the in-flight calls
+ * finish, and exit 0. A call still running after DRAIN_LIMIT_MS has its connection
+ * dropped, and the process exits 0 all the same. A second signal during the drain
+ * changes nothing.
+ */
 function shutdownOn(server: Server, stopQuotes: () => void): void {
-  for (const signal of ["SIGINT", "SIGTERM"] as const) {
-    process.once(signal, () => {
-      console.log("Shutting down");
-      stopQuotes();
-      server.close(() => process.exit(0));
-      // close() waits on open connections, and t-0 holds its callback connection
-      // alive between calls. Drop the idle ones, give in-flight requests 10s, leave.
-      server.closeIdleConnections();
-      setTimeout(() => process.exit(0), 10_000).unref();
-    });
-  }
+  let shuttingDown = false;
+  const shutDown = () => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log("Shutting down");
+    stopQuotes();
+    server.close(() => process.exit(0));
+    // close() waits on open connections, and t-0 holds its callback connection
+    // alive between calls: drop the idle ones so in-flight requests are all it waits for.
+    server.closeIdleConnections();
+    setTimeout(() => {
+      server.closeAllConnections();
+      process.exit(0);
+    }, DRAIN_LIMIT_MS).unref();
+  };
+  process.on("SIGINT", shutDown);
+  process.on("SIGTERM", shutDown);
 }
 
 main().catch((error: unknown) => {
-  if (error instanceof ConfigurationError) {
-    console.error(error.message);
-    console.error(error.help);
-  } else {
-    console.error("LP failed to start", error);
+  for (const line of startupFailureLines("LP", error)) {
+    console.error(line);
   }
   process.exit(1);
 });

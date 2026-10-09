@@ -34,7 +34,7 @@ curl -fsSL https://raw.githubusercontent.com/t-0-network/usdt-pay-sdk/master/cli
 ```
 
 Windows, the install-only form and every flag: [`cli/README.md`](cli/README.md).
-Then follow your project's README; [java/](java/), [node/](node/) and
+Then follow your project's README; [go/](go/), [java/](java/), [node/](node/) and
 [python/](python/) cover the SDKs on their own.
 
 ## What is in here

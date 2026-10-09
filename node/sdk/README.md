@@ -4,7 +4,7 @@ TypeScript SDK for the **t-0 USDt pay flow** — the contract under
 `proto/tzero/v1/pay/`. Generated Connect clients and servers for all three roles,
 over a transport that signs what you send and verifies what arrives.
 
-Start from a scaffolded project rather than from here: `usdt-pay init --lang=node --role=issuer` or `--role=lp`
+Start from a scaffolded project rather than from here: `usdt-pay init --lang=node --role=issuer <project-name>` or `--role=lp`
 (install and every flag: [`cli/README.md`](https://github.com/t-0-network/usdt-pay-sdk/blob/master/cli/README.md)).
 The project's README is the integration guide:
 [issuer](https://github.com/t-0-network/usdt-pay-sdk/blob/master/node/starter/issuer/README.md) ·
@@ -35,10 +35,42 @@ encoding is not canonical, so a re-serialized message is a different message to
 secp256k1, and `createServer` wires the raw-body hasher in for you.
 
 The returned value is a listening `http.Server`: `close()` it to shut down, and read
-`address()` when you passed port 0.
+`address()` when you passed port 0. A request body larger than
+`DEFAULT_MAX_BODY_SIZE` (exported from this package) is refused.
 
 Mount one service per role edge you implement — `IssuerCallbackService`,
 `AcquirerCallbackService`, `LpCallbackService`.
+
+### Writing a handler
+
+The handler type, the error a handler throws and its codes are exported from this
+package, so a project needs no direct `@connectrpc/connect` dependency:
+
+```ts
+import { Code, ConnectError, type ServiceImpl, type IssuerCallbackService } from "@t-0/usdt-pay-sdk";
+
+export const issuerCallbackHandler: ServiceImpl<typeof IssuerCallbackService> = {
+  async createPaymentInstructions(request) {
+    throw new ConnectError("address pool is unreachable", Code.Unavailable);
+  },
+};
+```
+
+The server validates every response on the way out. To check a response inside the
+handler first, for instance to answer with the `failure` arm instead of an opaque
+`Code.Internal`, call `validate` with the pay registry:
+
+```ts
+import { payRegistry, validate, CreatePaymentInstructionsResponseSchema } from "@t-0/usdt-pay-sdk";
+
+return validate(CreatePaymentInstructionsResponseSchema, response, { registry: payRegistry });
+```
+
+The registry is required: without it the contract's custom rules (`valid_address`,
+`valid_tx_hash`) cannot be resolved, and every message that uses one fails with
+"response validation error". An invalid response throws a `ConnectError` with
+`Code.Internal` and "response validation failed: <field path>: <message>", the error
+the server would return for it.
 
 ## Mounting into a server you already run
 
@@ -83,17 +115,19 @@ handler, behind the same signature check — mounting the handler mounts it.
 
 For frameworks that don't use Node's `http.createServer` (Hono, Effect, Koa, Fastify, etc.), use `createRequestDecoder` for one-call signature verification + Content-Type-aware decoding + protovalidation. It returns an either-type result: success with the decoded message and a response encoder, or failure with a ready-to-send HTTP error.
 
+Import from the `@t-0/usdt-pay-sdk/crypto` subpath. It exports everything the package root does except the code that runs on `node:http`: `createClient`, `createHandler`, `createServer`, `validate` and `DEFAULT_MAX_BODY_SIZE`. So the generated messages, `payRegistry`, `Code`, `ConnectError` and `SDK_VERSION` come from there too, and the root's Connect node adapter is never loaded.
+
 ```ts
 import { create } from "@bufbuild/protobuf";
-import { createRequestDecoder } from "@t-0/usdt-pay-sdk/crypto";
 import {
+  createRequestDecoder,
   CreatePaymentInstructionsRequestSchema,
   CreatePaymentInstructionsResponse_Failure_Reason,
   CreatePaymentInstructionsResponseSchema,
-} from "@t-0/usdt-pay-sdk";
+} from "@t-0/usdt-pay-sdk/crypto";
 
 const decode = createRequestDecoder({
-  networkPublicKey: process.env.NETWORK_PUBLIC_KEY!, // "0x04..." uncompressed secp256k1
+  networkPublicKey: process.env.NETWORK_PUBLIC_KEY!, // from your t-0 onboarding contact
 });
 
 // Hono / fetch-shaped framework — route by Connect procedure path:
@@ -125,15 +159,15 @@ app.post("/tzero.v1.pay.issuer.IssuerCallbackService/CreatePaymentInstructions",
 // Raw Node http example:
 import http from "node:http";
 import { create } from "@bufbuild/protobuf";
-import { createRequestDecoder } from "@t-0/usdt-pay-sdk/crypto";
 import {
+  createRequestDecoder,
   CreatePaymentInstructionsRequestSchema,
   CreatePaymentInstructionsResponse_Failure_Reason,
   CreatePaymentInstructionsResponseSchema,
-} from "@t-0/usdt-pay-sdk";
+} from "@t-0/usdt-pay-sdk/crypto";
 
 const decode = createRequestDecoder({
-  networkPublicKey: process.env.NETWORK_PUBLIC_KEY!, // "0x04..." uncompressed secp256k1
+  networkPublicKey: process.env.NETWORK_PUBLIC_KEY!, // from your t-0 onboarding contact
 });
 
 http.createServer((req, res) => {
@@ -169,7 +203,7 @@ http.createServer((req, res) => {
 
 The decoder accepts both fetch `Headers` and Node's `Record<string, string | string[] | undefined>`. It normalizes header case internally, detects Content-Type (`application/json` or `application/proto` / `application/protobuf` / `application/x-protobuf`), and the returned `encodeResponse` closure responds in the matching format. The pay contract's proto registry is baked in; you don't pass one.
 
-On success (`result.ok === true`), `result.request` is the typed message, `result.format` is `'json' | 'proto'`, and `result.encodeResponse(schema, message)` returns a `WireResponse` in the matching format. On failure (`result.ok === false`), `result.error` carries `{ status, headers, body }` ready to send — signature failures return 401, malformed bodies 400, unsupported Content-Type 415, and validation errors 400 with a `violations` array.
+On success (`result.ok === true`), `result.request` is the typed message, `result.format` is `'json' | 'proto'`, and `result.encodeResponse(schema, message)` returns a `WireResponse` in the matching format. On failure (`result.ok === false`), `result.error` carries `{ status, headers, body }` ready to send, with the status provider-sdk assigns to that failure.
 
 **Important constraints for standalone integrations:**
 
@@ -180,7 +214,7 @@ On success (`result.ok === true`), `result.request` is the typed message, `resul
 <details>
 <summary>Lower-level primitives</summary>
 
-The individual building blocks are also exported: `createRequestVerifier`, `rejectRequest`, `NetworkHeaders`, `DEFAULT_TOLERANCE_MS`, `verifySignature`, `computeDigest`, `keccak256`, `parsePublicKey`, `publicKeysEqual`. You can import them from the `./crypto` subpath: `import { createRequestVerifier } from "@t-0/usdt-pay-sdk/crypto"`.
+The individual building blocks are also exported, from the root and from the `./crypto` subpath: `createRequestVerifier`, `rejectRequest`, `NetworkHeaders`, `verifySignature`, `computeDigest`, `keccak256`, `publicKeysEqual`, `publicKeyFromPrivateKey`.
 </details>
 
 ## Calling t-0
@@ -188,23 +222,21 @@ The individual building blocks are also exported: `createRequestVerifier`, `reje
 ```ts
 import { createClient, IssuerService } from "@t-0/usdt-pay-sdk";
 
-const t0 = createClient(process.env.TZERO_ENDPOINT!, privateKeyHex, IssuerService);
-const response = await t0.paymentReceived(request, { timeoutMs: 10_000 });
+const t0 = createClient(privateKeyHex, baseUrl, IssuerService);
+const response = await t0.paymentReceived(request);
 ```
 
 All 14 endpoints are unary request/response — nothing in this contract streams.
 
-`endpoint` is required: the underlying provider client defaults to a different t-0
+`baseUrl` is required: the underlying provider client defaults to a different t-0
 API, and a pay participant that omitted it would sign perfectly valid requests and
 send them to the wrong host.
 
-Deadlines are per call, as `{ timeoutMs }`. A Connect timeout is a duration evaluated
-when the call is made, so each call site picks its own — the starters give a
-settlement report more room than the rest, because the transfer is already broadcast
-by then and an answer is worth waiting for.
+Every call gets provider-sdk's default deadline; a `{ timeoutMs }` in a call's second
+argument replaces it for that call.
 
-`signer` takes a hex private key, or a `SignerFunction` when the key lives in an HSM
-or KMS and never reaches this process.
+`signer` takes a hex private key or its raw bytes, or a `SignerFunction` when the key
+lives in an HSM or KMS and never reaches this process.
 
 ## The public key t-0 knows you by
 
@@ -215,7 +247,13 @@ console.log(publicKeyFromPrivateKey(process.env.PROVIDER_PRIVATE_KEY!));
 ```
 
 Send it to the t-0 team — that is step 1 of every role's integration. Calling it at
-startup also fails a malformed key there rather than on the first request.
+startup also fails a malformed key there rather than on the first request. It is
+also exported from `@t-0/usdt-pay-sdk/crypto`.
+
+## Version
+
+`SDK_VERSION` is this package's version. The server reports it in its health
+responses and logs.
 
 ## Generated code
 

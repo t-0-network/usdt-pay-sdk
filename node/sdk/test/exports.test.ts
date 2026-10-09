@@ -31,3 +31,35 @@ test("generated modules re-exported from index.ts have disjoint export names", (
     }
   }
 });
+
+// Names a project needs from provider-sdk or @connectrpc/connect are re-exported, so
+// user code imports only this package and installs one copy of connect.
+test("the root re-exports what a handler and a client need", async () => {
+  const root = await import("../src/index.js");
+  assert.equal(typeof root.SDK_VERSION, "string");
+  assert.equal(typeof root.DEFAULT_MAX_BODY_SIZE, "number");
+  assert.equal(typeof root.validate, "function");
+  assert.equal(typeof root.ConnectError, "function");
+  assert.equal(root.Code.Internal, 13);
+  assert.equal(typeof root.publicKeyFromPrivateKey, "function");
+});
+
+// ./crypto exports everything the root does except the code that runs on node:http.
+// provider-sdk exports validate and DEFAULT_MAX_BODY_SIZE only from its root, which
+// loads node:http, so they stay root-only here too.
+test("./crypto exports every root name but the node:http ones, as the same bindings", async () => {
+  const root: Record<string, unknown> = await import("../src/index.js");
+  const crypto: Record<string, unknown> = await import("../src/crypto.js");
+  const rootOnly = Object.keys(root).filter((key) => !(key in crypto));
+  assert.deepEqual(rootOnly.sort(), [
+    "DEFAULT_MAX_BODY_SIZE",
+    "createClient",
+    "createHandler",
+    "createServer",
+    "validate",
+  ]);
+  for (const key of Object.keys(crypto)) {
+    assert.ok(key in root, `./crypto exports "${key}", which the root does not`);
+    assert.equal(root[key], crypto[key], `"${key}" is a different binding in the root and in ./crypto`);
+  }
+});

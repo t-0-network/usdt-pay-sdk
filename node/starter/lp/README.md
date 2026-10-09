@@ -9,10 +9,10 @@ This README says what to build — for what every field and decline code means, 
 
 ## Prerequisites
 
-- Node 22+.
-- The t-0 network public key — an uncompressed secp256k1 key, `0x04…` and 130 hex
-  digits. It comes from your t-0 onboarding contact, along with a `TZERO_ENDPOINT`
-  you can reach.
+- Node.js 20.19 or a later 20.x release, or Node.js 22.12 or newer
+  (`"engines": { "node": "^20.19.0 || >=22.12.0" }`).
+- The t-0 network public key. It comes from your t-0 onboarding contact, along with
+  a `TZERO_ENDPOINT` you can reach.
 
 ## Run it
 
@@ -31,7 +31,35 @@ demo COP quote every minute under `tsx watch`, restarting as you edit. Until the
 key is registered with t-0, each tick logs `Unauthenticated` — that is expected
 and tells you the key exchange is still pending.
 
+The callback server speaks HTTP/1.1 only, with the Connect protocol. It serves no
+gRPC (there is no HTTP/2) and no gRPC-Web (the SDK turns it off).
+
 `npm run build && npm start` runs the compiled build; `npm test` runs the tests.
+
+## Environment variables
+
+The app reads `.env` from the working directory. When there is none, it says so on
+stderr and takes its configuration from the environment alone. A variable that is
+already set in the environment wins over the same one in `.env`.
+
+| Variable | Required | Default | What it is |
+|---|---|---|---|
+| `PROVIDER_PRIVATE_KEY` | yes | — | Your secp256k1 private key (hex). Every call you send to t-0 is signed with it. `usdt-pay init` wrote one into `.env`. |
+| `NETWORK_PUBLIC_KEY` | yes | — | t-0's public key. A callback that does not verify against it is refused. `.env` starts with the sandbox key. |
+| `TZERO_ENDPOINT` | no | `https://usdt-pay-api-sandbox.t-0.network` | The t-0 API your outbound calls go to. |
+| `PORT` | no | `8080` | The port the callback server listens on, an integer from 1 to 65535. |
+
+An empty `TZERO_ENDPOINT` or `PORT` counts as unset. Whitespace around the two keys
+and around `PORT` is ignored.
+
+Two libraries read variables of their own:
+
+- dotenv, which loads `.env`, reads `DOTENV_PATH` (load another file instead of
+  `./.env`), `DOTENV_ENCODING`, `DOTENV_OVERRIDE` (let `.env` win over the
+  environment), `DOTENV_DEBUG` and `DOTENV_FAST`. Each is also read as
+  `DOTENV_CONFIG_<NAME>`. The app sets `quiet` itself, so `DOTENV_QUIET` has no effect.
+- `@bufbuild/protobuf` reads `BUF_BIGINT_DISABLE`. Set to `1`, it turns 64-bit
+  integers into strings, which this code does not handle. Leave it unset.
 
 ## What you implement
 
@@ -128,11 +156,13 @@ switch (outcome.kind) {
 }
 ```
 
-A refusal t-0 answered with — a request it read and would refuse again, such as
-`invalid_argument` — comes back as `rejected` rather than `unknown`, because
-resending those same bytes only spins.
+A refusal t-0 answered with — a request it read and would refuse again:
+`invalid_argument`, `unauthenticated`, `permission_denied`, `unimplemented` or
+`failed_precondition` — comes back as `rejected` rather than `unknown`, because
+resending those same bytes only spins. Any other error code, or no answer at all, is
+`unknown`.
 
-`FAILED_PRECONDITION` on `FiatSettlementSent` is the exception: an execution's
+`failed_precondition` on `FiatSettlementSent` is the exception: an execution's
 durable result is still pending, and the contract says retry the same request. The
 helper classifies it as `unknown` so the caller retries.
 
@@ -166,7 +196,7 @@ Point `TZERO_ENDPOINT` at a sandbox only once both sides pass on their own.
 ```
 src/
 ├── index.ts                    # entry point, phases in order
-├── config.ts                   # what .env supplies
+├── config.ts                   # what .env supplies, and what a bad value prints
 ├── handler.ts                  # ExecuteQuote — t-0 calls you
 ├── quotes.ts                   # demo quote publisher loop
 └── internal/
@@ -176,10 +206,11 @@ src/
     └── decimals.ts             # unscaled × 10^exponent ↔ decimal string
 test/
 ├── callback_server.test.ts     # ExecuteQuote answers accepted; a call t-0 did not sign never lands
+├── config.test.ts              # every configuration error, word for word
 ├── decimals.test.ts
-├── outcome.test.ts
+├── outcome.test.ts             # which error codes are rejected and which are unknown
 ├── publish_quote.test.ts       # all three outcomes against a fake t-0
-├── fiat_settlement_sent.test.ts # all three outcomes against a fake t-0
+├── fiat_settlement_sent.test.ts # all three outcomes against a fake t-0, and the FAILED_PRECONDITION retry
 └── quotes.test.ts              # demo publisher fires and stops
 ```
 
@@ -192,3 +223,9 @@ docker run -p 8080:8080 --env-file .env usdt-pay-lp
 ```
 
 The image carries no `.env` on purpose: your private key does not belong in a layer.
+It runs on `node:24-alpine` as the non-root `node` user.
+
+On `SIGINT` or `SIGTERM` the app stops the quote timer and taking calls, gives the
+ones in flight up to 15 seconds to finish, and exits 0. `docker stop` waits only 10
+seconds before it kills the process; `docker stop -t 20` gives the drain its full
+time.
