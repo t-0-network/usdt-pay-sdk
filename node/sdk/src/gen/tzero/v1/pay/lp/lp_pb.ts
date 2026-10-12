@@ -48,7 +48,9 @@ export const PublishQuoteRequestSchema: GenMessage<PublishQuoteRequest> = /*@__P
  */
 export type PublishQuoteRequest_Quote = Message<"tzero.v1.pay.lp.PublishQuoteRequest.Quote"> & {
   /**
-   * * LP's identifier for this quote; idempotency key, unique per LP. 
+   * *
+   * LP's identifier for this quote; idempotency key, unique per LP. Mint a fresh quote_ref for
+   * every new quote.
    *
    * @generated from field: string quote_ref = 10;
    */
