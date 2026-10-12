@@ -1,6 +1,6 @@
 plugins {
     `java-library`
-    id("build.buf") version "0.11.1"
+    id("build.buf") version "0.11.2"
     `maven-publish`
     signing
     id("com.gradleup.nmcp")
