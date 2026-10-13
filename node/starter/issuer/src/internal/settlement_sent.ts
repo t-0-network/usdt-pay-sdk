@@ -70,7 +70,7 @@ export async function reportSettlementSent(
     }
   } catch (error) {
     // Never broadcast a second transfer to "retry" — resend this same ref.
-    console.error(`SettlementSent failed for ref ${settlement.settlementRef}:`, error);
+    console.error(`SettlementSent failed for ref ${settlement.settlementRef}: ${error instanceof Error ? error.message : String(error)}`);
     return outcomeFromError(error);
   }
 }

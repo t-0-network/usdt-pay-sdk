@@ -1,15 +1,21 @@
 import assert from "node:assert/strict";
 import type { AddressInfo } from "node:net";
 import { after, test } from "node:test";
+import { setTimeout } from "node:timers/promises";
+import { createClient as createLocalClient, createRouterTransport } from "@connectrpc/connect";
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import {
+  Code,
+  ConnectError,
   LpCallbackService,
+  LpService,
   createClient,
   createServer,
   publicKeyFromPrivateKey,
 } from "@t-0/usdt-pay-sdk";
 import { decimalFromString } from "../src/internal/decimals.js";
 import { lpCallbackHandler } from "../src/handler.js";
+import { startQuotePublisher } from "../src/quotes.js";
 
 // In production this is t-0's key and you only hold the public half. Here the test
 // plays t-0, so it signs with the key the server is told to trust.
@@ -46,6 +52,38 @@ test("ExecuteQuote answers accepted", async () => {
 
   assert.equal(response.result.case, "accepted");
 });
+
+for (const error of [new ConnectError("t-0 is down", Code.Unavailable), new Error("local failure")]) {
+  test(`a quote failure (${error.message}) logs once and leaves the timer and server running`, async (t) => {
+    const quotesT0 = createLocalClient(LpService, createRouterTransport(({ service }) => {
+      service(LpService, {
+        publishQuote: async () => ({ result: { case: "success", value: { quotes: [] } } }),
+      });
+    }));
+    const publishQuote = quotesT0.publishQuote;
+    let attempts = 0;
+    t.mock.method(quotesT0, "publishQuote", async (...args: Parameters<typeof publishQuote>) => {
+      if (++attempts === 1) throw error;
+      return publishQuote(...args);
+    });
+    const stderr = t.mock.method(console, "error", () => {});
+    const stop = startQuotePublisher(quotesT0, { refreshMs: 10 });
+    t.after(stop);
+
+    await setTimeout(50);
+    assert.ok(attempts >= 2, "the next tick must run after a failure");
+    const prefix = error instanceof ConnectError ? "PublishQuote failed" : "PublishQuote tick failed";
+    assert.deepEqual(stderr.mock.calls.map(({ arguments: args }) => args), [
+      [`${prefix}: ${error.message}`],
+    ]);
+    assert.equal((await t0.executeQuote(request)).result.case, "accepted");
+
+    stop();
+    const stoppedAt = attempts;
+    await setTimeout(30);
+    assert.equal(attempts, stoppedAt);
+  });
+}
 
 test("a call signed by anyone but t-0 never reaches the handler", async () => {
   const impostor = createClient(
