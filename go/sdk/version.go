@@ -1,3 +1,3 @@
 package usdtpay
 
-const SDKVersion = "0.2.9"
+const SDKVersion = "0.3.0"
