@@ -71,7 +71,7 @@ export async function reportPaymentReceived(
         return noResultVariant();
     }
   } catch (error) {
-    console.error(`PaymentReceived failed for intent ${payment.paymentIntentId}:`, error);
+    console.error(`PaymentReceived failed for intent ${payment.paymentIntentId}: ${error instanceof Error ? error.message : String(error)}`);
     return outcomeFromError(error);
   }
 }

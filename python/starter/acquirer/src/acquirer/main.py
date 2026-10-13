@@ -40,7 +40,11 @@ async def run_demo_sale(t0: AcquirerServiceClient) -> None:
     payment_ref = str(uuid4())
     idempotency_key = str(uuid4())
 
-    quoted = await get_payment_quote(t0, local_currency=local_currency, local_amount=local_amount)
+    try:
+        quoted = await get_payment_quote(t0, local_currency=local_currency, local_amount=local_amount)
+    except Exception as e:
+        logger.error("GetPaymentQuote failed: %s", e)
+        return
 
     if isinstance(quoted, Accepted):
         logger.info(
@@ -50,20 +54,24 @@ async def run_demo_sale(t0: AcquirerServiceClient) -> None:
             quoted.value.expires_at.ToDatetime().isoformat(),
         )
     elif isinstance(quoted, Unknown):
-        logger.warning("GetPaymentQuote unanswered — safe to retry")
+        logger.warning("GetPaymentQuote unanswered — safe to retry: %s", quoted.detail)
     elif isinstance(quoted, Rejected):
         logger.warning("GetPaymentQuote rejected: %s", quoted.reason)
 
     if not isinstance(quoted, Accepted):
         return
 
-    intent = await create_payment_intent(
-        t0,
-        payment_ref=payment_ref,
-        idempotency_key=idempotency_key,
-        amount=acquirer_pb2.LocalAmount(value=decimal_from_string(local_amount), currency=local_currency),
-        quote_id=quoted.value.quote_id,
-    )
+    try:
+        intent = await create_payment_intent(
+            t0,
+            payment_ref=payment_ref,
+            idempotency_key=idempotency_key,
+            amount=acquirer_pb2.LocalAmount(value=decimal_from_string(local_amount), currency=local_currency),
+            quote_id=quoted.value.quote_id,
+        )
+    except Exception as e:
+        logger.error("CreatePaymentIntent failed: %s", e)
+        return
 
     if isinstance(intent, Accepted):
         logger.info(
@@ -79,7 +87,7 @@ async def run_demo_sale(t0: AcquirerServiceClient) -> None:
                 opt.token_decimals,
             )
     elif isinstance(intent, Unknown):
-        logger.warning("CreatePaymentIntent unanswered — retry the same idempotency_key")
+        logger.warning("CreatePaymentIntent unanswered — retry the same idempotency_key: %s", intent.detail)
     elif isinstance(intent, Rejected):
         logger.warning("CreatePaymentIntent rejected: %s", intent.reason)
 
@@ -106,7 +114,7 @@ def stop(server: uvicorn.Server) -> None:
 
 def log_if_failed(task: asyncio.Task[None]) -> None:
     if not task.cancelled() and (error := task.exception()) is not None:
-        logger.error("Demo sale failed", exc_info=error)
+        logger.error("Demo sale failed: %s", error)
 
 
 async def main() -> None:

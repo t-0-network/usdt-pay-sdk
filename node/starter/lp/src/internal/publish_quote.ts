@@ -54,7 +54,9 @@ export async function publishQuotes(
         return noResultVariant();
     }
   } catch (error) {
-    console.error("PublishQuote failed:", error);
-    return outcomeFromError(error);
+    // Non-Connect errors propagate to the caller, which logs them (the demo timer does).
+    const outcome = outcomeFromError(error);
+    console.error(`PublishQuote failed: ${error instanceof Error ? error.message : String(error)}`);
+    return outcome;
   }
 }

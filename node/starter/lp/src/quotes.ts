@@ -24,8 +24,8 @@ export function startQuotePublisher(
 
     publishQuotes(t0, [
       { quoteRef, localCurrency: QUOTE_CURRENCY, fxRate: QUOTE_FX_RATE, expiresAt },
-    ]).catch((e: unknown) => {
-      console.error("PublishQuote tick failed", e);
+    ]).catch((error: unknown) => {
+      console.error(`PublishQuote tick failed: ${error instanceof Error ? error.message : String(error)}`);
     });
   };
 

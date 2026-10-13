@@ -70,7 +70,7 @@ export async function reportFiatSettlementSent(
     }
   } catch (error) {
     // Never wire a second transfer to "retry" — resend this same ref.
-    console.error(`FiatSettlementSent failed for ref ${settlement.bankTransferRef}:`, error);
+    console.error(`FiatSettlementSent failed for ref ${settlement.bankTransferRef}: ${error instanceof Error ? error.message : String(error)}`);
     // Everywhere else FAILED_PRECONDITION is a refusal, but not here. The contract says
     // so on this RPC (tzero/v1/pay/lp/lp.proto:25): "An execution still awaiting its
     // durable result returns FAILED_PRECONDITION; retry the same request."

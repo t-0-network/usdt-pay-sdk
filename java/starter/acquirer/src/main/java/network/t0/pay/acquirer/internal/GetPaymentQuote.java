@@ -60,7 +60,7 @@ public final class GetPaymentQuote {
                 }
             }
         } catch (StatusRuntimeException e) {
-            log.error("GetPaymentQuote failed: {}", e.getStatus());
+            log.error("GetPaymentQuote failed: {}", e.getMessage());
             return Outcome.fromError(e);
         }
     }
