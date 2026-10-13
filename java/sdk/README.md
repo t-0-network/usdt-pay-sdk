@@ -79,9 +79,9 @@ try (var t0 = UsdtPayClient.create(baseUrl, Signer.fromHex(privateKey),
 }
 ```
 
-`baseUrl` is the pay API's base URL: provider-sdk's default is a different t-0
-API. When the key lives in an HSM or KMS and never reaches this process, pass your
-own `DigestSigner` instead of a `Signer`.
+`baseUrl` is the pay API's base URL and is required. Passing `null` or an empty
+string causes an error from provider-sdk. When the key lives in an HSM or KMS and
+never reaches this process, pass your own `DigestSigner` instead of a `Signer`.
 
 All 14 endpoints are unary request/response — nothing in this protocol streams,
 which is why the starters use the blocking stub everywhere, and why you probably

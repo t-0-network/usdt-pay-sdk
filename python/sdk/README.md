@@ -91,10 +91,8 @@ t0 = create_client(private_key_hex, AcquirerServiceClient, base_url=base_url)
 response = await t0.create_payment_intent(request)
 ```
 
-`base_url` is the pay API's base URL; always pass it. `None` gives provider-sdk's
-default, `https://api.t-0.network`, which is a different t-0 API, so a client built
-from an unset variable signs valid requests and sends them to the wrong host. An
-empty string raises `ValueError`.
+`base_url` is the pay API's base URL and is required. Omitting it raises
+`TypeError`; passing `None` or an empty string raises `ValueError` from provider-sdk.
 
 Every call gets provider-sdk's default deadline; `timeout_ms=` on a call replaces it
 for that call: `await t0.create_payment_intent(request, timeout_ms=30_000)`.

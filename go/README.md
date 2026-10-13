@@ -38,6 +38,9 @@ t0, err := usdtpay.CreateClient(baseURL, privateKeyHex,
     acquirerconnect.NewAcquirerServiceClient)
 ```
 
+`baseURL` is the pay API's base URL and must be non-empty. An empty string returns
+an error from provider-sdk.
+
 When the key lives in an HSM or KMS and never reaches this process, build the
 client with provider-sdk directly and give it a `crypto.SignFn` (from
 `github.com/t-0-network/provider-sdk/go/crypto`) instead of a key:

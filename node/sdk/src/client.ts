@@ -10,10 +10,8 @@ import { createClient as createProviderClient, type Client, type SignerFunction 
  * const response = await t0.paymentReceived(request);
  * ```
  *
- * **`baseUrl` is required on purpose.** The underlying provider client defaults to
- * `https://api.t-0.network`, which is a different API from this one — a pay
- * participant that omitted the base URL would sign perfectly valid requests and send
- * them to the wrong host.
+ * `baseUrl` is the pay API's base URL and is required. The provider client throws
+ * an error for a missing or empty base URL.
  *
  * Every call gets provider-sdk's default deadline; a `{ timeoutMs }` in a call's
  * second argument replaces it for that call.

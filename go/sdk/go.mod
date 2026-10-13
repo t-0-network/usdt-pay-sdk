@@ -5,7 +5,7 @@ go 1.27.0
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20260825204119-511051f7f437.2
 	connectrpc.com/connect v1.21.0
-	github.com/t-0-network/provider-sdk/go v1.3.0
+	github.com/t-0-network/provider-sdk/go v1.3.1
 	google.golang.org/protobuf v1.36.12
 )
 
@@ -13,8 +13,9 @@ require (
 	buf.build/go/protovalidate v1.4.0 // indirect
 	cel.dev/cel-go v0.32.0 // indirect
 	cel.dev/expr v0.25.3 // indirect
+	connectrpc.com/connect/v2 v2.0.0 // indirect
 	connectrpc.com/grpchealth v1.5.0 // indirect
-	connectrpc.com/validate v0.7.0 // indirect
+	connectrpc.com/validate v0.9.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.5.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1 // indirect
