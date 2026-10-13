@@ -228,9 +228,8 @@ const response = await t0.paymentReceived(request);
 
 All 14 endpoints are unary request/response — nothing in this contract streams.
 
-`baseUrl` is required: the underlying provider client defaults to a different t-0
-API, and a pay participant that omitted it would sign perfectly valid requests and
-send them to the wrong host.
+`baseUrl` is the pay API's base URL and is required. A missing or empty base URL
+throws an error from provider-sdk.
 
 Every call gets provider-sdk's default deadline; a `{ timeoutMs }` in a call's second
 argument replaces it for that call.

@@ -26,7 +26,7 @@ public final class UsdtPayClient {
 
     /**
      * @param baseUrl     t-0 API base URL, e.g. {@code https://usdt-pay-api-sandbox.t-0.network};
-     *                    the provider SDK's default is a different API
+     *                    required — null or an empty string causes an error
      * @param signer      your secp256k1 key, as a {@code Signer}, or a {@code DigestSigner}
      *                    when the key lives in an HSM or KMS and never reaches this process
      * @param stubFactory the stub for your role, e.g. {@code AcquirerServiceGrpc::newBlockingStub}

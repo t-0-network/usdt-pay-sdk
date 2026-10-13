@@ -15,8 +15,8 @@ def create_client(signer: str | SignFn, client_class: type[T], *, base_url: str)
 
     ``signer`` is either a hex private key or a ``SignFn`` for HSM/KMS use.
 
-    ``base_url`` is the pay API's base URL; always pass it. ``None`` gives the provider
-    client's default, ``api.t-0.network``, which is a different API.
+    ``base_url`` is the pay API's base URL and is required. Omitting it raises
+    ``TypeError``; passing ``None`` or an empty string raises ``ValueError``.
     """
     return new_service_client(signer, client_class, base_url=base_url)
 

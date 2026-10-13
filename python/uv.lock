@@ -638,7 +638,7 @@ wheels = [
 
 [[package]]
 name = "t0-provider-sdk"
-version = "1.3.0"
+version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "coincurve" },
@@ -649,9 +649,9 @@ dependencies = [
     { name = "pycryptodome" },
     { name = "pyqwest" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e7/e6/4c1d2a7e360f8f19f66016f8ea7b4fcf8441c4e443aa08d74cb4d3186e85/t0_provider_sdk-1.3.0.tar.gz", hash = "sha256:5fbe78c7bfc1323103009c8ac12af2f312f13e6fa91d8492478b3da9d3223a23", size = 156816, upload-time = "2026-10-08T08:04:28.093Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4f/20/1cc1a53f1e6ac26b59e3374a65a0c765316cffd0320b67d1ae464a7d0036/t0_provider_sdk-1.3.1.tar.gz", hash = "sha256:baeead06c7891e6a3c27b4416c5eee0fad79e3d7f4df2e0ab71fe10b04e9ece3", size = 189869, upload-time = "2026-10-13T17:12:46.168Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a2/77/de063c8470848bd43c9b7146712ac6ee606c5c89ad042634d83e1ffc51cb/t0_provider_sdk-1.3.0-py3-none-any.whl", hash = "sha256:c18a7886ee5c80ce26e164b29fea4aa92d544146a99f42a9472ed1611dfc4b49", size = 148711, upload-time = "2026-10-08T08:04:26.675Z" },
+    { url = "https://files.pythonhosted.org/packages/f6/f3/dd7574e831e6d9adfd6daf88f5920065f63cc96550bac747596d4ca3433b/t0_provider_sdk-1.3.1-py3-none-any.whl", hash = "sha256:ff67876242ec6470632b03cabd70c89fb99230e2edb4bb85538afffbc8289261", size = 188263, upload-time = "2026-10-13T17:12:44.457Z" },
 ]
 
 [[package]]
@@ -668,7 +668,7 @@ dependencies = [
 requires-dist = [
     { name = "connectrpc", specifier = ">=0.12.1" },
     { name = "protobuf", specifier = ">=7.36.2" },
-    { name = "t0-provider-sdk", specifier = "==1.3.0" },
+    { name = "t0-provider-sdk", specifier = "==1.3.1" },
 ]
 
 [[package]]
