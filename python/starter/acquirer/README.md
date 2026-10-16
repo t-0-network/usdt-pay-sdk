@@ -34,7 +34,7 @@ waiting on t-0, and exits with status 0.
 |---|---|---|---|
 | `PROVIDER_PRIVATE_KEY` | Yes | Generated into `.env` by the CLI | Your secp256k1 private key (hex). Every request you send to t-0 is signed with it. |
 | `NETWORK_PUBLIC_KEY` | Yes | The sandbox key, in `.env` | t-0's public key. Every callback must verify against it. |
-| `TZERO_ENDPOINT` | No | `https://usdt-pay-api-sandbox.t-0.network` | The t-0 pay API. |
+| `TZERO_ENDPOINT` | No | `https://pay-api-sandbox.t-0.network` | The t-0 pay API. |
 | `PORT` | No | `8080` | The callback server's port, 1 to 65535. |
 
 Surrounding whitespace is trimmed from the two keys and from `PORT`. An empty

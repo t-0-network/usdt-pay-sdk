@@ -54,7 +54,7 @@ def load_config() -> Config:
     private_key = os.environ.get("PROVIDER_PRIVATE_KEY", "").strip()
     network_public_key = os.environ.get("NETWORK_PUBLIC_KEY", "").strip()
     # An empty value counts as unset.
-    tzero_endpoint = os.getenv("TZERO_ENDPOINT") or "https://usdt-pay-api-sandbox.t-0.network"
+    tzero_endpoint = os.getenv("TZERO_ENDPOINT") or "https://pay-api-sandbox.t-0.network"
 
     if not private_key:
         raise ConfigurationError(

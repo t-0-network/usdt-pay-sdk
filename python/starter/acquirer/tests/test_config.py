@@ -146,13 +146,13 @@ def test_valid_port(keys, monkeypatch, value, port):
 def test_tzero_endpoint_default(keys, monkeypatch, value):
     if value is not None:
         monkeypatch.setenv("TZERO_ENDPOINT", value)
-    assert load_config().tzero_endpoint == "https://usdt-pay-api-sandbox.t-0.network"
+    assert load_config().tzero_endpoint == "https://pay-api-sandbox.t-0.network"
 
 
 def test_valid_config(keys):
     config = load_config()
     assert config.port == 8080
-    assert config.tzero_endpoint == "https://usdt-pay-api-sandbox.t-0.network"
+    assert config.tzero_endpoint == "https://pay-api-sandbox.t-0.network"
     assert config.public_key == public_key_from_private_key(PRIVATE_KEY)
 
 
