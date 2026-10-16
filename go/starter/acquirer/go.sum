@@ -40,8 +40,8 @@ github.com/stretchr/testify v1.12.1 h1:EuwCh5fleGS7H32xRwO3wRGT7DxrDhLAT6FF8MpWD
 github.com/stretchr/testify v1.12.1/go.mod h1:MDEgiDPPsNp5cuIrHPPCyornHKgEVbtFUmoNlxoYthg=
 github.com/t-0-network/provider-sdk/go v1.3.1 h1:ykFz4PuFtlVxa5zCV4t0AT5ss69/qBOmpaFy9OQLeeI=
 github.com/t-0-network/provider-sdk/go v1.3.1/go.mod h1:+EQdPImf8tl9qEhtpsaM0BeRfOfzQOPkqTLjnqwZU7w=
-github.com/t-0-network/usdt-pay-sdk/go/sdk v0.3.0 h1:yKMALWqpP6gDARdNy8HUnIRrLg99/Qg+q4jxnNRosSQ=
-github.com/t-0-network/usdt-pay-sdk/go/sdk v0.3.0/go.mod h1:46/dDuv68Wv3N/9ptQ+iQ8s+2SLz7lzT1aA6Kgk/mq8=
+github.com/t-0-network/usdt-pay-sdk/go/sdk v0.3.1 h1:XKMjRVhRq/QT8nD2LTi/guf0r/qYOlXutdRk0u4lch0=
+github.com/t-0-network/usdt-pay-sdk/go/sdk v0.3.1/go.mod h1:46/dDuv68Wv3N/9ptQ+iQ8s+2SLz7lzT1aA6Kgk/mq8=
 go.yaml.in/yaml/v3 v3.0.5 h1:N6y/pJk8buWs9NY5ERU2HSMfm+IuD/OtfdAnq6kESPw=
 go.yaml.in/yaml/v3 v3.0.5/go.mod h1:HVTZu1O7/Vkt2N+BFy8Zza+lnLsABggaTM2ZpNIGuKg=
 golang.org/x/crypto v0.56.0 h1:GUh5Ii4J5jtcseSMiRqr1jXCNHoxjeV9Fmekc2oLy6Y=
