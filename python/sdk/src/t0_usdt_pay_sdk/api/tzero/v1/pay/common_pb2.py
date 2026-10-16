@@ -26,7 +26,7 @@ from buf.validate import validate_pb2 as buf_dot_validate_dot_validate__pb2
 from tzero.v1.pay import validate_pb2 as tzero_dot_v1_dot_pay_dot_validate__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19tzero/v1/pay/common.proto\x12\x0ctzero.v1.pay\x1a\x1b\x62uf/validate/validate.proto\x1a\x1btzero/v1/pay/validate.proto\"U\n\x07\x44\x65\x63imal\x12\x1a\n\x08unscaled\x18\n \x01(\x03R\x08unscaled\x12.\n\x08\x65xponent\x18\x14 \x01(\x05\x42\x12\xbaH\x0f\x1a\r\x18\x08(\xf8\xff\xff\xff\xff\xff\xff\xff\xff\x01R\x08\x65xponent\"\xb6\x01\n\x12UsdtOnChainPayment\x12:\n\x05\x63hain\x18\n \x01(\x0e\x32\x18.tzero.v1.pay.BlockchainB\n\xbaH\x07\x82\x01\x04\x10\x01 \x00R\x05\x63hain\x12\x32\n\x10on_chain_tx_hash\x18\x14 \x01(\tB\t\xbaH\x06r\x04\x88\xb5\x18\x01R\ronChainTxHash\x12\x30\n\x0esender_address\x18\x1e \x01(\tB\t\xbaH\x06r\x04\x90\xb5\x18\x01R\rsenderAddress\"\xc6\x01\n\x18OnChainSettlementDetails\x12\x32\n\x10on_chain_tx_hash\x18\n \x01(\tB\t\xbaH\x06r\x04\x88\xb5\x18\x01R\ronChainTxHash\x12:\n\x05\x63hain\x18\x14 \x01(\x0e\x32\x18.tzero.v1.pay.BlockchainB\n\xbaH\x07\x82\x01\x04\x10\x01 \x00R\x05\x63hain\x12:\n\x13\x64\x65stination_address\x18\x1e \x01(\tB\t\xbaH\x06r\x04\x90\xb5\x18\x01R\x12\x64\x65stinationAddress*e\n\nBlockchain\x12\x1a\n\x16\x42LOCKCHAIN_UNSPECIFIED\x10\x00\x12\x13\n\x0f\x42LOCKCHAIN_TRON\x10\n\x12\x12\n\x0e\x42LOCKCHAIN_ETH\x10\x14\x12\x12\n\x0e\x42LOCKCHAIN_BSC\x10\x1e*\x89\x01\n\x10\x46undsDisposition\x12!\n\x1d\x46UNDS_DISPOSITION_UNSPECIFIED\x10\x00\x12(\n$FUNDS_DISPOSITION_RETURNED_TO_SENDER\x10\n\x12(\n$FUNDS_DISPOSITION_RETAINED_BY_ISSUER\x10\x14*\x96\x01\n\x14PaymentFailureReason\x12&\n\"PAYMENT_FAILURE_REASON_UNSPECIFIED\x10\x00\x12*\n&PAYMENT_FAILURE_REASON_AMOUNT_MISMATCH\x10\n\x12*\n&PAYMENT_FAILURE_REASON_ISSUER_DECLINED\x10\x14\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19tzero/v1/pay/common.proto\x12\x0ctzero.v1.pay\x1a\x1b\x62uf/validate/validate.proto\x1a\x1btzero/v1/pay/validate.proto\"U\n\x07\x44\x65\x63imal\x12\x1a\n\x08unscaled\x18\n \x01(\x03R\x08unscaled\x12.\n\x08\x65xponent\x18\x14 \x01(\x05\x42\x12\xbaH\x0f\x1a\r\x18\x08(\xf8\xff\xff\xff\xff\xff\xff\xff\xff\x01R\x08\x65xponent\"\xb6\x01\n\x12UsdtOnChainPayment\x12:\n\x05\x63hain\x18\n \x01(\x0e\x32\x18.tzero.v1.pay.BlockchainB\n\xbaH\x07\x82\x01\x04\x10\x01 \x00R\x05\x63hain\x12\x32\n\x10on_chain_tx_hash\x18\x14 \x01(\tB\t\xbaH\x06r\x04\x88\xb5\x18\x01R\ronChainTxHash\x12\x30\n\x0esender_address\x18\x1e \x01(\tB\t\xbaH\x06r\x04\x90\xb5\x18\x01R\rsenderAddress\"\xc6\x01\n\x18OnChainSettlementDetails\x12\x32\n\x10on_chain_tx_hash\x18\n \x01(\tB\t\xbaH\x06r\x04\x88\xb5\x18\x01R\ronChainTxHash\x12:\n\x05\x63hain\x18\x14 \x01(\x0e\x32\x18.tzero.v1.pay.BlockchainB\n\xbaH\x07\x82\x01\x04\x10\x01 \x00R\x05\x63hain\x12:\n\x13\x64\x65stination_address\x18\x1e \x01(\tB\t\xbaH\x06r\x04\x90\xb5\x18\x01R\x12\x64\x65stinationAddress*\xad\x01\n\nBlockchain\x12\x1a\n\x16\x42LOCKCHAIN_UNSPECIFIED\x10\x00\x12\x13\n\x0f\x42LOCKCHAIN_TRON\x10\n\x12\x12\n\x0e\x42LOCKCHAIN_ETH\x10\x14\x12\x12\n\x0e\x42LOCKCHAIN_BSC\x10\x1e\x12\x16\n\x12\x42LOCKCHAIN_POLYGON\x10(\x12\x17\n\x13\x42LOCKCHAIN_ARBITRUM\x10\x32\x12\x15\n\x11\x42LOCKCHAIN_PLASMA\x10<*\x89\x01\n\x10\x46undsDisposition\x12!\n\x1d\x46UNDS_DISPOSITION_UNSPECIFIED\x10\x00\x12(\n$FUNDS_DISPOSITION_RETURNED_TO_SENDER\x10\n\x12(\n$FUNDS_DISPOSITION_RETAINED_BY_ISSUER\x10\x14*\x96\x01\n\x14PaymentFailureReason\x12&\n\"PAYMENT_FAILURE_REASON_UNSPECIFIED\x10\x00\x12*\n&PAYMENT_FAILURE_REASON_AMOUNT_MISMATCH\x10\n\x12*\n&PAYMENT_FAILURE_REASON_ISSUER_DECLINED\x10\x14\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -47,12 +47,12 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_ONCHAINSETTLEMENTDETAILS'].fields_by_name['chain']._serialized_options = b'\272H\007\202\001\004\020\001 \000'
   _globals['_ONCHAINSETTLEMENTDETAILS'].fields_by_name['destination_address']._loaded_options = None
   _globals['_ONCHAINSETTLEMENTDETAILS'].fields_by_name['destination_address']._serialized_options = b'\272H\006r\004\220\265\030\001'
-  _globals['_BLOCKCHAIN']._serialized_start=574
-  _globals['_BLOCKCHAIN']._serialized_end=675
-  _globals['_FUNDSDISPOSITION']._serialized_start=678
-  _globals['_FUNDSDISPOSITION']._serialized_end=815
-  _globals['_PAYMENTFAILUREREASON']._serialized_start=818
-  _globals['_PAYMENTFAILUREREASON']._serialized_end=968
+  _globals['_BLOCKCHAIN']._serialized_start=575
+  _globals['_BLOCKCHAIN']._serialized_end=748
+  _globals['_FUNDSDISPOSITION']._serialized_start=751
+  _globals['_FUNDSDISPOSITION']._serialized_end=888
+  _globals['_PAYMENTFAILUREREASON']._serialized_start=891
+  _globals['_PAYMENTFAILUREREASON']._serialized_end=1041
   _globals['_DECIMAL']._serialized_start=101
   _globals['_DECIMAL']._serialized_end=186
   _globals['_USDTONCHAINPAYMENT']._serialized_start=189

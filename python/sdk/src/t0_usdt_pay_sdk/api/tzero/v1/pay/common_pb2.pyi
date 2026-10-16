@@ -13,6 +13,9 @@ class Blockchain(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     BLOCKCHAIN_TRON: _ClassVar[Blockchain]
     BLOCKCHAIN_ETH: _ClassVar[Blockchain]
     BLOCKCHAIN_BSC: _ClassVar[Blockchain]
+    BLOCKCHAIN_POLYGON: _ClassVar[Blockchain]
+    BLOCKCHAIN_ARBITRUM: _ClassVar[Blockchain]
+    BLOCKCHAIN_PLASMA: _ClassVar[Blockchain]
 
 class FundsDisposition(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
@@ -29,6 +32,9 @@ BLOCKCHAIN_UNSPECIFIED: Blockchain
 BLOCKCHAIN_TRON: Blockchain
 BLOCKCHAIN_ETH: Blockchain
 BLOCKCHAIN_BSC: Blockchain
+BLOCKCHAIN_POLYGON: Blockchain
+BLOCKCHAIN_ARBITRUM: Blockchain
+BLOCKCHAIN_PLASMA: Blockchain
 FUNDS_DISPOSITION_UNSPECIFIED: FundsDisposition
 FUNDS_DISPOSITION_RETURNED_TO_SENDER: FundsDisposition
 FUNDS_DISPOSITION_RETAINED_BY_ISSUER: FundsDisposition

@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file tzero/v1/pay/common.proto.
  */
 export const file_tzero_v1_pay_common: GenFile = /*@__PURE__*/
-  fileDesc("Chl0emVyby92MS9wYXkvY29tbW9uLnByb3RvEgx0emVyby52MS5wYXkiQQoHRGVjaW1hbBIQCgh1bnNjYWxlZBgKIAEoAxIkCghleHBvbmVudBgUIAEoBUISukgPGg0YCCj4//////////8BIpEBChJVc2R0T25DaGFpblBheW1lbnQSMwoFY2hhaW4YCiABKA4yGC50emVyby52MS5wYXkuQmxvY2tjaGFpbkIKukgHggEEEAEgABIjChBvbl9jaGFpbl90eF9oYXNoGBQgASgJQgm6SAZyBIi1GAESIQoOc2VuZGVyX2FkZHJlc3MYHiABKAlCCbpIBnIEkLUYASKcAQoYT25DaGFpblNldHRsZW1lbnREZXRhaWxzEiMKEG9uX2NoYWluX3R4X2hhc2gYCiABKAlCCbpIBnIEiLUYARIzCgVjaGFpbhgUIAEoDjIYLnR6ZXJvLnYxLnBheS5CbG9ja2NoYWluQgq6SAeCAQQQASAAEiYKE2Rlc3RpbmF0aW9uX2FkZHJlc3MYHiABKAlCCbpIBnIEkLUYASplCgpCbG9ja2NoYWluEhoKFkJMT0NLQ0hBSU5fVU5TUEVDSUZJRUQQABITCg9CTE9DS0NIQUlOX1RST04QChISCg5CTE9DS0NIQUlOX0VUSBAUEhIKDkJMT0NLQ0hBSU5fQlNDEB4qiQEKEEZ1bmRzRGlzcG9zaXRpb24SIQodRlVORFNfRElTUE9TSVRJT05fVU5TUEVDSUZJRUQQABIoCiRGVU5EU19ESVNQT1NJVElPTl9SRVRVUk5FRF9UT19TRU5ERVIQChIoCiRGVU5EU19ESVNQT1NJVElPTl9SRVRBSU5FRF9CWV9JU1NVRVIQFCqWAQoUUGF5bWVudEZhaWx1cmVSZWFzb24SJgoiUEFZTUVOVF9GQUlMVVJFX1JFQVNPTl9VTlNQRUNJRklFRBAAEioKJlBBWU1FTlRfRkFJTFVSRV9SRUFTT05fQU1PVU5UX01JU01BVENIEAoSKgomUEFZTUVOVF9GQUlMVVJFX1JFQVNPTl9JU1NVRVJfREVDTElORUQQFGIGcHJvdG8z", [file_buf_validate_validate, file_tzero_v1_pay_validate]);
+  fileDesc("Chl0emVyby92MS9wYXkvY29tbW9uLnByb3RvEgx0emVyby52MS5wYXkiQQoHRGVjaW1hbBIQCgh1bnNjYWxlZBgKIAEoAxIkCghleHBvbmVudBgUIAEoBUISukgPGg0YCCj4//////////8BIpEBChJVc2R0T25DaGFpblBheW1lbnQSMwoFY2hhaW4YCiABKA4yGC50emVyby52MS5wYXkuQmxvY2tjaGFpbkIKukgHggEEEAEgABIjChBvbl9jaGFpbl90eF9oYXNoGBQgASgJQgm6SAZyBIi1GAESIQoOc2VuZGVyX2FkZHJlc3MYHiABKAlCCbpIBnIEkLUYASKcAQoYT25DaGFpblNldHRsZW1lbnREZXRhaWxzEiMKEG9uX2NoYWluX3R4X2hhc2gYCiABKAlCCbpIBnIEiLUYARIzCgVjaGFpbhgUIAEoDjIYLnR6ZXJvLnYxLnBheS5CbG9ja2NoYWluQgq6SAeCAQQQASAAEiYKE2Rlc3RpbmF0aW9uX2FkZHJlc3MYHiABKAlCCbpIBnIEkLUYASqtAQoKQmxvY2tjaGFpbhIaChZCTE9DS0NIQUlOX1VOU1BFQ0lGSUVEEAASEwoPQkxPQ0tDSEFJTl9UUk9OEAoSEgoOQkxPQ0tDSEFJTl9FVEgQFBISCg5CTE9DS0NIQUlOX0JTQxAeEhYKEkJMT0NLQ0hBSU5fUE9MWUdPThAoEhcKE0JMT0NLQ0hBSU5fQVJCSVRSVU0QMhIVChFCTE9DS0NIQUlOX1BMQVNNQRA8KokBChBGdW5kc0Rpc3Bvc2l0aW9uEiEKHUZVTkRTX0RJU1BPU0lUSU9OX1VOU1BFQ0lGSUVEEAASKAokRlVORFNfRElTUE9TSVRJT05fUkVUVVJORURfVE9fU0VOREVSEAoSKAokRlVORFNfRElTUE9TSVRJT05fUkVUQUlORURfQllfSVNTVUVSEBQqlgEKFFBheW1lbnRGYWlsdXJlUmVhc29uEiYKIlBBWU1FTlRfRkFJTFVSRV9SRUFTT05fVU5TUEVDSUZJRUQQABIqCiZQQVlNRU5UX0ZBSUxVUkVfUkVBU09OX0FNT1VOVF9NSVNNQVRDSBAKEioKJlBBWU1FTlRfRkFJTFVSRV9SRUFTT05fSVNTVUVSX0RFQ0xJTkVEEBRiBnByb3RvMw", [file_buf_validate_validate, file_tzero_v1_pay_validate]);
 
 /**
  * *
@@ -120,9 +120,9 @@ export const OnChainSettlementDetailsSchema: GenMessage<OnChainSettlementDetails
 
 /**
  * *
- * On-chain network a USDt transfer moves over. Live at launch: ETH and BSC.
- * TRON already carries a value but is not accepted until it goes live in a
- * later phase; Arbitrum, Polygon and Avalanche are added as they go live.
+ * On-chain network a USDt transfer moves over. Live: ETH, BSC, Polygon,
+ * Arbitrum and Plasma. TRON carries a value but is not accepted until it goes
+ * live in a later phase.
  *
  * @generated from enum tzero.v1.pay.Blockchain
  */
@@ -146,6 +146,25 @@ export enum Blockchain {
    * @generated from enum value: BLOCKCHAIN_BSC = 30;
    */
   BSC = 30,
+
+  /**
+   * Polygon PoS.
+   *
+   * @generated from enum value: BLOCKCHAIN_POLYGON = 40;
+   */
+  POLYGON = 40,
+
+  /**
+   * Arbitrum One.
+   *
+   * @generated from enum value: BLOCKCHAIN_ARBITRUM = 50;
+   */
+  ARBITRUM = 50,
+
+  /**
+   * @generated from enum value: BLOCKCHAIN_PLASMA = 60;
+   */
+  PLASMA = 60,
 }
 
 /**

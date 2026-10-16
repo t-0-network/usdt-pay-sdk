@@ -25,9 +25,9 @@ const (
 )
 
 // *
-// On-chain network a USDt transfer moves over. Live at launch: ETH and BSC.
-// TRON already carries a value but is not accepted until it goes live in a
-// later phase; Arbitrum, Polygon and Avalanche are added as they go live.
+// On-chain network a USDt transfer moves over. Live: ETH, BSC, Polygon,
+// Arbitrum and Plasma. TRON carries a value but is not accepted until it goes
+// live in a later phase.
 type Blockchain int32
 
 const (
@@ -35,6 +35,11 @@ const (
 	Blockchain_BLOCKCHAIN_TRON        Blockchain = 10
 	Blockchain_BLOCKCHAIN_ETH         Blockchain = 20
 	Blockchain_BLOCKCHAIN_BSC         Blockchain = 30
+	// Polygon PoS.
+	Blockchain_BLOCKCHAIN_POLYGON Blockchain = 40
+	// Arbitrum One.
+	Blockchain_BLOCKCHAIN_ARBITRUM Blockchain = 50
+	Blockchain_BLOCKCHAIN_PLASMA   Blockchain = 60
 )
 
 // Enum value maps for Blockchain.
@@ -44,12 +49,18 @@ var (
 		10: "BLOCKCHAIN_TRON",
 		20: "BLOCKCHAIN_ETH",
 		30: "BLOCKCHAIN_BSC",
+		40: "BLOCKCHAIN_POLYGON",
+		50: "BLOCKCHAIN_ARBITRUM",
+		60: "BLOCKCHAIN_PLASMA",
 	}
 	Blockchain_value = map[string]int32{
 		"BLOCKCHAIN_UNSPECIFIED": 0,
 		"BLOCKCHAIN_TRON":        10,
 		"BLOCKCHAIN_ETH":         20,
 		"BLOCKCHAIN_BSC":         30,
+		"BLOCKCHAIN_POLYGON":     40,
+		"BLOCKCHAIN_ARBITRUM":    50,
+		"BLOCKCHAIN_PLASMA":      60,
 	}
 )
 
@@ -397,14 +408,17 @@ const file_tzero_v1_pay_common_proto_rawDesc = "" +
 	" \x01(\tB\t\xbaH\x06r\x04\x88\xb5\x18\x01R\ronChainTxHash\x12:\n" +
 	"\x05chain\x18\x14 \x01(\x0e2\x18.tzero.v1.pay.BlockchainB\n" +
 	"\xbaH\a\x82\x01\x04\x10\x01 \x00R\x05chain\x12:\n" +
-	"\x13destination_address\x18\x1e \x01(\tB\t\xbaH\x06r\x04\x90\xb5\x18\x01R\x12destinationAddress*e\n" +
+	"\x13destination_address\x18\x1e \x01(\tB\t\xbaH\x06r\x04\x90\xb5\x18\x01R\x12destinationAddress*\xad\x01\n" +
 	"\n" +
 	"Blockchain\x12\x1a\n" +
 	"\x16BLOCKCHAIN_UNSPECIFIED\x10\x00\x12\x13\n" +
 	"\x0fBLOCKCHAIN_TRON\x10\n" +
 	"\x12\x12\n" +
 	"\x0eBLOCKCHAIN_ETH\x10\x14\x12\x12\n" +
-	"\x0eBLOCKCHAIN_BSC\x10\x1e*\x89\x01\n" +
+	"\x0eBLOCKCHAIN_BSC\x10\x1e\x12\x16\n" +
+	"\x12BLOCKCHAIN_POLYGON\x10(\x12\x17\n" +
+	"\x13BLOCKCHAIN_ARBITRUM\x102\x12\x15\n" +
+	"\x11BLOCKCHAIN_PLASMA\x10<*\x89\x01\n" +
 	"\x10FundsDisposition\x12!\n" +
 	"\x1dFUNDS_DISPOSITION_UNSPECIFIED\x10\x00\x12(\n" +
 	"$FUNDS_DISPOSITION_RETURNED_TO_SENDER\x10\n" +
