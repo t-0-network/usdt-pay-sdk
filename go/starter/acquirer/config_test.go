@@ -265,7 +265,7 @@ func TestLoadConfig_DefaultEndpoint(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
-			if config.TzeroEndpoint != "https://usdt-pay-api-sandbox.t-0.network" {
+			if config.TzeroEndpoint != "https://pay-api-sandbox.t-0.network" {
 				t.Errorf("TzeroEndpoint = %s, want sandbox default", config.TzeroEndpoint)
 			}
 		})

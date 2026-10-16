@@ -41,7 +41,7 @@ export function loadConfig(): Config {
   const privateKey = process.env.PROVIDER_PRIVATE_KEY?.trim() ?? "";
   const networkPublicKey = process.env.NETWORK_PUBLIC_KEY?.trim() ?? "";
   // An empty value counts as unset.
-  const tzeroEndpoint = process.env.TZERO_ENDPOINT || "https://usdt-pay-api-sandbox.t-0.network";
+  const tzeroEndpoint = process.env.TZERO_ENDPOINT || "https://pay-api-sandbox.t-0.network";
 
   if (!privateKey) {
     // Never "copy .env.example to .env" here: a scaffolded project's .env already holds

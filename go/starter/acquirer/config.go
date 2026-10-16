@@ -55,7 +55,7 @@ func LoadConfig() (*Config, error) {
 	// An empty value counts as unset.
 	tzeroEndpoint := os.Getenv("TZERO_ENDPOINT")
 	if tzeroEndpoint == "" {
-		tzeroEndpoint = "https://usdt-pay-api-sandbox.t-0.network"
+		tzeroEndpoint = "https://pay-api-sandbox.t-0.network"
 	}
 	rawPort := os.Getenv("PORT")
 
