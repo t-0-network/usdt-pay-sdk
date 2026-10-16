@@ -22,15 +22,20 @@ message Decimal {
 }
 
 /**
- * On-chain network a USDt transfer moves over. Live at launch: ETH and BSC.
- * TRON already carries a value but is not accepted until it goes live in a
- * later phase; Arbitrum, Polygon and Avalanche are added as they go live.
+ * On-chain network a USDt transfer moves over. Live: ETH, BSC, Polygon,
+ * Arbitrum and Plasma. TRON carries a value but is not accepted until it goes
+ * live in a later phase.
  */
 enum Blockchain {
   BLOCKCHAIN_UNSPECIFIED = 0;
   BLOCKCHAIN_TRON = 10;
   BLOCKCHAIN_ETH = 20;
   BLOCKCHAIN_BSC = 30;
+  // Polygon PoS.
+  BLOCKCHAIN_POLYGON = 40;
+  // Arbitrum One.
+  BLOCKCHAIN_ARBITRUM = 50;
+  BLOCKCHAIN_PLASMA = 60;
 }
 
 /**
