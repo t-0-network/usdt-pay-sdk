@@ -46,7 +46,7 @@ already set in the environment wins over the same one in `.env`.
 |---|---|---|---|
 | `PROVIDER_PRIVATE_KEY` | yes | — | Your secp256k1 private key (hex). Every call you send to t-0 is signed with it. `usdt-pay init` wrote one into `.env`. |
 | `NETWORK_PUBLIC_KEY` | yes | — | t-0's public key. A callback that does not verify against it is refused. `.env` starts with the sandbox key. |
-| `TZERO_ENDPOINT` | no | `https://usdt-pay-api-sandbox.t-0.network` | The t-0 API your outbound calls go to. |
+| `TZERO_ENDPOINT` | no | `https://pay-api-sandbox.t-0.network` | The t-0 API your outbound calls go to. |
 | `PORT` | no | `8080` | The port the callback server listens on, an integer from 1 to 65535. |
 
 An empty `TZERO_ENDPOINT` or `PORT` counts as unset. Whitespace around the two keys

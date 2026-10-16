@@ -22,7 +22,7 @@ const envPath = resolve(".env");
 
 const PRIVATE_KEY = "0x4c0883a69102937d6231471b5dbb6204fe512961708279f23efb0fecd891d2f2";
 const NETWORK_PUBLIC_KEY = publicKeyFromPrivateKey("0x" + "11".repeat(32));
-const SANDBOX = "https://usdt-pay-api-sandbox.t-0.network";
+const SANDBOX = "https://pay-api-sandbox.t-0.network";
 
 const NETWORK_PUBLIC_KEY_HELP = "Ask the t-0 team for the network public key and put it in .env.";
 

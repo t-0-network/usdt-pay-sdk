@@ -60,7 +60,7 @@ class ConfigTest {
 
         assertEquals(PRIVATE_KEY, config.privateKey());
         assertEquals(NETWORK_PUBLIC_KEY, config.networkPublicKey());
-        assertEquals("https://usdt-pay-api-sandbox.t-0.network", config.tzeroEndpoint());
+        assertEquals("https://pay-api-sandbox.t-0.network", config.tzeroEndpoint());
         assertEquals(8080, config.port());
     }
 
@@ -165,7 +165,7 @@ class ConfigTest {
         Map<String, String> env = validEnv();
         env.put("TZERO_ENDPOINT", "");
 
-        assertEquals("https://usdt-pay-api-sandbox.t-0.network", load(env).tzeroEndpoint());
+        assertEquals("https://pay-api-sandbox.t-0.network", load(env).tzeroEndpoint());
     }
 
     @Test

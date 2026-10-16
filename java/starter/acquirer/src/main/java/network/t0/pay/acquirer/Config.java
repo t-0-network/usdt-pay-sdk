@@ -19,7 +19,7 @@ public record Config(
 
     private static final Logger log = LoggerFactory.getLogger(Config.class);
 
-    static final String DEFAULT_TZERO_ENDPOINT = "https://usdt-pay-api-sandbox.t-0.network";
+    static final String DEFAULT_TZERO_ENDPOINT = "https://pay-api-sandbox.t-0.network";
 
     /** Shared by a missing and a malformed NETWORK_PUBLIC_KEY — the fix is the same. */
     static final String NETWORK_PUBLIC_KEY_HELP = "Ask the t-0 team for the network public key and put it in .env.";

@@ -18,7 +18,7 @@ import { createClient as createProviderClient, type Client, type SignerFunction 
  *
  * @param signer    your secp256k1 private key as hex or raw bytes, or a signing function if the
  *                  key lives in an HSM or KMS and never reaches this process
- * @param baseUrl   t-0 API base URL — e.g. `https://usdt-pay-api-sandbox.t-0.network`
+ * @param baseUrl   t-0 API base URL — e.g. `https://pay-api-sandbox.t-0.network`
  * @param service   the service descriptor for your role — `IssuerService`,
  *                  `AcquirerService` or `LpService`
  */

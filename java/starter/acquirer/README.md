@@ -46,7 +46,7 @@ To run the tests:
 |---|---|---|---|
 | `PROVIDER_PRIVATE_KEY` | Yes | none; `usdt-pay init` wrote one into `.env` | Your secp256k1 private key: 64 hex characters, with an optional `0x`. Every request you send to t-0 is signed with it. |
 | `NETWORK_PUBLIC_KEY` | Yes | none; `.env` starts with the sandbox key | t-0's network public key. A callback that does not verify against it is refused. |
-| `TZERO_ENDPOINT` | No | `https://usdt-pay-api-sandbox.t-0.network` | The t-0 API your calls go to. |
+| `TZERO_ENDPOINT` | No | `https://pay-api-sandbox.t-0.network` | The t-0 API your calls go to. |
 | `PORT` | No | `8080` | The port the callback server listens on, from 1 to 65535. |
 
 The app reads `.env` from its working directory when the file exists, and a
