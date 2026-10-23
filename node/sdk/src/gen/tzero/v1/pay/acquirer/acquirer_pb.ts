@@ -292,9 +292,6 @@ export type CreatePaymentIntentRequest = Message<"tzero.v1.pay.acquirer.CreatePa
     /**
      * * A standing quote from GetPaymentQuote; it must still stand, and its currency must equal local.currency when `local` is given. 
      *
-     * Reserved, not on the wire yet: `quote_currency`, pricing by the freshest
-     * standing quote for a named currency.
-     *
      * @generated from field: uint64 quote_id = 120;
      */
     value: bigint;
@@ -798,7 +795,7 @@ export type PaymentAuthorizedRequest = Message<"tzero.v1.pay.acquirer.PaymentAut
   receivedAt?: Timestamp | undefined;
 
   /**
-   * no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
+   * * The fiat terms locked on CreatePaymentIntent; present only for an Acquirer settled in fiat. 
    *
    * @generated from field: tzero.v1.pay.acquirer.FiatSettlement fiat_settlement = 80;
    */
@@ -1003,7 +1000,7 @@ export type PaymentExpiredRequest = Message<"tzero.v1.pay.acquirer.PaymentExpire
   expiredAt?: Timestamp | undefined;
 
   /**
-   * no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
+   * * The fiat terms locked on CreatePaymentIntent; present only for an Acquirer settled in fiat. 
    *
    * @generated from field: tzero.v1.pay.acquirer.FiatSettlement fiat_settlement = 50;
    */
@@ -1096,7 +1093,7 @@ export type PaymentFailedRequest = Message<"tzero.v1.pay.acquirer.PaymentFailedR
   failedAt?: Timestamp | undefined;
 
   /**
-   * no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
+   * * The fiat terms locked on CreatePaymentIntent; present only for an Acquirer settled in fiat. 
    *
    * @generated from field: tzero.v1.pay.acquirer.FiatSettlement fiat_settlement = 80;
    */
