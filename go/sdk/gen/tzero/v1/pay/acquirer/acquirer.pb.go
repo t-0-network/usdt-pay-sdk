@@ -875,7 +875,7 @@ type PaymentAuthorizedRequest struct {
 	SettlementAmount *pay.Decimal `protobuf:"bytes,50,opt,name=settlement_amount,json=settlementAmount,proto3" json:"settlement_amount,omitempty"`
 	// * Moment the Issuer observed the deposit final on-chain.
 	ReceivedAt *timestamppb.Timestamp `protobuf:"bytes,60,opt,name=received_at,json=receivedAt,proto3" json:"received_at,omitempty"`
-	// no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
+	// * The fiat terms locked on CreatePaymentIntent; present only for an Acquirer settled in fiat.
 	FiatSettlement *FiatSettlement `protobuf:"bytes,80,opt,name=fiat_settlement,json=fiatSettlement,proto3" json:"fiat_settlement,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -1296,7 +1296,7 @@ type PaymentExpiredRequest struct {
 	PaymentRef string `protobuf:"bytes,20,opt,name=payment_ref,json=paymentRef,proto3" json:"payment_ref,omitempty"`
 	// * Moment the intent expired on t-0's clock.
 	ExpiredAt *timestamppb.Timestamp `protobuf:"bytes,30,opt,name=expired_at,json=expiredAt,proto3" json:"expired_at,omitempty"`
-	// no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
+	// * The fiat terms locked on CreatePaymentIntent; present only for an Acquirer settled in fiat.
 	FiatSettlement *FiatSettlement `protobuf:"bytes,50,opt,name=fiat_settlement,json=fiatSettlement,proto3" json:"fiat_settlement,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -1420,7 +1420,7 @@ type PaymentFailedRequest struct {
 	Reason pay.PaymentFailureReason `protobuf:"varint,70,opt,name=reason,proto3,enum=tzero.v1.pay.PaymentFailureReason" json:"reason,omitempty"`
 	// * Moment the intent became terminally failed.
 	FailedAt *timestamppb.Timestamp `protobuf:"bytes,60,opt,name=failed_at,json=failedAt,proto3" json:"failed_at,omitempty"`
-	// no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
+	// * The fiat terms locked on CreatePaymentIntent; present only for an Acquirer settled in fiat.
 	FiatSettlement *FiatSettlement `protobuf:"bytes,80,opt,name=fiat_settlement,json=fiatSettlement,proto3" json:"fiat_settlement,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
