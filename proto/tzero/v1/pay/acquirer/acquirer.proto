@@ -238,8 +238,6 @@ message CreatePaymentIntentRequest {
   oneof settlement_quote {
     /** A standing quote from GetPaymentQuote; it must still stand, and its currency must equal local.currency when `local` is given. */
     uint64 quote_id = 120 [(buf.validate.field).uint64.gt = 0];
-    // Reserved, not on the wire yet: `quote_currency`, pricing by the freshest
-    // standing quote for a named currency.
   }
 }
 
@@ -439,7 +437,6 @@ message PaymentAuthorizedRequest {
   google.protobuf.Timestamp received_at = 60 [(buf.validate.field).required = true];
 
   /** The fiat terms locked on CreatePaymentIntent; present only for an Acquirer settled in fiat. */
-  // no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
   FiatSettlement fiat_settlement = 80;
 }
 
@@ -525,7 +522,6 @@ message PaymentExpiredRequest {
   google.protobuf.Timestamp expired_at = 30 [(buf.validate.field).required = true];
 
   /** The fiat terms locked on CreatePaymentIntent; present only for an Acquirer settled in fiat. */
-  // no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
   FiatSettlement fiat_settlement = 50;
 }
 
@@ -575,7 +571,6 @@ message PaymentFailedRequest {
   google.protobuf.Timestamp failed_at = 60 [(buf.validate.field).required = true];
 
   /** The fiat terms locked on CreatePaymentIntent; present only for an Acquirer settled in fiat. */
-  // no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
   FiatSettlement fiat_settlement = 80;
 }
 
