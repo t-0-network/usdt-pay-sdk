@@ -19,11 +19,11 @@
   "dependencies": {
     "@bufbuild/protobuf": "^2.15.0",
     "@t-0/usdt-pay-sdk": "^0.3.1",
-    "dotenv": "^18.0.1"
+    "dotenv": "^18.0.9"
   },
   "devDependencies": {
     "@connectrpc/connect": "2.1.2",
-    "@types/node": "^26.6.4",
+    "@types/node": "^26.6.5",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   }
