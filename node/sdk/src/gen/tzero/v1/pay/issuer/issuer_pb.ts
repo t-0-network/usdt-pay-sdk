@@ -230,7 +230,7 @@ export enum PaymentReceivedResponse_Rejected_Reason {
   UNKNOWN_INTENT = 20,
 
   /**
-   * amount_usdt is not exactly the intent's stored amount; authorized outcome only.
+   * amount_usdt is not exactly the amount_usdt commanded on CreatePaymentInstructions; authorized outcome only.
    *
    * @generated from enum value: REASON_AMOUNT_MISMATCH = 30;
    */
@@ -374,8 +374,7 @@ export enum SettlementSentResponse_Rejected_Reason {
   UNSPECIFIED = 0,
 
   /**
-   * The on-chain transaction is not yet confirmed. Not returned in the MVP, where t-0
-   * records the settlement on the Issuer's report without on-chain verification.
+   * The on-chain transaction is not yet confirmed. SettlementSent does not return this reason.
    *
    * @generated from enum value: REASON_ON_CHAIN_UNCONFIRMED = 10;
    */
@@ -445,9 +444,7 @@ export type CreatePaymentInstructionsRequest = Message<"tzero.v1.pay.issuer.Crea
   amountUsdt?: Decimal | undefined;
 
   /**
-   * *
-   * Absolute moment t-0 requires the reservation held until, on t-0's clock.
-   * t-0 sizes the window per intent rather than to a fixed value.
+   * * Absolute moment t-0 requires the reservation held until, on t-0's clock. 
    *
    * @generated from field: google.protobuf.Timestamp expires_at = 40;
    */
@@ -638,7 +635,9 @@ export const IssuerService: GenService<{
  */
 export const IssuerCallbackService: GenService<{
   /**
-   * * Reserves one deposit address per supported chain and returns the deposit options. 
+   * *
+   * Reserves one deposit address per supported chain and returns the deposit options.
+   * A repeat with the same payment_intent_id reserves nothing new, and a repeat after a success returns the same instructions.
    *
    * @generated from rpc tzero.v1.pay.issuer.IssuerCallbackService.CreatePaymentInstructions
    */

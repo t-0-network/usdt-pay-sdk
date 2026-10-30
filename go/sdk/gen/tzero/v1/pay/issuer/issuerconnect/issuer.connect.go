@@ -157,7 +157,9 @@ func (UnimplementedIssuerServiceHandler) SettlementSent(context.Context, *connec
 // IssuerCallbackServiceClient is a client for the tzero.v1.pay.issuer.IssuerCallbackService
 // service.
 type IssuerCallbackServiceClient interface {
-	// * Reserves one deposit address per supported chain and returns the deposit options.
+	// *
+	// Reserves one deposit address per supported chain and returns the deposit options.
+	// A repeat with the same payment_intent_id reserves nothing new, and a repeat after a success returns the same instructions.
 	CreatePaymentInstructions(context.Context, *connect.Request[issuer.CreatePaymentInstructionsRequest]) (*connect.Response[issuer.CreatePaymentInstructionsResponse], error)
 }
 
@@ -196,7 +198,9 @@ func (c *issuerCallbackServiceClient) CreatePaymentInstructions(ctx context.Cont
 // IssuerCallbackServiceHandler is an implementation of the
 // tzero.v1.pay.issuer.IssuerCallbackService service.
 type IssuerCallbackServiceHandler interface {
-	// * Reserves one deposit address per supported chain and returns the deposit options.
+	// *
+	// Reserves one deposit address per supported chain and returns the deposit options.
+	// A repeat with the same payment_intent_id reserves nothing new, and a repeat after a success returns the same instructions.
 	CreatePaymentInstructions(context.Context, *connect.Request[issuer.CreatePaymentInstructionsRequest]) (*connect.Response[issuer.CreatePaymentInstructionsResponse], error)
 }
 

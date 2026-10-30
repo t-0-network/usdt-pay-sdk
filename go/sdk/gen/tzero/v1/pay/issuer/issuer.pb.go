@@ -36,7 +36,7 @@ const (
 	PaymentReceivedResponse_Rejected_REASON_INTENT_EXPIRED PaymentReceivedResponse_Rejected_Reason = 10
 	// No such intent exists, or another Issuer serves it.
 	PaymentReceivedResponse_Rejected_REASON_UNKNOWN_INTENT PaymentReceivedResponse_Rejected_Reason = 20
-	// amount_usdt is not exactly the intent's stored amount; authorized outcome only.
+	// amount_usdt is not exactly the amount_usdt commanded on CreatePaymentInstructions; authorized outcome only.
 	PaymentReceivedResponse_Rejected_REASON_AMOUNT_MISMATCH PaymentReceivedResponse_Rejected_Reason = 30
 	// The transfer is already another intent's recorded deposit; no refund or
 	// disposition action follows — reconciled out of band.
@@ -92,8 +92,7 @@ type SettlementSentResponse_Rejected_Reason int32
 
 const (
 	SettlementSentResponse_Rejected_REASON_UNSPECIFIED SettlementSentResponse_Rejected_Reason = 0
-	// The on-chain transaction is not yet confirmed. Not returned in the MVP, where t-0
-	// records the settlement on the Issuer's report without on-chain verification.
+	// The on-chain transaction is not yet confirmed. SettlementSent does not return this reason.
 	SettlementSentResponse_Rejected_REASON_ON_CHAIN_UNCONFIRMED SettlementSentResponse_Rejected_Reason = 10
 	// The confirmed amount does not equal amount_usdt or the covered intents' sum.
 	SettlementSentResponse_Rejected_REASON_AMOUNT_MISMATCH SettlementSentResponse_Rejected_Reason = 20
@@ -610,9 +609,7 @@ type CreatePaymentInstructionsRequest struct {
 	AcquirerId uint64 `protobuf:"varint,20,opt,name=acquirer_id,json=acquirerId,proto3" json:"acquirer_id,omitempty"`
 	// * USDt amount the reserved addresses should accept.
 	AmountUsdt *pay.Decimal `protobuf:"bytes,30,opt,name=amount_usdt,json=amountUsdt,proto3" json:"amount_usdt,omitempty"`
-	// *
-	// Absolute moment t-0 requires the reservation held until, on t-0's clock.
-	// t-0 sizes the window per intent rather than to a fixed value.
+	// * Absolute moment t-0 requires the reservation held until, on t-0's clock.
 	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,40,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

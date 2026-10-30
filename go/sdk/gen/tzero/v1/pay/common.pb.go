@@ -26,8 +26,7 @@ const (
 
 // *
 // On-chain network a USDt transfer moves over. Live: ETH, BSC, Polygon,
-// Arbitrum and Plasma. TRON carries a value but is not accepted until it goes
-// live in a later phase.
+// Arbitrum and Plasma. TRON carries a value but is not accepted.
 type Blockchain int32
 
 const (
