@@ -28,7 +28,7 @@ async function main(): Promise<void> {
   // Outbound: everything you call on t-0 (PublishQuote, FiatSettlementSent).
   const t0 = createClient(config.privateKey, config.tzeroEndpoint, LpService);
 
-  // Inbound: the one callback t-0 pushes to you (ExecuteQuote).
+  // Inbound: the two callbacks t-0 pushes to you (ExecuteQuote, UsdtSettlementCompleted).
   // Every inbound signature is verified against NETWORK_PUBLIC_KEY.
   //
   // createServer checks that key before it returns its promise, and throws right here
@@ -72,6 +72,15 @@ async function main(): Promise<void> {
   //       reportFiatSettlementSent(t0, ...) with the bank transfer ref.
   //       One transfer covers accepted executions of one acquirer in
   //       one currency; settlementAmount = the sum of their localAmounts.
+  // ──────────────────────────────────────────────────────────────────
+
+  // ──────────────────────────────────────────────────────────────────
+  // Phase 5 — UsdtSettlementCompleted (handler).
+  //
+  // t-0 calls UsdtSettlementCompleted when it has verified the issuer's
+  // USDt transfer to your wallet on-chain. The shipped handler logs it
+  // and answers success; in production, record the covered executions
+  // under settlementId and count a redelivery only once.
   // ──────────────────────────────────────────────────────────────────
 }
 

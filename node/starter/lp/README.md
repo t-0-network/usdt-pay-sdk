@@ -2,7 +2,7 @@
 
 You price USDt↔local fiat, accept the per-payment obligation when t-0 executes
 against your standing quote, and settle fiat to the acquirer over bank rails.
-One inbound endpoint, two outbound calls.
+Two inbound endpoints, two outbound calls.
 
 This README says what to build — for what every field and decline code means, see the
 [LP API reference](https://usdt-pay-docs.t-0.network/docs/integration-guidance/api-reference/pay_lp/).
@@ -66,6 +66,7 @@ Two libraries read variables of their own:
 | Direction | Endpoint | What it does | Where |
 |---|---|---|---|
 | t-0 → you | `ExecuteQuote` | Accept or reject a per-payment obligation | `src/handler.ts` |
+| t-0 → you | `UsdtSettlementCompleted` | Learn which executions a confirmed USDt transfer to your wallet covers | `src/handler.ts` |
 | you → t-0 | `PublishQuote` | Push standing quotes into t-0's order book | `src/quotes.ts` + `src/internal/publish_quote.ts` |
 | you → t-0 | `FiatSettlementSent` | Report a fiat bank transfer to the acquirer | `src/internal/fiat_settlement_sent.ts` |
 
@@ -123,11 +124,32 @@ request under the same `bankTransferRef`.
 
 Nothing here runs on a timer: the bank statement drives it.
 
+### Phase 5 — match the USDt settlement
+
+Implement `usdtSettlementCompleted` in `src/handler.ts`. t-0 calls it once it has
+verified on-chain that the issuer's USDt reached your wallet. The transfer itself
+carries no reference, so this is how you match the credit to your executions.
+
+1. **5.1** Look up `settlementId` first. On a repeat, answer success without counting
+   the transfer twice.
+2. **5.2** Record which executions the settlement covers, durably under `settlementId`,
+   before returning. `settledExecutionIds` is ascending and may list an execution you
+   rejected or have not answered or received yet, so an id you do not recognize is not
+   an error.
+
+It arrives for a confirmed transfer only. A failed verdict, or no verdict at all, sends
+you nothing, so treat a transfer as unconfirmed until this arrives. It does not gate
+Phase 4: you may wire the fiat and report it first.
+
 ## At-least-once, both directions
 
 `ExecuteQuote` is delivered at least once, keyed on `executionId`. Record your
 decision durably under that key and return the same answer on a repeat —
 acknowledging without a durable write throws the event away.
+
+`UsdtSettlementCompleted` is delivered at least once too, keyed on `settlementId`.
+Record the settlement durably under that key and answer success on a repeat, without
+counting the transfer twice.
 
 Your outbound calls work the same way. Retry with the original key and identical
 content until t-0 answers:
@@ -136,6 +158,7 @@ content until t-0 answers:
 |---|---|---|
 | `PublishQuote` | `quoteRef` | you, unique per LP |
 | `ExecuteQuote` | `executionId` | t-0 |
+| `UsdtSettlementCompleted` | `settlementId` | t-0 |
 | `FiatSettlementSent` | `bankTransferRef` | you, unique per LP |
 
 A rejection is an acknowledgment — stop retrying — but it never consumes the key:
@@ -197,7 +220,7 @@ Point `TZERO_ENDPOINT` at a sandbox only once both sides pass on their own.
 src/
 ├── index.ts                    # entry point, phases in order
 ├── config.ts                   # what .env supplies, and what a bad value prints
-├── handler.ts                  # ExecuteQuote — t-0 calls you
+├── handler.ts                  # ExecuteQuote, UsdtSettlementCompleted — t-0 calls you
 ├── quotes.ts                   # demo quote publisher loop
 └── internal/
     ├── publish_quote.ts        # PublishQuote
@@ -205,7 +228,7 @@ src/
     ├── outcome.ts              # accepted / rejected / unknown
     └── decimals.ts             # unscaled × 10^exponent ↔ decimal string
 test/
-├── callback_server.test.ts     # ExecuteQuote answers accepted; a call t-0 did not sign never lands
+├── callback_server.test.ts     # ExecuteQuote answers accepted; UsdtSettlementCompleted answers success; a call t-0 did not sign never lands
 ├── config.test.ts              # every configuration error, word for word
 ├── decimals.test.ts
 ├── outcome.test.ts             # which error codes are rejected and which are unknown
