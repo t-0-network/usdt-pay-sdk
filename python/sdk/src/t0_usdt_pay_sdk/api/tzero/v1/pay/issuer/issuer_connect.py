@@ -320,7 +320,9 @@ class IssuerCallbackService(Protocol):
     """
     async def create_payment_instructions(self, request: CreatePaymentInstructionsRequest, ctx: RequestContext[CreatePaymentInstructionsRequest, CreatePaymentInstructionsResponse], /) -> CreatePaymentInstructionsResponse:
         """
-        * Reserves one deposit address per supported chain and returns the deposit options.
+        *
+        Reserves one deposit address per supported chain and returns the deposit options.
+        A repeat with the same payment_intent_id reserves nothing new, and a repeat after a success returns the same instructions.
         """
         raise ConnectError(Code.UNIMPLEMENTED, 'Not implemented')
 
@@ -399,7 +401,9 @@ class IssuerCallbackServiceClient(ConnectClient):
         timeout_ms: int | None = None,
     ) -> CreatePaymentInstructionsResponse:
         """
-        * Reserves one deposit address per supported chain and returns the deposit options.
+        *
+        Reserves one deposit address per supported chain and returns the deposit options.
+        A repeat with the same payment_intent_id reserves nothing new, and a repeat after a success returns the same instructions.
         """
         return await self.execute_unary(
             request=request,
@@ -422,7 +426,9 @@ class IssuerCallbackServiceSync(Protocol):
     """
     def create_payment_instructions(self, request: CreatePaymentInstructionsRequest, ctx: RequestContext[CreatePaymentInstructionsRequest, CreatePaymentInstructionsResponse], /) -> CreatePaymentInstructionsResponse:
         """
-        * Reserves one deposit address per supported chain and returns the deposit options.
+        *
+        Reserves one deposit address per supported chain and returns the deposit options.
+        A repeat with the same payment_intent_id reserves nothing new, and a repeat after a success returns the same instructions.
         """
         raise ConnectError(Code.UNIMPLEMENTED, 'Not implemented')
 
@@ -499,7 +505,9 @@ class IssuerCallbackServiceClientSync(ConnectClientSync):
         timeout_ms: int | None = None,
     ) -> CreatePaymentInstructionsResponse:
         """
-        * Reserves one deposit address per supported chain and returns the deposit options.
+        *
+        Reserves one deposit address per supported chain and returns the deposit options.
+        A repeat with the same payment_intent_id reserves nothing new, and a repeat after a success returns the same instructions.
         """
         return self.execute_unary(
             request=request,

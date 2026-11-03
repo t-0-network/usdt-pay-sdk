@@ -690,6 +690,125 @@ func (*ExecuteQuoteResponse_Accepted_) isExecuteQuoteResponse_Result() {}
 
 func (*ExecuteQuoteResponse_Rejected_) isExecuteQuoteResponse_Result() {}
 
+type UsdtSettlementCompletedRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// * t-0's id for this on-chain settlement; the LP dedupes on it.
+	SettlementId uint64 `protobuf:"varint,10,opt,name=settlement_id,json=settlementId,proto3" json:"settlement_id,omitempty"`
+	// * USDt amount that reached the LP's wallet.
+	SettlementAmount *pay.Decimal `protobuf:"bytes,20,opt,name=settlement_amount,json=settlementAmount,proto3" json:"settlement_amount,omitempty"`
+	// *
+	// Executions this settlement covers, ascending. May include one the LP
+	// rejected or has not answered yet.
+	SettledExecutionIds []uint64 `protobuf:"varint,30,rep,packed,name=settled_execution_ids,json=settledExecutionIds,proto3" json:"settled_execution_ids,omitempty"`
+	// * Moment t-0 verified the settlement final on-chain.
+	SettledAt *timestamppb.Timestamp `protobuf:"bytes,40,opt,name=settled_at,json=settledAt,proto3" json:"settled_at,omitempty"`
+	// * The on-chain USDt transfer that reached the LP's registered wallet.
+	Settlement    *pay.OnChainSettlementDetails `protobuf:"bytes,50,opt,name=settlement,proto3" json:"settlement,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UsdtSettlementCompletedRequest) Reset() {
+	*x = UsdtSettlementCompletedRequest{}
+	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UsdtSettlementCompletedRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UsdtSettlementCompletedRequest) ProtoMessage() {}
+
+func (x *UsdtSettlementCompletedRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UsdtSettlementCompletedRequest.ProtoReflect.Descriptor instead.
+func (*UsdtSettlementCompletedRequest) Descriptor() ([]byte, []int) {
+	return file_tzero_v1_pay_lp_lp_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *UsdtSettlementCompletedRequest) GetSettlementId() uint64 {
+	if x != nil {
+		return x.SettlementId
+	}
+	return 0
+}
+
+func (x *UsdtSettlementCompletedRequest) GetSettlementAmount() *pay.Decimal {
+	if x != nil {
+		return x.SettlementAmount
+	}
+	return nil
+}
+
+func (x *UsdtSettlementCompletedRequest) GetSettledExecutionIds() []uint64 {
+	if x != nil {
+		return x.SettledExecutionIds
+	}
+	return nil
+}
+
+func (x *UsdtSettlementCompletedRequest) GetSettledAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.SettledAt
+	}
+	return nil
+}
+
+func (x *UsdtSettlementCompletedRequest) GetSettlement() *pay.OnChainSettlementDetails {
+	if x != nil {
+		return x.Settlement
+	}
+	return nil
+}
+
+type UsdtSettlementCompletedResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UsdtSettlementCompletedResponse) Reset() {
+	*x = UsdtSettlementCompletedResponse{}
+	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UsdtSettlementCompletedResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UsdtSettlementCompletedResponse) ProtoMessage() {}
+
+func (x *UsdtSettlementCompletedResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UsdtSettlementCompletedResponse.ProtoReflect.Descriptor instead.
+func (*UsdtSettlementCompletedResponse) Descriptor() ([]byte, []int) {
+	return file_tzero_v1_pay_lp_lp_proto_rawDescGZIP(), []int{7}
+}
+
 type PublishQuoteRequest_Quote struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// *
@@ -710,7 +829,7 @@ type PublishQuoteRequest_Quote struct {
 
 func (x *PublishQuoteRequest_Quote) Reset() {
 	*x = PublishQuoteRequest_Quote{}
-	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[6]
+	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -722,7 +841,7 @@ func (x *PublishQuoteRequest_Quote) String() string {
 func (*PublishQuoteRequest_Quote) ProtoMessage() {}
 
 func (x *PublishQuoteRequest_Quote) ProtoReflect() protoreflect.Message {
-	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[6]
+	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -776,7 +895,7 @@ type PublishQuoteResponse_Success struct {
 
 func (x *PublishQuoteResponse_Success) Reset() {
 	*x = PublishQuoteResponse_Success{}
-	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[7]
+	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -788,7 +907,7 @@ func (x *PublishQuoteResponse_Success) String() string {
 func (*PublishQuoteResponse_Success) ProtoMessage() {}
 
 func (x *PublishQuoteResponse_Success) ProtoReflect() protoreflect.Message {
-	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[7]
+	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -820,7 +939,7 @@ type PublishQuoteResponse_Failure struct {
 
 func (x *PublishQuoteResponse_Failure) Reset() {
 	*x = PublishQuoteResponse_Failure{}
-	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[8]
+	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -832,7 +951,7 @@ func (x *PublishQuoteResponse_Failure) String() string {
 func (*PublishQuoteResponse_Failure) ProtoMessage() {}
 
 func (x *PublishQuoteResponse_Failure) ProtoReflect() protoreflect.Message {
-	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[8]
+	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -867,7 +986,7 @@ type PublishQuoteResponse_Success_PublishedQuote struct {
 
 func (x *PublishQuoteResponse_Success_PublishedQuote) Reset() {
 	*x = PublishQuoteResponse_Success_PublishedQuote{}
-	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[9]
+	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -879,7 +998,7 @@ func (x *PublishQuoteResponse_Success_PublishedQuote) String() string {
 func (*PublishQuoteResponse_Success_PublishedQuote) ProtoMessage() {}
 
 func (x *PublishQuoteResponse_Success_PublishedQuote) ProtoReflect() protoreflect.Message {
-	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[9]
+	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -917,7 +1036,7 @@ type FiatSettlementSentResponse_Accepted struct {
 
 func (x *FiatSettlementSentResponse_Accepted) Reset() {
 	*x = FiatSettlementSentResponse_Accepted{}
-	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[10]
+	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -929,7 +1048,7 @@ func (x *FiatSettlementSentResponse_Accepted) String() string {
 func (*FiatSettlementSentResponse_Accepted) ProtoMessage() {}
 
 func (x *FiatSettlementSentResponse_Accepted) ProtoReflect() protoreflect.Message {
-	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[10]
+	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -954,7 +1073,7 @@ type FiatSettlementSentResponse_Rejected struct {
 
 func (x *FiatSettlementSentResponse_Rejected) Reset() {
 	*x = FiatSettlementSentResponse_Rejected{}
-	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[11]
+	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -966,7 +1085,7 @@ func (x *FiatSettlementSentResponse_Rejected) String() string {
 func (*FiatSettlementSentResponse_Rejected) ProtoMessage() {}
 
 func (x *FiatSettlementSentResponse_Rejected) ProtoReflect() protoreflect.Message {
-	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[11]
+	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -998,7 +1117,7 @@ type ExecuteQuoteResponse_Accepted struct {
 
 func (x *ExecuteQuoteResponse_Accepted) Reset() {
 	*x = ExecuteQuoteResponse_Accepted{}
-	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[12]
+	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1010,7 +1129,7 @@ func (x *ExecuteQuoteResponse_Accepted) String() string {
 func (*ExecuteQuoteResponse_Accepted) ProtoMessage() {}
 
 func (x *ExecuteQuoteResponse_Accepted) ProtoReflect() protoreflect.Message {
-	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[12]
+	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1039,7 +1158,7 @@ type ExecuteQuoteResponse_Rejected struct {
 
 func (x *ExecuteQuoteResponse_Rejected) Reset() {
 	*x = ExecuteQuoteResponse_Rejected{}
-	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[13]
+	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1051,7 +1170,7 @@ func (x *ExecuteQuoteResponse_Rejected) String() string {
 func (*ExecuteQuoteResponse_Rejected) ProtoMessage() {}
 
 func (x *ExecuteQuoteResponse_Rejected) ProtoReflect() protoreflect.Message {
-	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[13]
+	mi := &file_tzero_v1_pay_lp_lp_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1174,12 +1293,24 @@ const file_tzero_v1_pay_lp_lp_proto_rawDesc = "" +
 	"\x12REASON_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fREASON_OTHER\x10\n" +
 	"B\x0f\n" +
-	"\x06result\x12\x05\xbaH\x02\b\x012\xe1\x01\n" +
+	"\x06result\x12\x05\xbaH\x02\b\x01\"\xb5\x03\n" +
+	"\x1eUsdtSettlementCompletedRequest\x12,\n" +
+	"\rsettlement_id\x18\n" +
+	" \x01(\x04B\a\xbaH\x042\x02 \x00R\fsettlementId\x12\x8d\x01\n" +
+	"\x11settlement_amount\x18\x14 \x01(\v2\x15.tzero.v1.pay.DecimalBI\xbaHF\xba\x01@\x12+settlement_amount must be greater than zero\x1a\x11this.unscaled > 0\xc8\x01\x01R\x10settlementAmount\x12B\n" +
+	"\x15settled_execution_ids\x18\x1e \x03(\x04B\x0e\xbaH\v\x92\x01\b\b\x01\"\x042\x02 \x00R\x13settledExecutionIds\x12A\n" +
+	"\n" +
+	"settled_at\x18( \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tsettledAt\x12N\n" +
+	"\n" +
+	"settlement\x182 \x01(\v2&.tzero.v1.pay.OnChainSettlementDetailsB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"settlement\"!\n" +
+	"\x1fUsdtSettlementCompletedResponse2\xe1\x01\n" +
 	"\tLpService\x12`\n" +
 	"\fPublishQuote\x12$.tzero.v1.pay.lp.PublishQuoteRequest\x1a%.tzero.v1.pay.lp.PublishQuoteResponse\"\x03\x90\x02\x02\x12r\n" +
-	"\x12FiatSettlementSent\x12*.tzero.v1.pay.lp.FiatSettlementSentRequest\x1a+.tzero.v1.pay.lp.FiatSettlementSentResponse\"\x03\x90\x02\x022u\n" +
+	"\x12FiatSettlementSent\x12*.tzero.v1.pay.lp.FiatSettlementSentRequest\x1a+.tzero.v1.pay.lp.FiatSettlementSentResponse\"\x03\x90\x02\x022\xf9\x01\n" +
 	"\x11LpCallbackService\x12`\n" +
-	"\fExecuteQuote\x12$.tzero.v1.pay.lp.ExecuteQuoteRequest\x1a%.tzero.v1.pay.lp.ExecuteQuoteResponse\"\x03\x90\x02\x02B\xbe\x01\n" +
+	"\fExecuteQuote\x12$.tzero.v1.pay.lp.ExecuteQuoteRequest\x1a%.tzero.v1.pay.lp.ExecuteQuoteResponse\"\x03\x90\x02\x02\x12\x81\x01\n" +
+	"\x17UsdtSettlementCompleted\x12/.tzero.v1.pay.lp.UsdtSettlementCompletedRequest\x1a0.tzero.v1.pay.lp.UsdtSettlementCompletedResponse\"\x03\x90\x02\x02B\xbe\x01\n" +
 	"\x13com.tzero.v1.pay.lpB\aLpProtoP\x01Z>github.com/t-0-network/usdt-pay-sdk/go/sdk/gen/tzero/v1/pay/lp\xa2\x02\x04TVPL\xaa\x02\x0fTzero.V1.Pay.Lp\xca\x02\x0fTzero\\V1\\Pay\\Lp\xe2\x02\x1bTzero\\V1\\Pay\\Lp\\GPBMetadata\xea\x02\x12Tzero::V1::Pay::Lpb\x06proto3"
 
 var (
@@ -1195,7 +1326,7 @@ func file_tzero_v1_pay_lp_lp_proto_rawDescGZIP() []byte {
 }
 
 var file_tzero_v1_pay_lp_lp_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_tzero_v1_pay_lp_lp_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_tzero_v1_pay_lp_lp_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_tzero_v1_pay_lp_lp_proto_goTypes = []any{
 	(PublishQuoteResponse_Failure_Reason)(0),            // 0: tzero.v1.pay.lp.PublishQuoteResponse.Failure.Reason
 	(FiatSettlementSentResponse_Rejected_Reason)(0),     // 1: tzero.v1.pay.lp.FiatSettlementSentResponse.Rejected.Reason
@@ -1206,48 +1337,56 @@ var file_tzero_v1_pay_lp_lp_proto_goTypes = []any{
 	(*FiatSettlementSentResponse)(nil),                  // 6: tzero.v1.pay.lp.FiatSettlementSentResponse
 	(*ExecuteQuoteRequest)(nil),                         // 7: tzero.v1.pay.lp.ExecuteQuoteRequest
 	(*ExecuteQuoteResponse)(nil),                        // 8: tzero.v1.pay.lp.ExecuteQuoteResponse
-	(*PublishQuoteRequest_Quote)(nil),                   // 9: tzero.v1.pay.lp.PublishQuoteRequest.Quote
-	(*PublishQuoteResponse_Success)(nil),                // 10: tzero.v1.pay.lp.PublishQuoteResponse.Success
-	(*PublishQuoteResponse_Failure)(nil),                // 11: tzero.v1.pay.lp.PublishQuoteResponse.Failure
-	(*PublishQuoteResponse_Success_PublishedQuote)(nil), // 12: tzero.v1.pay.lp.PublishQuoteResponse.Success.PublishedQuote
-	(*FiatSettlementSentResponse_Accepted)(nil),         // 13: tzero.v1.pay.lp.FiatSettlementSentResponse.Accepted
-	(*FiatSettlementSentResponse_Rejected)(nil),         // 14: tzero.v1.pay.lp.FiatSettlementSentResponse.Rejected
-	(*ExecuteQuoteResponse_Accepted)(nil),               // 15: tzero.v1.pay.lp.ExecuteQuoteResponse.Accepted
-	(*ExecuteQuoteResponse_Rejected)(nil),               // 16: tzero.v1.pay.lp.ExecuteQuoteResponse.Rejected
-	(*pay.Decimal)(nil),                                 // 17: tzero.v1.pay.Decimal
-	(*timestamppb.Timestamp)(nil),                       // 18: google.protobuf.Timestamp
+	(*UsdtSettlementCompletedRequest)(nil),              // 9: tzero.v1.pay.lp.UsdtSettlementCompletedRequest
+	(*UsdtSettlementCompletedResponse)(nil),             // 10: tzero.v1.pay.lp.UsdtSettlementCompletedResponse
+	(*PublishQuoteRequest_Quote)(nil),                   // 11: tzero.v1.pay.lp.PublishQuoteRequest.Quote
+	(*PublishQuoteResponse_Success)(nil),                // 12: tzero.v1.pay.lp.PublishQuoteResponse.Success
+	(*PublishQuoteResponse_Failure)(nil),                // 13: tzero.v1.pay.lp.PublishQuoteResponse.Failure
+	(*PublishQuoteResponse_Success_PublishedQuote)(nil), // 14: tzero.v1.pay.lp.PublishQuoteResponse.Success.PublishedQuote
+	(*FiatSettlementSentResponse_Accepted)(nil),         // 15: tzero.v1.pay.lp.FiatSettlementSentResponse.Accepted
+	(*FiatSettlementSentResponse_Rejected)(nil),         // 16: tzero.v1.pay.lp.FiatSettlementSentResponse.Rejected
+	(*ExecuteQuoteResponse_Accepted)(nil),               // 17: tzero.v1.pay.lp.ExecuteQuoteResponse.Accepted
+	(*ExecuteQuoteResponse_Rejected)(nil),               // 18: tzero.v1.pay.lp.ExecuteQuoteResponse.Rejected
+	(*pay.Decimal)(nil),                                 // 19: tzero.v1.pay.Decimal
+	(*timestamppb.Timestamp)(nil),                       // 20: google.protobuf.Timestamp
+	(*pay.OnChainSettlementDetails)(nil),                // 21: tzero.v1.pay.OnChainSettlementDetails
 }
 var file_tzero_v1_pay_lp_lp_proto_depIdxs = []int32{
-	9,  // 0: tzero.v1.pay.lp.PublishQuoteRequest.quotes:type_name -> tzero.v1.pay.lp.PublishQuoteRequest.Quote
-	10, // 1: tzero.v1.pay.lp.PublishQuoteResponse.success:type_name -> tzero.v1.pay.lp.PublishQuoteResponse.Success
-	11, // 2: tzero.v1.pay.lp.PublishQuoteResponse.failure:type_name -> tzero.v1.pay.lp.PublishQuoteResponse.Failure
-	17, // 3: tzero.v1.pay.lp.FiatSettlementSentRequest.settlement_amount:type_name -> tzero.v1.pay.Decimal
-	18, // 4: tzero.v1.pay.lp.FiatSettlementSentRequest.settled_at:type_name -> google.protobuf.Timestamp
-	13, // 5: tzero.v1.pay.lp.FiatSettlementSentResponse.accepted:type_name -> tzero.v1.pay.lp.FiatSettlementSentResponse.Accepted
-	14, // 6: tzero.v1.pay.lp.FiatSettlementSentResponse.rejected:type_name -> tzero.v1.pay.lp.FiatSettlementSentResponse.Rejected
-	17, // 7: tzero.v1.pay.lp.ExecuteQuoteRequest.local_amount:type_name -> tzero.v1.pay.Decimal
-	17, // 8: tzero.v1.pay.lp.ExecuteQuoteRequest.amount_usdt:type_name -> tzero.v1.pay.Decimal
-	18, // 9: tzero.v1.pay.lp.ExecuteQuoteRequest.executed_at:type_name -> google.protobuf.Timestamp
-	17, // 10: tzero.v1.pay.lp.ExecuteQuoteRequest.fx_rate:type_name -> tzero.v1.pay.Decimal
-	15, // 11: tzero.v1.pay.lp.ExecuteQuoteResponse.accepted:type_name -> tzero.v1.pay.lp.ExecuteQuoteResponse.Accepted
-	16, // 12: tzero.v1.pay.lp.ExecuteQuoteResponse.rejected:type_name -> tzero.v1.pay.lp.ExecuteQuoteResponse.Rejected
-	17, // 13: tzero.v1.pay.lp.PublishQuoteRequest.Quote.fx_rate:type_name -> tzero.v1.pay.Decimal
-	18, // 14: tzero.v1.pay.lp.PublishQuoteRequest.Quote.expires_at:type_name -> google.protobuf.Timestamp
-	12, // 15: tzero.v1.pay.lp.PublishQuoteResponse.Success.quotes:type_name -> tzero.v1.pay.lp.PublishQuoteResponse.Success.PublishedQuote
-	0,  // 16: tzero.v1.pay.lp.PublishQuoteResponse.Failure.reason:type_name -> tzero.v1.pay.lp.PublishQuoteResponse.Failure.Reason
-	1,  // 17: tzero.v1.pay.lp.FiatSettlementSentResponse.Rejected.reason:type_name -> tzero.v1.pay.lp.FiatSettlementSentResponse.Rejected.Reason
-	2,  // 18: tzero.v1.pay.lp.ExecuteQuoteResponse.Rejected.reason:type_name -> tzero.v1.pay.lp.ExecuteQuoteResponse.Rejected.Reason
-	3,  // 19: tzero.v1.pay.lp.LpService.PublishQuote:input_type -> tzero.v1.pay.lp.PublishQuoteRequest
-	5,  // 20: tzero.v1.pay.lp.LpService.FiatSettlementSent:input_type -> tzero.v1.pay.lp.FiatSettlementSentRequest
-	7,  // 21: tzero.v1.pay.lp.LpCallbackService.ExecuteQuote:input_type -> tzero.v1.pay.lp.ExecuteQuoteRequest
-	4,  // 22: tzero.v1.pay.lp.LpService.PublishQuote:output_type -> tzero.v1.pay.lp.PublishQuoteResponse
-	6,  // 23: tzero.v1.pay.lp.LpService.FiatSettlementSent:output_type -> tzero.v1.pay.lp.FiatSettlementSentResponse
-	8,  // 24: tzero.v1.pay.lp.LpCallbackService.ExecuteQuote:output_type -> tzero.v1.pay.lp.ExecuteQuoteResponse
-	22, // [22:25] is the sub-list for method output_type
-	19, // [19:22] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	11, // 0: tzero.v1.pay.lp.PublishQuoteRequest.quotes:type_name -> tzero.v1.pay.lp.PublishQuoteRequest.Quote
+	12, // 1: tzero.v1.pay.lp.PublishQuoteResponse.success:type_name -> tzero.v1.pay.lp.PublishQuoteResponse.Success
+	13, // 2: tzero.v1.pay.lp.PublishQuoteResponse.failure:type_name -> tzero.v1.pay.lp.PublishQuoteResponse.Failure
+	19, // 3: tzero.v1.pay.lp.FiatSettlementSentRequest.settlement_amount:type_name -> tzero.v1.pay.Decimal
+	20, // 4: tzero.v1.pay.lp.FiatSettlementSentRequest.settled_at:type_name -> google.protobuf.Timestamp
+	15, // 5: tzero.v1.pay.lp.FiatSettlementSentResponse.accepted:type_name -> tzero.v1.pay.lp.FiatSettlementSentResponse.Accepted
+	16, // 6: tzero.v1.pay.lp.FiatSettlementSentResponse.rejected:type_name -> tzero.v1.pay.lp.FiatSettlementSentResponse.Rejected
+	19, // 7: tzero.v1.pay.lp.ExecuteQuoteRequest.local_amount:type_name -> tzero.v1.pay.Decimal
+	19, // 8: tzero.v1.pay.lp.ExecuteQuoteRequest.amount_usdt:type_name -> tzero.v1.pay.Decimal
+	20, // 9: tzero.v1.pay.lp.ExecuteQuoteRequest.executed_at:type_name -> google.protobuf.Timestamp
+	19, // 10: tzero.v1.pay.lp.ExecuteQuoteRequest.fx_rate:type_name -> tzero.v1.pay.Decimal
+	17, // 11: tzero.v1.pay.lp.ExecuteQuoteResponse.accepted:type_name -> tzero.v1.pay.lp.ExecuteQuoteResponse.Accepted
+	18, // 12: tzero.v1.pay.lp.ExecuteQuoteResponse.rejected:type_name -> tzero.v1.pay.lp.ExecuteQuoteResponse.Rejected
+	19, // 13: tzero.v1.pay.lp.UsdtSettlementCompletedRequest.settlement_amount:type_name -> tzero.v1.pay.Decimal
+	20, // 14: tzero.v1.pay.lp.UsdtSettlementCompletedRequest.settled_at:type_name -> google.protobuf.Timestamp
+	21, // 15: tzero.v1.pay.lp.UsdtSettlementCompletedRequest.settlement:type_name -> tzero.v1.pay.OnChainSettlementDetails
+	19, // 16: tzero.v1.pay.lp.PublishQuoteRequest.Quote.fx_rate:type_name -> tzero.v1.pay.Decimal
+	20, // 17: tzero.v1.pay.lp.PublishQuoteRequest.Quote.expires_at:type_name -> google.protobuf.Timestamp
+	14, // 18: tzero.v1.pay.lp.PublishQuoteResponse.Success.quotes:type_name -> tzero.v1.pay.lp.PublishQuoteResponse.Success.PublishedQuote
+	0,  // 19: tzero.v1.pay.lp.PublishQuoteResponse.Failure.reason:type_name -> tzero.v1.pay.lp.PublishQuoteResponse.Failure.Reason
+	1,  // 20: tzero.v1.pay.lp.FiatSettlementSentResponse.Rejected.reason:type_name -> tzero.v1.pay.lp.FiatSettlementSentResponse.Rejected.Reason
+	2,  // 21: tzero.v1.pay.lp.ExecuteQuoteResponse.Rejected.reason:type_name -> tzero.v1.pay.lp.ExecuteQuoteResponse.Rejected.Reason
+	3,  // 22: tzero.v1.pay.lp.LpService.PublishQuote:input_type -> tzero.v1.pay.lp.PublishQuoteRequest
+	5,  // 23: tzero.v1.pay.lp.LpService.FiatSettlementSent:input_type -> tzero.v1.pay.lp.FiatSettlementSentRequest
+	7,  // 24: tzero.v1.pay.lp.LpCallbackService.ExecuteQuote:input_type -> tzero.v1.pay.lp.ExecuteQuoteRequest
+	9,  // 25: tzero.v1.pay.lp.LpCallbackService.UsdtSettlementCompleted:input_type -> tzero.v1.pay.lp.UsdtSettlementCompletedRequest
+	4,  // 26: tzero.v1.pay.lp.LpService.PublishQuote:output_type -> tzero.v1.pay.lp.PublishQuoteResponse
+	6,  // 27: tzero.v1.pay.lp.LpService.FiatSettlementSent:output_type -> tzero.v1.pay.lp.FiatSettlementSentResponse
+	8,  // 28: tzero.v1.pay.lp.LpCallbackService.ExecuteQuote:output_type -> tzero.v1.pay.lp.ExecuteQuoteResponse
+	10, // 29: tzero.v1.pay.lp.LpCallbackService.UsdtSettlementCompleted:output_type -> tzero.v1.pay.lp.UsdtSettlementCompletedResponse
+	26, // [26:30] is the sub-list for method output_type
+	22, // [22:26] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_tzero_v1_pay_lp_lp_proto_init() }
@@ -1273,7 +1412,7 @@ func file_tzero_v1_pay_lp_lp_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_tzero_v1_pay_lp_lp_proto_rawDesc), len(file_tzero_v1_pay_lp_lp_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   14,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

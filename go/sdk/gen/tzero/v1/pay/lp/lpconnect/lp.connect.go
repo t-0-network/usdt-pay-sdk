@@ -47,6 +47,9 @@ const (
 	// LpCallbackServiceExecuteQuoteProcedure is the fully-qualified name of the LpCallbackService's
 	// ExecuteQuote RPC.
 	LpCallbackServiceExecuteQuoteProcedure = "/tzero.v1.pay.lp.LpCallbackService/ExecuteQuote"
+	// LpCallbackServiceUsdtSettlementCompletedProcedure is the fully-qualified name of the
+	// LpCallbackService's UsdtSettlementCompleted RPC.
+	LpCallbackServiceUsdtSettlementCompletedProcedure = "/tzero.v1.pay.lp.LpCallbackService/UsdtSettlementCompleted"
 )
 
 // LpServiceClient is a client for the tzero.v1.pay.lp.LpService service.
@@ -161,6 +164,8 @@ func (UnimplementedLpServiceHandler) FiatSettlementSent(context.Context, *connec
 type LpCallbackServiceClient interface {
 	// * Requests a durable Accepted or Rejected result; only Accepted creates the LP's firm per-payment obligation.
 	ExecuteQuote(context.Context, *connect.Request[lp.ExecuteQuoteRequest]) (*connect.Response[lp.ExecuteQuoteResponse], error)
+	// * The Issuer's USDt settlement verified on-chain as reaching the LP's wallet, with the executions it covers; delivered at least once per settlement_id.
+	UsdtSettlementCompleted(context.Context, *connect.Request[lp.UsdtSettlementCompletedRequest]) (*connect.Response[lp.UsdtSettlementCompletedResponse], error)
 }
 
 // NewLpCallbackServiceClient constructs a client for the tzero.v1.pay.lp.LpCallbackService service.
@@ -181,12 +186,20 @@ func NewLpCallbackServiceClient(httpClient connect.HTTPClient, baseURL string, o
 			connect.WithIdempotency(connect.IdempotencyIdempotent),
 			connect.WithClientOptions(opts...),
 		),
+		usdtSettlementCompleted: connect.NewClient[lp.UsdtSettlementCompletedRequest, lp.UsdtSettlementCompletedResponse](
+			httpClient,
+			baseURL+LpCallbackServiceUsdtSettlementCompletedProcedure,
+			connect.WithSchema(lpCallbackServiceMethods.ByName("UsdtSettlementCompleted")),
+			connect.WithIdempotency(connect.IdempotencyIdempotent),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // lpCallbackServiceClient implements LpCallbackServiceClient.
 type lpCallbackServiceClient struct {
-	executeQuote *connect.Client[lp.ExecuteQuoteRequest, lp.ExecuteQuoteResponse]
+	executeQuote            *connect.Client[lp.ExecuteQuoteRequest, lp.ExecuteQuoteResponse]
+	usdtSettlementCompleted *connect.Client[lp.UsdtSettlementCompletedRequest, lp.UsdtSettlementCompletedResponse]
 }
 
 // ExecuteQuote calls tzero.v1.pay.lp.LpCallbackService.ExecuteQuote.
@@ -194,10 +207,17 @@ func (c *lpCallbackServiceClient) ExecuteQuote(ctx context.Context, req *connect
 	return c.executeQuote.CallUnary(ctx, req)
 }
 
+// UsdtSettlementCompleted calls tzero.v1.pay.lp.LpCallbackService.UsdtSettlementCompleted.
+func (c *lpCallbackServiceClient) UsdtSettlementCompleted(ctx context.Context, req *connect.Request[lp.UsdtSettlementCompletedRequest]) (*connect.Response[lp.UsdtSettlementCompletedResponse], error) {
+	return c.usdtSettlementCompleted.CallUnary(ctx, req)
+}
+
 // LpCallbackServiceHandler is an implementation of the tzero.v1.pay.lp.LpCallbackService service.
 type LpCallbackServiceHandler interface {
 	// * Requests a durable Accepted or Rejected result; only Accepted creates the LP's firm per-payment obligation.
 	ExecuteQuote(context.Context, *connect.Request[lp.ExecuteQuoteRequest]) (*connect.Response[lp.ExecuteQuoteResponse], error)
+	// * The Issuer's USDt settlement verified on-chain as reaching the LP's wallet, with the executions it covers; delivered at least once per settlement_id.
+	UsdtSettlementCompleted(context.Context, *connect.Request[lp.UsdtSettlementCompletedRequest]) (*connect.Response[lp.UsdtSettlementCompletedResponse], error)
 }
 
 // NewLpCallbackServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -214,10 +234,19 @@ func NewLpCallbackServiceHandler(svc LpCallbackServiceHandler, opts ...connect.H
 		connect.WithIdempotency(connect.IdempotencyIdempotent),
 		connect.WithHandlerOptions(opts...),
 	)
+	lpCallbackServiceUsdtSettlementCompletedHandler := connect.NewUnaryHandler(
+		LpCallbackServiceUsdtSettlementCompletedProcedure,
+		svc.UsdtSettlementCompleted,
+		connect.WithSchema(lpCallbackServiceMethods.ByName("UsdtSettlementCompleted")),
+		connect.WithIdempotency(connect.IdempotencyIdempotent),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/tzero.v1.pay.lp.LpCallbackService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case LpCallbackServiceExecuteQuoteProcedure:
 			lpCallbackServiceExecuteQuoteHandler.ServeHTTP(w, r)
+		case LpCallbackServiceUsdtSettlementCompletedProcedure:
+			lpCallbackServiceUsdtSettlementCompletedHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -229,4 +258,8 @@ type UnimplementedLpCallbackServiceHandler struct{}
 
 func (UnimplementedLpCallbackServiceHandler) ExecuteQuote(context.Context, *connect.Request[lp.ExecuteQuoteRequest]) (*connect.Response[lp.ExecuteQuoteResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("tzero.v1.pay.lp.LpCallbackService.ExecuteQuote is not implemented"))
+}
+
+func (UnimplementedLpCallbackServiceHandler) UsdtSettlementCompleted(context.Context, *connect.Request[lp.UsdtSettlementCompletedRequest]) (*connect.Response[lp.UsdtSettlementCompletedResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("tzero.v1.pay.lp.LpCallbackService.UsdtSettlementCompleted is not implemented"))
 }

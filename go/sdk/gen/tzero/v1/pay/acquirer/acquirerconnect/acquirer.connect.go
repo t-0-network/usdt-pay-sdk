@@ -67,7 +67,7 @@ const (
 
 // AcquirerServiceClient is a client for the tzero.v1.pay.acquirer.AcquirerService service.
 type AcquirerServiceClient interface {
-	// * Prices an upcoming local-fiat payment from t-0's Order Book of standing LP quotes; fiat settlement mode only.
+	// * Prices an upcoming local-fiat payment from t-0's Order Book of standing LP quotes; fiat settlement mode only, and refused as a failed precondition for an Acquirer that no LP serves.
 	GetPaymentQuote(context.Context, *connect.Request[acquirer.GetPaymentQuoteRequest]) (*connect.Response[acquirer.GetPaymentQuoteResponse], error)
 	// * Opens a payment intent; t-0 reserves deposit addresses with the Issuer inline and returns the payment instructions.
 	CreatePaymentIntent(context.Context, *connect.Request[acquirer.CreatePaymentIntentRequest]) (*connect.Response[acquirer.CreatePaymentIntentResponse], error)
@@ -134,7 +134,7 @@ func (c *acquirerServiceClient) SettlementReceived(ctx context.Context, req *con
 
 // AcquirerServiceHandler is an implementation of the tzero.v1.pay.acquirer.AcquirerService service.
 type AcquirerServiceHandler interface {
-	// * Prices an upcoming local-fiat payment from t-0's Order Book of standing LP quotes; fiat settlement mode only.
+	// * Prices an upcoming local-fiat payment from t-0's Order Book of standing LP quotes; fiat settlement mode only, and refused as a failed precondition for an Acquirer that no LP serves.
 	GetPaymentQuote(context.Context, *connect.Request[acquirer.GetPaymentQuoteRequest]) (*connect.Response[acquirer.GetPaymentQuoteResponse], error)
 	// * Opens a payment intent; t-0 reserves deposit addresses with the Issuer inline and returns the payment instructions.
 	CreatePaymentIntent(context.Context, *connect.Request[acquirer.CreatePaymentIntentRequest]) (*connect.Response[acquirer.CreatePaymentIntentResponse], error)

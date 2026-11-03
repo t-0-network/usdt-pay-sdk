@@ -32,7 +32,7 @@ type GetPaymentQuoteResponse_Failure_Reason int32
 
 const (
 	GetPaymentQuoteResponse_Failure_REASON_UNSPECIFIED GetPaymentQuoteResponse_Failure_Reason = 0
-	// No standing quote available for this currency right now.
+	// No standing quote for this currency right now; wait, then retry.
 	GetPaymentQuoteResponse_Failure_REASON_QUOTE_UNAVAILABLE GetPaymentQuoteResponse_Failure_Reason = 10
 )
 
@@ -79,17 +79,18 @@ type CreatePaymentIntentResponse_Failure_Reason int32
 
 const (
 	CreatePaymentIntentResponse_Failure_REASON_UNSPECIFIED CreatePaymentIntentResponse_Failure_Reason = 0
-	// The Issuer could not be reached, or returned no usable instructions.
+	// The Issuer could not be reached, or returned no usable instructions; wait a few seconds, then retry.
 	CreatePaymentIntentResponse_Failure_REASON_ISSUER_UNAVAILABLE CreatePaymentIntentResponse_Failure_Reason = 10
-	// The Issuer has no free one-time deposit addresses.
+	// The Issuer has no free one-time deposit addresses; wait a few seconds, then retry.
 	CreatePaymentIntentResponse_Failure_REASON_ADDRESS_POOL_EMPTY CreatePaymentIntentResponse_Failure_Reason = 20
-	// The amount falls outside the acceptable range.
+	// The amount falls outside the acceptable range; final for this amount, and a different amount is a new payment.
 	CreatePaymentIntentResponse_Failure_REASON_AMOUNT_OUT_OF_RANGE CreatePaymentIntentResponse_Failure_Reason = 40
-	// The referenced quote no longer stands.
+	// The referenced quote no longer stands; retry with a fresh quote_id or with quote_id omitted, at a price that can differ.
 	CreatePaymentIntentResponse_Failure_REASON_QUOTE_EXPIRED CreatePaymentIntentResponse_Failure_Reason = 50
-	// The quote's remaining validity is too short to guarantee execution before it expires.
+	// The quote's remaining validity is too short to guarantee execution before it expires; retry
+	// with a fresh quote_id or with quote_id omitted, at a price that can differ.
 	CreatePaymentIntentResponse_Failure_REASON_QUOTE_INSUFFICIENT_HEADROOM CreatePaymentIntentResponse_Failure_Reason = 70
-	// No standing quote for the payment's currency right now (quote_id omitted).
+	// No standing quote for the payment's currency right now (quote_id omitted); wait, then retry.
 	CreatePaymentIntentResponse_Failure_REASON_QUOTE_UNAVAILABLE CreatePaymentIntentResponse_Failure_Reason = 80
 )
 
@@ -875,7 +876,7 @@ type PaymentAuthorizedRequest struct {
 	SettlementAmount *pay.Decimal `protobuf:"bytes,50,opt,name=settlement_amount,json=settlementAmount,proto3" json:"settlement_amount,omitempty"`
 	// * Moment the Issuer observed the deposit final on-chain.
 	ReceivedAt *timestamppb.Timestamp `protobuf:"bytes,60,opt,name=received_at,json=receivedAt,proto3" json:"received_at,omitempty"`
-	// no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
+	// * The fiat terms locked on CreatePaymentIntent; present only for an Acquirer settled in fiat.
 	FiatSettlement *FiatSettlement `protobuf:"bytes,80,opt,name=fiat_settlement,json=fiatSettlement,proto3" json:"fiat_settlement,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -1296,7 +1297,7 @@ type PaymentExpiredRequest struct {
 	PaymentRef string `protobuf:"bytes,20,opt,name=payment_ref,json=paymentRef,proto3" json:"payment_ref,omitempty"`
 	// * Moment the intent expired on t-0's clock.
 	ExpiredAt *timestamppb.Timestamp `protobuf:"bytes,30,opt,name=expired_at,json=expiredAt,proto3" json:"expired_at,omitempty"`
-	// no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
+	// * The fiat terms locked on CreatePaymentIntent; present only for an Acquirer settled in fiat.
 	FiatSettlement *FiatSettlement `protobuf:"bytes,50,opt,name=fiat_settlement,json=fiatSettlement,proto3" json:"fiat_settlement,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -1420,7 +1421,7 @@ type PaymentFailedRequest struct {
 	Reason pay.PaymentFailureReason `protobuf:"varint,70,opt,name=reason,proto3,enum=tzero.v1.pay.PaymentFailureReason" json:"reason,omitempty"`
 	// * Moment the intent became terminally failed.
 	FailedAt *timestamppb.Timestamp `protobuf:"bytes,60,opt,name=failed_at,json=failedAt,proto3" json:"failed_at,omitempty"`
-	// no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
+	// * The fiat terms locked on CreatePaymentIntent; present only for an Acquirer settled in fiat.
 	FiatSettlement *FiatSettlement `protobuf:"bytes,80,opt,name=fiat_settlement,json=fiatSettlement,proto3" json:"fiat_settlement,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -1753,7 +1754,7 @@ type CreatePaymentIntentResponse_Success struct {
 	//
 	//	*CreatePaymentIntentResponse_Success_UsdtOnChain
 	Instructions isCreatePaymentIntentResponse_Success_Instructions `protobuf_oneof:"instructions"`
-	// * How the Acquirer is settled for this payment, per its configured settlement mode; always present, also when the variant carries no data.
+	// * How the Acquirer is settled for this payment, per its configured settlement mode; always present.
 	// Types that are valid to be assigned to Settlement:
 	//
 	//	*CreatePaymentIntentResponse_Success_Fiat
@@ -1974,7 +1975,7 @@ func (x *CreatePaymentIntentResponse_Success_UsdtOnChainInstructions) GetDeposit
 }
 
 // *
-// On-chain settlement mode; carries no data. The Issuer settles
+// On-chain settlement mode. The Issuer settles
 // settlement_amount in USDt to the Acquirer's registered wallet; no quote
 // and no FX.
 type CreatePaymentIntentResponse_Success_OnchainSettlement struct {

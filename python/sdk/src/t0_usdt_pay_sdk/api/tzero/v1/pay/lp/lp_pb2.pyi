@@ -151,3 +151,21 @@ class ExecuteQuoteResponse(_message.Message):
     accepted: ExecuteQuoteResponse.Accepted
     rejected: ExecuteQuoteResponse.Rejected
     def __init__(self, accepted: _Optional[_Union[ExecuteQuoteResponse.Accepted, _Mapping]] = ..., rejected: _Optional[_Union[ExecuteQuoteResponse.Rejected, _Mapping]] = ...) -> None: ...
+
+class UsdtSettlementCompletedRequest(_message.Message):
+    __slots__ = ("settlement_id", "settlement_amount", "settled_execution_ids", "settled_at", "settlement")
+    SETTLEMENT_ID_FIELD_NUMBER: _ClassVar[int]
+    SETTLEMENT_AMOUNT_FIELD_NUMBER: _ClassVar[int]
+    SETTLED_EXECUTION_IDS_FIELD_NUMBER: _ClassVar[int]
+    SETTLED_AT_FIELD_NUMBER: _ClassVar[int]
+    SETTLEMENT_FIELD_NUMBER: _ClassVar[int]
+    settlement_id: int
+    settlement_amount: _common_pb2.Decimal
+    settled_execution_ids: _containers.RepeatedScalarFieldContainer[int]
+    settled_at: _timestamp_pb2.Timestamp
+    settlement: _common_pb2.OnChainSettlementDetails
+    def __init__(self, settlement_id: _Optional[int] = ..., settlement_amount: _Optional[_Union[_common_pb2.Decimal, _Mapping]] = ..., settled_execution_ids: _Optional[_Iterable[int]] = ..., settled_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., settlement: _Optional[_Union[_common_pb2.OnChainSettlementDetails, _Mapping]] = ...) -> None: ...
+
+class UsdtSettlementCompletedResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...

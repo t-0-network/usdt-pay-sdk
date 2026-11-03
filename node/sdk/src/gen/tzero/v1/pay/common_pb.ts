@@ -84,7 +84,8 @@ export const UsdtOnChainPaymentSchema: GenMessage<UsdtOnChainPayment> = /*@__PUR
 /**
  * *
  * One on-chain USDt settlement transfer, as reported by the Issuer on
- * SettlementSent and relayed to the Acquirer on SettlementCompleted.
+ * SettlementSent and relayed to the Acquirer on SettlementCompleted or to the
+ * LP on UsdtSettlementCompleted.
  *
  * @generated from message tzero.v1.pay.OnChainSettlementDetails
  */
@@ -121,8 +122,7 @@ export const OnChainSettlementDetailsSchema: GenMessage<OnChainSettlementDetails
 /**
  * *
  * On-chain network a USDt transfer moves over. Live: ETH, BSC, Polygon,
- * Arbitrum and Plasma. TRON carries a value but is not accepted until it goes
- * live in a later phase.
+ * Arbitrum and Plasma. TRON carries a value but is not accepted.
  *
  * @generated from enum tzero.v1.pay.Blockchain
  */

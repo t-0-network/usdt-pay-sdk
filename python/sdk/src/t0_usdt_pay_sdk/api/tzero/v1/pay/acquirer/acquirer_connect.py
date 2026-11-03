@@ -42,7 +42,7 @@ class AcquirerService(Protocol):
     """
     async def get_payment_quote(self, request: GetPaymentQuoteRequest, ctx: RequestContext[GetPaymentQuoteRequest, GetPaymentQuoteResponse], /) -> GetPaymentQuoteResponse:
         """
-        * Prices an upcoming local-fiat payment from t-0's Order Book of standing LP quotes; fiat settlement mode only.
+        * Prices an upcoming local-fiat payment from t-0's Order Book of standing LP quotes; fiat settlement mode only, and refused as a failed precondition for an Acquirer that no LP serves.
         """
         raise ConnectError(Code.UNIMPLEMENTED, 'Not implemented')
 
@@ -154,7 +154,7 @@ class AcquirerServiceClient(ConnectClient):
         use_get: bool = False,
     ) -> GetPaymentQuoteResponse:
         """
-        * Prices an upcoming local-fiat payment from t-0's Order Book of standing LP quotes; fiat settlement mode only.
+        * Prices an upcoming local-fiat payment from t-0's Order Book of standing LP quotes; fiat settlement mode only, and refused as a failed precondition for an Acquirer that no LP serves.
         """
         return await self.execute_unary(
             request=request,
@@ -224,7 +224,7 @@ class AcquirerServiceSync(Protocol):
     """
     def get_payment_quote(self, request: GetPaymentQuoteRequest, ctx: RequestContext[GetPaymentQuoteRequest, GetPaymentQuoteResponse], /) -> GetPaymentQuoteResponse:
         """
-        * Prices an upcoming local-fiat payment from t-0's Order Book of standing LP quotes; fiat settlement mode only.
+        * Prices an upcoming local-fiat payment from t-0's Order Book of standing LP quotes; fiat settlement mode only, and refused as a failed precondition for an Acquirer that no LP serves.
         """
         raise ConnectError(Code.UNIMPLEMENTED, 'Not implemented')
 
@@ -334,7 +334,7 @@ class AcquirerServiceClientSync(ConnectClientSync):
         use_get: bool = False,
     ) -> GetPaymentQuoteResponse:
         """
-        * Prices an upcoming local-fiat payment from t-0's Order Book of standing LP quotes; fiat settlement mode only.
+        * Prices an upcoming local-fiat payment from t-0's Order Book of standing LP quotes; fiat settlement mode only, and refused as a failed precondition for an Acquirer that no LP serves.
         """
         return self.execute_unary(
             request=request,

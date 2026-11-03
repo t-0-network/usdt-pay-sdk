@@ -18,7 +18,7 @@ from connectrpc.protocol import ProtocolType
 from connectrpc.server import ConnectASGIApplication, ConnectWSGIApplication, DEFAULT_READ_MAX_BYTES, Endpoint, EndpointSync
 from pyqwest import Client, SyncClient
 
-from .lp_pb2 import ExecuteQuoteRequest, ExecuteQuoteResponse, FiatSettlementSentRequest, FiatSettlementSentResponse, PublishQuoteRequest, PublishQuoteResponse
+from .lp_pb2 import ExecuteQuoteRequest, ExecuteQuoteResponse, FiatSettlementSentRequest, FiatSettlementSentResponse, PublishQuoteRequest, PublishQuoteResponse, UsdtSettlementCompletedRequest, UsdtSettlementCompletedResponse
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator, Iterable, Mapping
@@ -323,12 +323,20 @@ class LpServiceClientSync(ConnectClientSync):
 class LpCallbackService(Protocol):
     """
     *
-    LP-implemented endpoint t-0 calls to request the LP's durable decision on a
-    standing quote execution for one authorized payment. Fiat mode only.
+    LP-implemented endpoints t-0 calls to request the LP's durable decision on a
+    standing quote execution for one authorized payment, and to report the
+    Issuer's USDt settlement verified on-chain to the LP's wallet. Fiat mode
+    only.
     """
     async def execute_quote(self, request: ExecuteQuoteRequest, ctx: RequestContext[ExecuteQuoteRequest, ExecuteQuoteResponse], /) -> ExecuteQuoteResponse:
         """
         * Requests a durable Accepted or Rejected result; only Accepted creates the LP's firm per-payment obligation.
+        """
+        raise ConnectError(Code.UNIMPLEMENTED, 'Not implemented')
+
+    async def usdt_settlement_completed(self, request: UsdtSettlementCompletedRequest, ctx: RequestContext[UsdtSettlementCompletedRequest, UsdtSettlementCompletedResponse], /) -> UsdtSettlementCompletedResponse:
+        """
+        * The Issuer's USDt settlement verified on-chain as reaching the LP's wallet, with the executions it covers; delivered at least once per settlement_id.
         """
         raise ConnectError(Code.UNIMPLEMENTED, 'Not implemented')
 
@@ -356,6 +364,16 @@ class LpCallbackServiceASGIApplication(ConnectASGIApplication[LpCallbackService]
                     ),
                     function=svc.execute_quote,
                 ),
+                "/tzero.v1.pay.lp.LpCallbackService/UsdtSettlementCompleted": Endpoint.unary(
+                    method=MethodInfo(
+                        name="UsdtSettlementCompleted",
+                        service_name="tzero.v1.pay.lp.LpCallbackService",
+                        input=UsdtSettlementCompletedRequest,
+                        output=UsdtSettlementCompletedResponse,
+                        idempotency_level=IdempotencyLevel.IDEMPOTENT,
+                    ),
+                    function=svc.usdt_settlement_completed,
+                ),
             },
             interceptors=interceptors,
             read_max_bytes=read_max_bytes,
@@ -372,8 +390,10 @@ class LpCallbackServiceASGIApplication(ConnectASGIApplication[LpCallbackService]
 class LpCallbackServiceClient(ConnectClient):
     """
     *
-    LP-implemented endpoint t-0 calls to request the LP's durable decision on a
-    standing quote execution for one authorized payment. Fiat mode only.
+    LP-implemented endpoints t-0 calls to request the LP's durable decision on a
+    standing quote execution for one authorized payment, and to report the
+    Issuer's USDt settlement verified on-chain to the LP's wallet. Fiat mode
+    only.
     """
     def __init__(
         self,
@@ -422,15 +442,46 @@ class LpCallbackServiceClient(ConnectClient):
             timeout_ms=timeout_ms,
         )
 
+    async def usdt_settlement_completed(
+        self,
+        request: UsdtSettlementCompletedRequest,
+        *,
+        headers: Headers | Mapping[str, str] | None = None, 
+        timeout_ms: int | None = None,
+    ) -> UsdtSettlementCompletedResponse:
+        """
+        * The Issuer's USDt settlement verified on-chain as reaching the LP's wallet, with the executions it covers; delivered at least once per settlement_id.
+        """
+        return await self.execute_unary(
+            request=request,
+            method=MethodInfo(
+                name="UsdtSettlementCompleted",
+                service_name="tzero.v1.pay.lp.LpCallbackService",
+                input=UsdtSettlementCompletedRequest,
+                output=UsdtSettlementCompletedResponse,
+                idempotency_level=IdempotencyLevel.IDEMPOTENT,
+            ),
+            headers=headers,
+            timeout_ms=timeout_ms,
+        )
+
 class LpCallbackServiceSync(Protocol):
     """
     *
-    LP-implemented endpoint t-0 calls to request the LP's durable decision on a
-    standing quote execution for one authorized payment. Fiat mode only.
+    LP-implemented endpoints t-0 calls to request the LP's durable decision on a
+    standing quote execution for one authorized payment, and to report the
+    Issuer's USDt settlement verified on-chain to the LP's wallet. Fiat mode
+    only.
     """
     def execute_quote(self, request: ExecuteQuoteRequest, ctx: RequestContext[ExecuteQuoteRequest, ExecuteQuoteResponse], /) -> ExecuteQuoteResponse:
         """
         * Requests a durable Accepted or Rejected result; only Accepted creates the LP's firm per-payment obligation.
+        """
+        raise ConnectError(Code.UNIMPLEMENTED, 'Not implemented')
+
+    def usdt_settlement_completed(self, request: UsdtSettlementCompletedRequest, ctx: RequestContext[UsdtSettlementCompletedRequest, UsdtSettlementCompletedResponse], /) -> UsdtSettlementCompletedResponse:
+        """
+        * The Issuer's USDt settlement verified on-chain as reaching the LP's wallet, with the executions it covers; delivered at least once per settlement_id.
         """
         raise ConnectError(Code.UNIMPLEMENTED, 'Not implemented')
 
@@ -456,6 +507,16 @@ class LpCallbackServiceWSGIApplication(ConnectWSGIApplication):
                     ),
                     function=service.execute_quote,
                 ),
+                "/tzero.v1.pay.lp.LpCallbackService/UsdtSettlementCompleted": EndpointSync.unary(
+                    method=MethodInfo(
+                        name="UsdtSettlementCompleted",
+                        service_name="tzero.v1.pay.lp.LpCallbackService",
+                        input=UsdtSettlementCompletedRequest,
+                        output=UsdtSettlementCompletedResponse,
+                        idempotency_level=IdempotencyLevel.IDEMPOTENT,
+                    ),
+                    function=service.usdt_settlement_completed,
+                ),
             },
             interceptors=interceptors,
             read_max_bytes=read_max_bytes,
@@ -472,8 +533,10 @@ class LpCallbackServiceWSGIApplication(ConnectWSGIApplication):
 class LpCallbackServiceClientSync(ConnectClientSync):
     """
     *
-    LP-implemented endpoint t-0 calls to request the LP's durable decision on a
-    standing quote execution for one authorized payment. Fiat mode only.
+    LP-implemented endpoints t-0 calls to request the LP's durable decision on a
+    standing quote execution for one authorized payment, and to report the
+    Issuer's USDt settlement verified on-chain to the LP's wallet. Fiat mode
+    only.
     """
     def __init__(
         self,
@@ -516,6 +579,28 @@ class LpCallbackServiceClientSync(ConnectClientSync):
                 service_name="tzero.v1.pay.lp.LpCallbackService",
                 input=ExecuteQuoteRequest,
                 output=ExecuteQuoteResponse,
+                idempotency_level=IdempotencyLevel.IDEMPOTENT,
+            ),
+            headers=headers,
+            timeout_ms=timeout_ms,
+        )
+    def usdt_settlement_completed(
+        self,
+        request: UsdtSettlementCompletedRequest,
+        *,
+        headers: Headers | Mapping[str, str] | None = None, 
+        timeout_ms: int | None = None,
+    ) -> UsdtSettlementCompletedResponse:
+        """
+        * The Issuer's USDt settlement verified on-chain as reaching the LP's wallet, with the executions it covers; delivered at least once per settlement_id.
+        """
+        return self.execute_unary(
+            request=request,
+            method=MethodInfo(
+                name="UsdtSettlementCompleted",
+                service_name="tzero.v1.pay.lp.LpCallbackService",
+                input=UsdtSettlementCompletedRequest,
+                output=UsdtSettlementCompletedResponse,
                 idempotency_level=IdempotencyLevel.IDEMPOTENT,
             ),
             headers=headers,

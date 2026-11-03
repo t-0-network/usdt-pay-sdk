@@ -217,7 +217,7 @@ export enum GetPaymentQuoteResponse_Failure_Reason {
   UNSPECIFIED = 0,
 
   /**
-   * No standing quote available for this currency right now.
+   * No standing quote for this currency right now; wait, then retry.
    *
    * @generated from enum value: REASON_QUOTE_UNAVAILABLE = 10;
    */
@@ -291,9 +291,6 @@ export type CreatePaymentIntentRequest = Message<"tzero.v1.pay.acquirer.CreatePa
   settlementQuote: {
     /**
      * * A standing quote from GetPaymentQuote; it must still stand, and its currency must equal local.currency when `local` is given. 
-     *
-     * Reserved, not on the wire yet: `quote_currency`, pricing by the freshest
-     * standing quote for a named currency.
      *
      * @generated from field: uint64 quote_id = 120;
      */
@@ -408,7 +405,7 @@ export type CreatePaymentIntentResponse_Success = Message<"tzero.v1.pay.acquirer
   } | { case: undefined; value?: undefined };
 
   /**
-   * * How the Acquirer is settled for this payment, per its configured settlement mode; always present, also when the variant carries no data. 
+   * * How the Acquirer is settled for this payment, per its configured settlement mode; always present. 
    *
    * @generated from oneof tzero.v1.pay.acquirer.CreatePaymentIntentResponse.Success.settlement
    */
@@ -507,7 +504,7 @@ export const CreatePaymentIntentResponse_Success_UsdtOnChainInstructions_Deposit
 
 /**
  * *
- * On-chain settlement mode; carries no data. The Issuer settles
+ * On-chain settlement mode. The Issuer settles
  * settlement_amount in USDt to the Acquirer's registered wallet; no quote
  * and no FX.
  *
@@ -550,42 +547,43 @@ export enum CreatePaymentIntentResponse_Failure_Reason {
   UNSPECIFIED = 0,
 
   /**
-   * The Issuer could not be reached, or returned no usable instructions.
+   * The Issuer could not be reached, or returned no usable instructions; wait a few seconds, then retry.
    *
    * @generated from enum value: REASON_ISSUER_UNAVAILABLE = 10;
    */
   ISSUER_UNAVAILABLE = 10,
 
   /**
-   * The Issuer has no free one-time deposit addresses.
+   * The Issuer has no free one-time deposit addresses; wait a few seconds, then retry.
    *
    * @generated from enum value: REASON_ADDRESS_POOL_EMPTY = 20;
    */
   ADDRESS_POOL_EMPTY = 20,
 
   /**
-   * The amount falls outside the acceptable range.
+   * The amount falls outside the acceptable range; final for this amount, and a different amount is a new payment.
    *
    * @generated from enum value: REASON_AMOUNT_OUT_OF_RANGE = 40;
    */
   AMOUNT_OUT_OF_RANGE = 40,
 
   /**
-   * The referenced quote no longer stands.
+   * The referenced quote no longer stands; retry with a fresh quote_id or with quote_id omitted, at a price that can differ.
    *
    * @generated from enum value: REASON_QUOTE_EXPIRED = 50;
    */
   QUOTE_EXPIRED = 50,
 
   /**
-   * The quote's remaining validity is too short to guarantee execution before it expires.
+   * The quote's remaining validity is too short to guarantee execution before it expires; retry
+   * with a fresh quote_id or with quote_id omitted, at a price that can differ.
    *
    * @generated from enum value: REASON_QUOTE_INSUFFICIENT_HEADROOM = 70;
    */
   QUOTE_INSUFFICIENT_HEADROOM = 70,
 
   /**
-   * No standing quote for the payment's currency right now (quote_id omitted).
+   * No standing quote for the payment's currency right now (quote_id omitted); wait, then retry.
    *
    * @generated from enum value: REASON_QUOTE_UNAVAILABLE = 80;
    */
@@ -798,7 +796,7 @@ export type PaymentAuthorizedRequest = Message<"tzero.v1.pay.acquirer.PaymentAut
   receivedAt?: Timestamp | undefined;
 
   /**
-   * no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
+   * * The fiat terms locked on CreatePaymentIntent; present only for an Acquirer settled in fiat. 
    *
    * @generated from field: tzero.v1.pay.acquirer.FiatSettlement fiat_settlement = 80;
    */
@@ -1003,7 +1001,7 @@ export type PaymentExpiredRequest = Message<"tzero.v1.pay.acquirer.PaymentExpire
   expiredAt?: Timestamp | undefined;
 
   /**
-   * no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
+   * * The fiat terms locked on CreatePaymentIntent; present only for an Acquirer settled in fiat. 
    *
    * @generated from field: tzero.v1.pay.acquirer.FiatSettlement fiat_settlement = 50;
    */
@@ -1096,7 +1094,7 @@ export type PaymentFailedRequest = Message<"tzero.v1.pay.acquirer.PaymentFailedR
   failedAt?: Timestamp | undefined;
 
   /**
-   * no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
+   * * The fiat terms locked on CreatePaymentIntent; present only for an Acquirer settled in fiat. 
    *
    * @generated from field: tzero.v1.pay.acquirer.FiatSettlement fiat_settlement = 80;
    */
@@ -1132,7 +1130,7 @@ export const PaymentFailedResponseSchema: GenMessage<PaymentFailedResponse> = /*
  */
 export const AcquirerService: GenService<{
   /**
-   * * Prices an upcoming local-fiat payment from t-0's Order Book of standing LP quotes; fiat settlement mode only. 
+   * * Prices an upcoming local-fiat payment from t-0's Order Book of standing LP quotes; fiat settlement mode only, and refused as a failed precondition for an Acquirer that no LP serves. 
    *
    * @generated from rpc tzero.v1.pay.acquirer.AcquirerService.GetPaymentQuote
    */
