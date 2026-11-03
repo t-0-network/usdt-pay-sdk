@@ -77,10 +77,10 @@ async function main(): Promise<void> {
   // ──────────────────────────────────────────────────────────────────
   // Phase 5 — UsdtSettlementCompleted (handler).
   //
-  // t-0 calls UsdtSettlementCompleted when it has verified the issuer's
-  // USDt transfer to your wallet on-chain. The shipped handler logs it
-  // and answers success; in production, record the covered executions
-  // under settlementId and count a redelivery only once.
+  // t-0 calls it once the issuer's USDt transfer to your wallet is verified
+  // on-chain. The shipped handler logs it and answers success; in production,
+  // record the covered executions under settlementId and count a redelivery
+  // only once.
   // ──────────────────────────────────────────────────────────────────
 }
 

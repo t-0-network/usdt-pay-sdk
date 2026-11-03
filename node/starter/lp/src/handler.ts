@@ -10,20 +10,18 @@ import { decimalToString } from "./internal/decimals.js";
 /**
  * The two callbacks t-0 pushes to the LP.
  *
- * ExecuteQuote — synchronous: t-0 calls it when a payment is authorized against one
- * of your standing quotes. Your answer is durable — Accepted creates your firm
- * obligation to pay `localAmount` to the acquirer over bank rails.
+ * ExecuteQuote — t-0 calls it when a payment is authorized against one of your
+ * standing quotes. Your answer is durable — Accepted creates your firm obligation
+ * to pay `localAmount` to the acquirer over bank rails.
  *
  * Delivered at least once, dedup key `executionId`. A repeat for an id you already
  * decided on must return the *same* decision — look it up before deciding.
  *
  * UsdtSettlementCompleted — t-0 verified on-chain that the issuer's USDt reached your
- * wallet, and lists the executions it covers. The transfer itself carries no reference,
- * so this is how you match the credit to your executions. A failed verdict, or no
- * verdict at all, sends nothing: until this arrives, the transfer is unconfirmed.
+ * wallet. The transfer carries no reference, so this lists the executions it covers.
+ * A transfer that fails verification or is never verified sends nothing.
  *
- * Delivered at least once, dedup key `settlementId`. A repeat must answer success
- * without counting the transfer twice.
+ * Delivered at least once, dedup key `settlementId`.
  */
 export const lpCallbackHandler: ServiceImpl<typeof LpCallbackService> = {
   async executeQuote(request) {
@@ -62,10 +60,9 @@ export const lpCallbackHandler: ServiceImpl<typeof LpCallbackService> = {
 
     // TODO: Step 5.1 — look up settlementId first. On a repeat, answer success
     //       without counting the transfer twice.
-    // TODO: Step 5.2 — record which executions this settlement covers, durably
-    //       under settlementId, before returning. settledExecutionIds is ascending
-    //       and may list an execution you rejected or have not answered or received
-    //       yet, so an id you do not recognize is not an error.
+    // TODO: Step 5.2 — record the covered executions durably under settlementId
+    //       before returning. The list may include an execution you rejected or
+    //       have not answered or received yet; that is not an error.
 
     return create(UsdtSettlementCompletedResponseSchema);
   },
