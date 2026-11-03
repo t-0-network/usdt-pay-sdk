@@ -8,8 +8,10 @@ authors = [
     { name = "T-0 Network" },
 ]
 dependencies = [
-    "t0-provider-sdk==1.3.1",
-    "connectrpc>=0.12.1",
+    "t0-provider-sdk==1.3.2",
+    # The version the stubs are generated with. From 0.13 `MethodInfo` requires `stream_type`, so
+    # 0.12 stubs fail to import on a 0.13 runtime and 0.13 stubs on a 0.12 one.
+    "connectrpc>=0.13.0",
     "protobuf>=7.36.2",
 ]
 

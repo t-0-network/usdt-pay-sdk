@@ -30,8 +30,8 @@ exclude = ["sdk/src/t0_usdt_pay_sdk/api/"]
 
 [dependency-groups]
 dev = [
-    "protoc-gen-connectrpc>=0.12.1",
-    "protovalidate>=2.0",
+    "protoc-gen-connectrpc>=0.13.0",
+    "protovalidate>=2.1",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "ruff>=0.16.10",

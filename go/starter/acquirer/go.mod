@@ -3,10 +3,10 @@ module github.com/t-0-network/usdt-pay-sdk/go/starter/acquirer
 go 1.27.0
 
 require (
-	connectrpc.com/connect v1.21.0
+	connectrpc.com/connect v1.21.1
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
-	github.com/t-0-network/provider-sdk/go v1.3.1
+	github.com/t-0-network/provider-sdk/go v1.3.2
 	github.com/t-0-network/usdt-pay-sdk/go/sdk v0.3.1
 	google.golang.org/protobuf v1.36.12
 )
