@@ -53,7 +53,7 @@ export function createHandler(
 /**
  * The server a pay participant runs so t-0 can call it: acquirers host
  * PaymentAuthorized / SettlementInitiated / SettlementCompleted / PaymentExpired / PaymentFailed,
- * issuers host CreatePaymentInstructions, LPs host ExecuteQuote.
+ * issuers host CreatePaymentInstructions, LPs host ExecuteQuote / UsdtSettlementCompleted.
  *
  * Every inbound request is signature-verified against the t-0 network public key
  * before it reaches your handler, and every response is validated against the

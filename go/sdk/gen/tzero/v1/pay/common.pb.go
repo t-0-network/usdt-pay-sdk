@@ -26,8 +26,7 @@ const (
 
 // *
 // On-chain network a USDt transfer moves over. Live: ETH, BSC, Polygon,
-// Arbitrum and Plasma. TRON carries a value but is not accepted until it goes
-// live in a later phase.
+// Arbitrum and Plasma. TRON carries a value but is not accepted.
 type Blockchain int32
 
 const (
@@ -324,7 +323,8 @@ func (x *UsdtOnChainPayment) GetSenderAddress() string {
 
 // *
 // One on-chain USDt settlement transfer, as reported by the Issuer on
-// SettlementSent and relayed to the Acquirer on SettlementCompleted.
+// SettlementSent and relayed to the Acquirer on SettlementCompleted or to the
+// LP on UsdtSettlementCompleted.
 type OnChainSettlementDetails struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// * Hash of the settlement transaction.

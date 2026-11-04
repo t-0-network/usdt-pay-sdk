@@ -89,6 +89,9 @@ class _UniversalStub:
     async def execute_quote(self, request, ctx):
         return lp_pb2.ExecuteQuoteResponse()
 
+    async def usdt_settlement_completed(self, request, ctx):
+        return lp_pb2.UsdtSettlementCompletedResponse()
+
 
 _ASGI_APPS = [
     (AcquirerServiceASGIApplication, "/tzero.v1.pay.acquirer.AcquirerService"),

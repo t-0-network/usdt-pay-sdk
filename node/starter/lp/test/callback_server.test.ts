@@ -5,6 +5,7 @@ import { setTimeout } from "node:timers/promises";
 import { createClient as createLocalClient, createRouterTransport } from "@connectrpc/connect";
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import {
+  Blockchain,
   Code,
   ConnectError,
   LpCallbackService,
@@ -51,6 +52,20 @@ test("ExecuteQuote answers accepted", async () => {
   const response = await t0.executeQuote(request);
 
   assert.equal(response.result.case, "accepted");
+});
+
+test("UsdtSettlementCompleted answers success", async () => {
+  await t0.usdtSettlementCompleted({
+    settlementId: 1n,
+    settlementAmount: decimalFromString("25.00"),
+    settledExecutionIds: [1n, 2n],
+    settledAt: timestampFromDate(new Date()),
+    settlement: {
+      onChainTxHash: "0x" + "ab".repeat(32),
+      chain: Blockchain.ETH,
+      destinationAddress: "0x" + "aa".repeat(20),
+    },
+  });
 });
 
 for (const error of [new ConnectError("t-0 is down", Code.Unavailable), new Error("local failure")]) {

@@ -16,7 +16,7 @@ import "tzero/v1/pay/validate.proto";
  * confirm fiat receipt.
  */
 service AcquirerService {
-  /** Prices an upcoming local-fiat payment from t-0's Order Book of standing LP quotes; fiat settlement mode only. */
+  /** Prices an upcoming local-fiat payment from t-0's Order Book of standing LP quotes; fiat settlement mode only, and refused as a failed precondition for an Acquirer that no LP serves. */
   rpc GetPaymentQuote(GetPaymentQuoteRequest) returns (GetPaymentQuoteResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
@@ -171,7 +171,7 @@ message GetPaymentQuoteResponse {
 
     enum Reason {
       REASON_UNSPECIFIED = 0;
-      // No standing quote available for this currency right now.
+      // No standing quote for this currency right now; wait, then retry.
       REASON_QUOTE_UNAVAILABLE = 10;
     }
   }
@@ -238,8 +238,6 @@ message CreatePaymentIntentRequest {
   oneof settlement_quote {
     /** A standing quote from GetPaymentQuote; it must still stand, and its currency must equal local.currency when `local` is given. */
     uint64 quote_id = 120 [(buf.validate.field).uint64.gt = 0];
-    // Reserved, not on the wire yet: `quote_currency`, pricing by the freshest
-    // standing quote for a named currency.
   }
 }
 
@@ -317,7 +315,7 @@ message CreatePaymentIntentResponse {
       }
     }
 
-    /** How the Acquirer is settled for this payment, per its configured settlement mode; always present, also when the variant carries no data. */
+    /** How the Acquirer is settled for this payment, per its configured settlement mode; always present. */
     oneof settlement {
       option (buf.validate.oneof).required = true;
       FiatSettlement fiat = 120;
@@ -325,7 +323,7 @@ message CreatePaymentIntentResponse {
     }
 
     /**
-     * On-chain settlement mode; carries no data. The Issuer settles
+     * On-chain settlement mode. The Issuer settles
      * settlement_amount in USDt to the Acquirer's registered wallet; no quote
      * and no FX.
      */
@@ -337,17 +335,18 @@ message CreatePaymentIntentResponse {
 
     enum Reason {
       REASON_UNSPECIFIED = 0;
-      // The Issuer could not be reached, or returned no usable instructions.
+      // The Issuer could not be reached, or returned no usable instructions; wait a few seconds, then retry.
       REASON_ISSUER_UNAVAILABLE = 10;
-      // The Issuer has no free one-time deposit addresses.
+      // The Issuer has no free one-time deposit addresses; wait a few seconds, then retry.
       REASON_ADDRESS_POOL_EMPTY = 20;
-      // The amount falls outside the acceptable range.
+      // The amount falls outside the acceptable range; final for this amount, and a different amount is a new payment.
       REASON_AMOUNT_OUT_OF_RANGE = 40;
-      // The referenced quote no longer stands.
+      // The referenced quote no longer stands; retry with a fresh quote_id or with quote_id omitted, at a price that can differ.
       REASON_QUOTE_EXPIRED = 50;
-      // The quote's remaining validity is too short to guarantee execution before it expires.
+      // The quote's remaining validity is too short to guarantee execution before it expires; retry
+      // with a fresh quote_id or with quote_id omitted, at a price that can differ.
       REASON_QUOTE_INSUFFICIENT_HEADROOM = 70;
-      // No standing quote for the payment's currency right now (quote_id omitted).
+      // No standing quote for the payment's currency right now (quote_id omitted); wait, then retry.
       REASON_QUOTE_UNAVAILABLE = 80;
     }
   }
@@ -439,7 +438,6 @@ message PaymentAuthorizedRequest {
   google.protobuf.Timestamp received_at = 60 [(buf.validate.field).required = true];
 
   /** The fiat terms locked on CreatePaymentIntent; present only for an Acquirer settled in fiat. */
-  // no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
   FiatSettlement fiat_settlement = 80;
 }
 
@@ -525,7 +523,6 @@ message PaymentExpiredRequest {
   google.protobuf.Timestamp expired_at = 30 [(buf.validate.field).required = true];
 
   /** The fiat terms locked on CreatePaymentIntent; present only for an Acquirer settled in fiat. */
-  // no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
   FiatSettlement fiat_settlement = 50;
 }
 
@@ -575,7 +572,6 @@ message PaymentFailedRequest {
   google.protobuf.Timestamp failed_at = 60 [(buf.validate.field).required = true];
 
   /** The fiat terms locked on CreatePaymentIntent; present only for an Acquirer settled in fiat. */
-  // no validation: absent for an Acquirer settled on-chain, so no presence rule applies.
   FiatSettlement fiat_settlement = 80;
 }
 
