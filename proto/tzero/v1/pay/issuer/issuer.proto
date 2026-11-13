@@ -8,6 +8,7 @@ package tzero.v1.pay.issuer;
 
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
+import "tzero/v1/common/timeout.proto";
 import "tzero/v1/pay/common.proto";
 import "tzero/v1/pay/validate.proto";
 
@@ -19,11 +20,17 @@ service IssuerService {
   /** Reports a deposit seen on-chain against an intent and the Issuer's final disposition of it. */
   rpc PaymentReceived(PaymentReceivedRequest) returns (PaymentReceivedResponse) {
     option idempotency_level = IDEMPOTENT;
+    option (tzero.v1.common.timeout) = {seconds: 30};
   }
 
-  /** Reports a USDt settlement sent on-chain to the registered destination, for t-0 to verify. */
+  /**
+   * Reports a USDt settlement sent on-chain to the registered destination, for t-0 to verify. The
+   * transaction must be in a block within 10 minutes of the report: verification can fail a
+   * settlement whose transaction it still does not find after that.
+   */
   rpc SettlementSent(SettlementSentRequest) returns (SettlementSentResponse) {
     option idempotency_level = IDEMPOTENT;
+    option (tzero.v1.common.timeout) = {seconds: 30};
   }
 }
 
@@ -38,6 +45,7 @@ service IssuerCallbackService {
    */
   rpc CreatePaymentInstructions(CreatePaymentInstructionsRequest) returns (CreatePaymentInstructionsResponse) {
     option idempotency_level = IDEMPOTENT;
+    option (tzero.v1.common.timeout) = {seconds: 9};
   }
 }
 
@@ -143,7 +151,10 @@ message SettlementSentRequest {
     max_len: 256
   }];
 
-  /** Total USDt settled across the covered intents. */
+  /**
+   * Total USDt settled across the covered intents. The transaction must hold one USDt transfer of
+   * exactly this amount to the destination; the amounts of several transfers are not added up.
+   */
   tzero.v1.pay.Decimal amount_usdt = 20 [
     (buf.validate.field).required = true,
     (buf.validate.field).cel = {

@@ -12,6 +12,7 @@ package acquirer
 
 import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
+	_ "github.com/t-0-network/usdt-pay-sdk/go/sdk/gen/tzero/v1/common"
 	pay "github.com/t-0-network/usdt-pay-sdk/go/sdk/gen/tzero/v1/pay"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -2181,7 +2182,7 @@ var File_tzero_v1_pay_acquirer_acquirer_proto protoreflect.FileDescriptor
 
 const file_tzero_v1_pay_acquirer_acquirer_proto_rawDesc = "" +
 	"\n" +
-	"$tzero/v1/pay/acquirer/acquirer.proto\x12\x15tzero.v1.pay.acquirer\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19tzero/v1/pay/common.proto\x1a\x1btzero/v1/pay/validate.proto\"\xab\x01\n" +
+	"$tzero/v1/pay/acquirer/acquirer.proto\x12\x15tzero.v1.pay.acquirer\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1dtzero/v1/common/timeout.proto\x1a\x19tzero/v1/pay/common.proto\x1a\x1btzero/v1/pay/validate.proto\"\xab\x01\n" +
 	"\vLocalAmount\x12j\n" +
 	"\x05value\x18\n" +
 	" \x01(\v2\x15.tzero.v1.pay.DecimalB=\xbaH:\xba\x014\x12\x1fvalue must be greater than zero\x1a\x11this.unscaled > 0\xc8\x01\x01R\x05value\x120\n" +
@@ -2363,17 +2364,18 @@ const file_tzero_v1_pay_acquirer_acquirer_proto_rawDesc = "" +
 	"\tfailed_at\x18< \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\bfailedAt\x12N\n" +
 	"\x0ffiat_settlement\x18P \x01(\v2%.tzero.v1.pay.acquirer.FiatSettlementR\x0efiatSettlementB\x17\n" +
 	"\x0epayment_method\x12\x05\xbaH\x02\b\x01\"\x17\n" +
-	"\x15PaymentFailedResponse2\x8c\x03\n" +
-	"\x0fAcquirerService\x12u\n" +
-	"\x0fGetPaymentQuote\x12-.tzero.v1.pay.acquirer.GetPaymentQuoteRequest\x1a..tzero.v1.pay.acquirer.GetPaymentQuoteResponse\"\x03\x90\x02\x01\x12\x81\x01\n" +
-	"\x13CreatePaymentIntent\x121.tzero.v1.pay.acquirer.CreatePaymentIntentRequest\x1a2.tzero.v1.pay.acquirer.CreatePaymentIntentResponse\"\x03\x90\x02\x02\x12~\n" +
-	"\x12SettlementReceived\x120.tzero.v1.pay.acquirer.SettlementReceivedRequest\x1a1.tzero.v1.pay.acquirer.SettlementReceivedResponse\"\x03\x90\x02\x022\x83\x05\n" +
-	"\x17AcquirerCallbackService\x12{\n" +
-	"\x11PaymentAuthorized\x12/.tzero.v1.pay.acquirer.PaymentAuthorizedRequest\x1a0.tzero.v1.pay.acquirer.PaymentAuthorizedResponse\"\x03\x90\x02\x02\x12\x81\x01\n" +
-	"\x13SettlementInitiated\x121.tzero.v1.pay.acquirer.SettlementInitiatedRequest\x1a2.tzero.v1.pay.acquirer.SettlementInitiatedResponse\"\x03\x90\x02\x02\x12\x81\x01\n" +
-	"\x13SettlementCompleted\x121.tzero.v1.pay.acquirer.SettlementCompletedRequest\x1a2.tzero.v1.pay.acquirer.SettlementCompletedResponse\"\x03\x90\x02\x02\x12r\n" +
-	"\x0ePaymentExpired\x12,.tzero.v1.pay.acquirer.PaymentExpiredRequest\x1a-.tzero.v1.pay.acquirer.PaymentExpiredResponse\"\x03\x90\x02\x02\x12o\n" +
-	"\rPaymentFailed\x12+.tzero.v1.pay.acquirer.PaymentFailedRequest\x1a,.tzero.v1.pay.acquirer.PaymentFailedResponse\"\x03\x90\x02\x02B\xe8\x01\n" +
+	"\x15PaymentFailedResponse2\x9f\x03\n" +
+	"\x0fAcquirerService\x12{\n" +
+	"\x0fGetPaymentQuote\x12-.tzero.v1.pay.acquirer.GetPaymentQuoteRequest\x1a..tzero.v1.pay.acquirer.GetPaymentQuoteResponse\"\t\xa2\xa7\x1d\x02\b\x1e\x90\x02\x01\x12\x87\x01\n" +
+	"\x13CreatePaymentIntent\x121.tzero.v1.pay.acquirer.CreatePaymentIntentRequest\x1a2.tzero.v1.pay.acquirer.CreatePaymentIntentResponse\"\t\xa2\xa7\x1d\x02\b\n" +
+	"\x90\x02\x02\x12\x84\x01\n" +
+	"\x12SettlementReceived\x120.tzero.v1.pay.acquirer.SettlementReceivedRequest\x1a1.tzero.v1.pay.acquirer.SettlementReceivedResponse\"\t\xa2\xa7\x1d\x02\b\x1e\x90\x02\x022\xa2\x05\n" +
+	"\x17AcquirerCallbackService\x12\x81\x01\n" +
+	"\x11PaymentAuthorized\x12/.tzero.v1.pay.acquirer.PaymentAuthorizedRequest\x1a0.tzero.v1.pay.acquirer.PaymentAuthorizedResponse\"\t\xa2\xa7\x1d\x02\b\x1e\x90\x02\x02\x12\x87\x01\n" +
+	"\x13SettlementInitiated\x121.tzero.v1.pay.acquirer.SettlementInitiatedRequest\x1a2.tzero.v1.pay.acquirer.SettlementInitiatedResponse\"\t\xa2\xa7\x1d\x02\b\x1e\x90\x02\x02\x12\x87\x01\n" +
+	"\x13SettlementCompleted\x121.tzero.v1.pay.acquirer.SettlementCompletedRequest\x1a2.tzero.v1.pay.acquirer.SettlementCompletedResponse\"\t\xa2\xa7\x1d\x02\b\x1e\x90\x02\x02\x12x\n" +
+	"\x0ePaymentExpired\x12,.tzero.v1.pay.acquirer.PaymentExpiredRequest\x1a-.tzero.v1.pay.acquirer.PaymentExpiredResponse\"\t\xa2\xa7\x1d\x02\b\x1e\x90\x02\x02\x12u\n" +
+	"\rPaymentFailed\x12+.tzero.v1.pay.acquirer.PaymentFailedRequest\x1a,.tzero.v1.pay.acquirer.PaymentFailedResponse\"\t\xa2\xa7\x1d\x02\b\x1e\x90\x02\x02B\xe8\x01\n" +
 	"\x19com.tzero.v1.pay.acquirerB\rAcquirerProtoP\x01ZDgithub.com/t-0-network/usdt-pay-sdk/go/sdk/gen/tzero/v1/pay/acquirer\xa2\x02\x04TVPA\xaa\x02\x15Tzero.V1.Pay.Acquirer\xca\x02\x15Tzero\\V1\\Pay\\Acquirer\xe2\x02!Tzero\\V1\\Pay\\Acquirer\\GPBMetadata\xea\x02\x18Tzero::V1::Pay::Acquirerb\x06proto3"
 
 var (

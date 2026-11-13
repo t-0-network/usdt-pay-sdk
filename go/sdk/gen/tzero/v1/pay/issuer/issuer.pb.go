@@ -12,6 +12,7 @@ package issuer
 
 import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
+	_ "github.com/t-0-network/usdt-pay-sdk/go/sdk/gen/tzero/v1/common"
 	pay "github.com/t-0-network/usdt-pay-sdk/go/sdk/gen/tzero/v1/pay"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -442,7 +443,9 @@ type SettlementSentRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// * Issuer's id for this USDt settlement; idempotency key, unique per Issuer.
 	SettlementRef string `protobuf:"bytes,10,opt,name=settlement_ref,json=settlementRef,proto3" json:"settlement_ref,omitempty"`
-	// * Total USDt settled across the covered intents.
+	// *
+	// Total USDt settled across the covered intents. The transaction must hold one USDt transfer of
+	// exactly this amount to the destination; the amounts of several transfers are not added up.
 	AmountUsdt *pay.Decimal `protobuf:"bytes,20,opt,name=amount_usdt,json=amountUsdt,proto3" json:"amount_usdt,omitempty"`
 	// * On-chain transaction, chain, and registered destination wallet for this settlement.
 	Settlement *pay.OnChainSettlementDetails `protobuf:"bytes,30,opt,name=settlement,proto3" json:"settlement,omitempty"`
@@ -1185,7 +1188,7 @@ var File_tzero_v1_pay_issuer_issuer_proto protoreflect.FileDescriptor
 
 const file_tzero_v1_pay_issuer_issuer_proto_rawDesc = "" +
 	"\n" +
-	" tzero/v1/pay/issuer/issuer.proto\x12\x13tzero.v1.pay.issuer\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19tzero/v1/pay/common.proto\x1a\x1btzero/v1/pay/validate.proto\"\xf5\x05\n" +
+	" tzero/v1/pay/issuer/issuer.proto\x12\x13tzero.v1.pay.issuer\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1dtzero/v1/common/timeout.proto\x1a\x19tzero/v1/pay/common.proto\x1a\x1btzero/v1/pay/validate.proto\"\xf5\x05\n" +
 	"\x16PaymentReceivedRequest\x123\n" +
 	"\x11payment_intent_id\x18\n" +
 	" \x01(\x04B\a\xbaH\x042\x02 \x00R\x0fpaymentIntentId\x12{\n" +
@@ -1285,12 +1288,12 @@ const file_tzero_v1_pay_issuer_issuer_proto_rawDesc = "" +
 	"\x12REASON_UNSPECIFIED\x10\x00\x12\x1d\n" +
 	"\x19REASON_ADDRESS_POOL_EMPTY\x10\x14\x12\x1e\n" +
 	"\x1aREASON_AMOUNT_OUT_OF_RANGE\x10(B\x0f\n" +
-	"\x06result\x12\x05\xbaH\x02\b\x012\xf2\x01\n" +
-	"\rIssuerService\x12q\n" +
-	"\x0fPaymentReceived\x12+.tzero.v1.pay.issuer.PaymentReceivedRequest\x1a,.tzero.v1.pay.issuer.PaymentReceivedResponse\"\x03\x90\x02\x02\x12n\n" +
-	"\x0eSettlementSent\x12*.tzero.v1.pay.issuer.SettlementSentRequest\x1a+.tzero.v1.pay.issuer.SettlementSentResponse\"\x03\x90\x02\x022\xa9\x01\n" +
-	"\x15IssuerCallbackService\x12\x8f\x01\n" +
-	"\x19CreatePaymentInstructions\x125.tzero.v1.pay.issuer.CreatePaymentInstructionsRequest\x1a6.tzero.v1.pay.issuer.CreatePaymentInstructionsResponse\"\x03\x90\x02\x02B\xda\x01\n" +
+	"\x06result\x12\x05\xbaH\x02\b\x012\xfe\x01\n" +
+	"\rIssuerService\x12w\n" +
+	"\x0fPaymentReceived\x12+.tzero.v1.pay.issuer.PaymentReceivedRequest\x1a,.tzero.v1.pay.issuer.PaymentReceivedResponse\"\t\xa2\xa7\x1d\x02\b\x1e\x90\x02\x02\x12t\n" +
+	"\x0eSettlementSent\x12*.tzero.v1.pay.issuer.SettlementSentRequest\x1a+.tzero.v1.pay.issuer.SettlementSentResponse\"\t\xa2\xa7\x1d\x02\b\x1e\x90\x02\x022\xaf\x01\n" +
+	"\x15IssuerCallbackService\x12\x95\x01\n" +
+	"\x19CreatePaymentInstructions\x125.tzero.v1.pay.issuer.CreatePaymentInstructionsRequest\x1a6.tzero.v1.pay.issuer.CreatePaymentInstructionsResponse\"\t\xa2\xa7\x1d\x02\b\t\x90\x02\x02B\xda\x01\n" +
 	"\x17com.tzero.v1.pay.issuerB\vIssuerProtoP\x01ZBgithub.com/t-0-network/usdt-pay-sdk/go/sdk/gen/tzero/v1/pay/issuer\xa2\x02\x04TVPI\xaa\x02\x13Tzero.V1.Pay.Issuer\xca\x02\x13Tzero\\V1\\Pay\\Issuer\xe2\x02\x1fTzero\\V1\\Pay\\Issuer\\GPBMetadata\xea\x02\x16Tzero::V1::Pay::Issuerb\x06proto3"
 
 var (
