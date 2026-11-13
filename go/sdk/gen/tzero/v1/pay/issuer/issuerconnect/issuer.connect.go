@@ -54,7 +54,10 @@ const (
 type IssuerServiceClient interface {
 	// * Reports a deposit seen on-chain against an intent and the Issuer's final disposition of it.
 	PaymentReceived(context.Context, *connect.Request[issuer.PaymentReceivedRequest]) (*connect.Response[issuer.PaymentReceivedResponse], error)
-	// * Reports a USDt settlement sent on-chain to the registered destination, for t-0 to verify.
+	// *
+	// Reports a USDt settlement sent on-chain to the registered destination, for t-0 to verify. The
+	// transaction must be in a block within 10 minutes of the report: verification can fail a
+	// settlement whose transaction it still does not find after that.
 	SettlementSent(context.Context, *connect.Request[issuer.SettlementSentRequest]) (*connect.Response[issuer.SettlementSentResponse], error)
 }
 
@@ -106,7 +109,10 @@ func (c *issuerServiceClient) SettlementSent(ctx context.Context, req *connect.R
 type IssuerServiceHandler interface {
 	// * Reports a deposit seen on-chain against an intent and the Issuer's final disposition of it.
 	PaymentReceived(context.Context, *connect.Request[issuer.PaymentReceivedRequest]) (*connect.Response[issuer.PaymentReceivedResponse], error)
-	// * Reports a USDt settlement sent on-chain to the registered destination, for t-0 to verify.
+	// *
+	// Reports a USDt settlement sent on-chain to the registered destination, for t-0 to verify. The
+	// transaction must be in a block within 10 minutes of the report: verification can fail a
+	// settlement whose transaction it still does not find after that.
 	SettlementSent(context.Context, *connect.Request[issuer.SettlementSentRequest]) (*connect.Response[issuer.SettlementSentResponse], error)
 }
 
