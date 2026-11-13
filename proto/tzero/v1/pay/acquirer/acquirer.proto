@@ -8,6 +8,7 @@ package tzero.v1.pay.acquirer;
 
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
+import "tzero/v1/common/timeout.proto";
 import "tzero/v1/pay/common.proto";
 import "tzero/v1/pay/validate.proto";
 
@@ -19,16 +20,19 @@ service AcquirerService {
   /** Prices an upcoming local-fiat payment from t-0's Order Book of standing LP quotes; fiat settlement mode only, and refused as a failed precondition for an Acquirer that no LP serves. */
   rpc GetPaymentQuote(GetPaymentQuoteRequest) returns (GetPaymentQuoteResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
+    option (tzero.v1.common.timeout) = {seconds: 30};
   }
 
   /** Opens a payment intent; t-0 reserves deposit addresses with the Issuer inline and returns the payment instructions. */
   rpc CreatePaymentIntent(CreatePaymentIntentRequest) returns (CreatePaymentIntentResponse) {
     option idempotency_level = IDEMPOTENT;
+    option (tzero.v1.common.timeout) = {seconds: 10};
   }
 
   /** Confirms that a fiat settlement landed in the Acquirer's bank account; fiat settlement mode only, and the only event that settles the covered intents. */
   rpc SettlementReceived(SettlementReceivedRequest) returns (SettlementReceivedResponse) {
     option idempotency_level = IDEMPOTENT;
+    option (tzero.v1.common.timeout) = {seconds: 30};
   }
 }
 
@@ -42,26 +46,31 @@ service AcquirerCallbackService {
   /** Tells the merchant the payment is approved; from here the Issuer is obligated to settle. */
   rpc PaymentAuthorized(PaymentAuthorizedRequest) returns (PaymentAuthorizedResponse) {
     option idempotency_level = IDEMPOTENT;
+    option (tzero.v1.common.timeout) = {seconds: 30};
   }
 
   /** Pre-notice that the LP sent a fiat bank transfer, naming the reference to expect; fiat settlement mode only, and does not settle the intents. */
   rpc SettlementInitiated(SettlementInitiatedRequest) returns (SettlementInitiatedResponse) {
     option idempotency_level = IDEMPOTENT;
+    option (tzero.v1.common.timeout) = {seconds: 30};
   }
 
   /** The Issuer's USDt settlement verified on-chain as reaching the Acquirer's wallet, with the intents it clears; USDt settlement mode only — in fiat mode the Acquirer's own SettlementReceived is the terminal event. */
   rpc SettlementCompleted(SettlementCompletedRequest) returns (SettlementCompletedResponse) {
     option idempotency_level = IDEMPOTENT;
+    option (tzero.v1.common.timeout) = {seconds: 30};
   }
 
   /** The QR window lapsed with no payment; clear the pending order and drop the QR. */
   rpc PaymentExpired(PaymentExpiredRequest) returns (PaymentExpiredResponse) {
     option idempotency_level = IDEMPOTENT;
+    option (tzero.v1.common.timeout) = {seconds: 30};
   }
 
   /** A deposit arrived that the Issuer will not process; the payment is over and will not settle. */
   rpc PaymentFailed(PaymentFailedRequest) returns (PaymentFailedResponse) {
     option idempotency_level = IDEMPOTENT;
+    option (tzero.v1.common.timeout) = {seconds: 30};
   }
 }
 
