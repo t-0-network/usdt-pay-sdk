@@ -8,6 +8,7 @@ package tzero.v1.pay.lp;
 
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
+import "tzero/v1/common/timeout.proto";
 import "tzero/v1/pay/common.proto";
 
 /**
@@ -18,6 +19,7 @@ service LpService {
   /** Pushes immutable standing quotes into t-0's Order Book, at most one per currency per call; each is multi-consumable while it stands. */
   rpc PublishQuote(PublishQuoteRequest) returns (PublishQuoteResponse) {
     option idempotency_level = IDEMPOTENT;
+    option (tzero.v1.common.timeout) = {seconds: 30};
   }
 
   /**
@@ -26,6 +28,7 @@ service LpService {
    */
   rpc FiatSettlementSent(FiatSettlementSentRequest) returns (FiatSettlementSentResponse) {
     option idempotency_level = IDEMPOTENT;
+    option (tzero.v1.common.timeout) = {seconds: 30};
   }
 }
 
@@ -39,11 +42,13 @@ service LpCallbackService {
   /** Requests a durable Accepted or Rejected result; only Accepted creates the LP's firm per-payment obligation. */
   rpc ExecuteQuote(ExecuteQuoteRequest) returns (ExecuteQuoteResponse) {
     option idempotency_level = IDEMPOTENT;
+    option (tzero.v1.common.timeout) = {seconds: 30};
   }
 
   /** The Issuer's USDt settlement verified on-chain as reaching the LP's wallet, with the executions it covers; delivered at least once per settlement_id. */
   rpc UsdtSettlementCompleted(UsdtSettlementCompletedRequest) returns (UsdtSettlementCompletedResponse) {
     option idempotency_level = IDEMPOTENT;
+    option (tzero.v1.common.timeout) = {seconds: 30};
   }
 }
 
