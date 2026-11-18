@@ -257,7 +257,7 @@ func (x *Decimal) GetExponent() int32 {
 
 // *
 // One on-chain USDt transfer made by the customer. The only payment-method
-// variant in the MVP.
+// variant.
 type UsdtOnChainPayment struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// * Chain the customer's USDt transfer moved over.

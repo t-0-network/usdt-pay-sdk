@@ -39,7 +39,7 @@ enum Blockchain {
 
 /**
  * One on-chain USDt transfer made by the customer. The only payment-method
- * variant in the MVP.
+ * variant.
  */
 message UsdtOnChainPayment {
   /** Chain the customer's USDt transfer moved over. */
