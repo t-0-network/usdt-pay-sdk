@@ -47,7 +47,7 @@ export const DecimalSchema: GenMessage<Decimal> = /*@__PURE__*/
 /**
  * *
  * One on-chain USDt transfer made by the customer. The only payment-method
- * variant in the MVP.
+ * variant.
  *
  * @generated from message tzero.v1.pay.UsdtOnChainPayment
  */
