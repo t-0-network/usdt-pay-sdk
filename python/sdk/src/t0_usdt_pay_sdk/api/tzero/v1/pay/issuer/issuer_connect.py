@@ -51,7 +51,10 @@ class IssuerService(Protocol):
 
     async def settlement_sent(self, request: SettlementSentRequest, ctx: RequestContext[SettlementSentRequest, SettlementSentResponse], /) -> SettlementSentResponse:
         """
-        * Reports a USDt settlement sent on-chain to the registered destination, for t-0 to verify.
+        *
+        Reports a USDt settlement sent on-chain to the registered destination, for t-0 to verify. The
+        transaction must be in a block within 10 minutes of the report: verification can fail a
+        settlement whose transaction it still does not find after that.
         """
         raise ConnectError(Code.UNIMPLEMENTED, 'Not implemented')
 
@@ -165,7 +168,10 @@ class IssuerServiceClient(ConnectClient):
         timeout_ms: int | None = None,
     ) -> SettlementSentResponse:
         """
-        * Reports a USDt settlement sent on-chain to the registered destination, for t-0 to verify.
+        *
+        Reports a USDt settlement sent on-chain to the registered destination, for t-0 to verify. The
+        transaction must be in a block within 10 minutes of the report: verification can fail a
+        settlement whose transaction it still does not find after that.
         """
         return await self.execute_unary(
             request=request,
@@ -195,7 +201,10 @@ class IssuerServiceSync(Protocol):
 
     def settlement_sent(self, request: SettlementSentRequest, ctx: RequestContext[SettlementSentRequest, SettlementSentResponse], /) -> SettlementSentResponse:
         """
-        * Reports a USDt settlement sent on-chain to the registered destination, for t-0 to verify.
+        *
+        Reports a USDt settlement sent on-chain to the registered destination, for t-0 to verify. The
+        transaction must be in a block within 10 minutes of the report: verification can fail a
+        settlement whose transaction it still does not find after that.
         """
         raise ConnectError(Code.UNIMPLEMENTED, 'Not implemented')
 
@@ -307,7 +316,10 @@ class IssuerServiceClientSync(ConnectClientSync):
         timeout_ms: int | None = None,
     ) -> SettlementSentResponse:
         """
-        * Reports a USDt settlement sent on-chain to the registered destination, for t-0 to verify.
+        *
+        Reports a USDt settlement sent on-chain to the registered destination, for t-0 to verify. The
+        transaction must be in a block within 10 minutes of the report: verification can fail a
+        settlement whose transaction it still does not find after that.
         """
         return self.execute_unary(
             request=request,
