@@ -12,6 +12,7 @@ package lp
 
 import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
+	_ "github.com/t-0-network/usdt-pay-sdk/go/sdk/gen/tzero/v1/common"
 	pay "github.com/t-0-network/usdt-pay-sdk/go/sdk/gen/tzero/v1/pay"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -1204,7 +1205,7 @@ var File_tzero_v1_pay_lp_lp_proto protoreflect.FileDescriptor
 
 const file_tzero_v1_pay_lp_lp_proto_rawDesc = "" +
 	"\n" +
-	"\x18tzero/v1/pay/lp/lp.proto\x12\x0ftzero.v1.pay.lp\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19tzero/v1/pay/common.proto\"\x88\x03\n" +
+	"\x18tzero/v1/pay/lp/lp.proto\x12\x0ftzero.v1.pay.lp\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1dtzero/v1/common/timeout.proto\x1a\x19tzero/v1/pay/common.proto\"\x88\x03\n" +
 	"\x13PublishQuoteRequest\x12N\n" +
 	"\x06quotes\x18\n" +
 	" \x03(\v2*.tzero.v1.pay.lp.PublishQuoteRequest.QuoteB\n" +
@@ -1304,13 +1305,13 @@ const file_tzero_v1_pay_lp_lp_proto_rawDesc = "" +
 	"\n" +
 	"settlement\x182 \x01(\v2&.tzero.v1.pay.OnChainSettlementDetailsB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"settlement\"!\n" +
-	"\x1fUsdtSettlementCompletedResponse2\xe1\x01\n" +
-	"\tLpService\x12`\n" +
-	"\fPublishQuote\x12$.tzero.v1.pay.lp.PublishQuoteRequest\x1a%.tzero.v1.pay.lp.PublishQuoteResponse\"\x03\x90\x02\x02\x12r\n" +
-	"\x12FiatSettlementSent\x12*.tzero.v1.pay.lp.FiatSettlementSentRequest\x1a+.tzero.v1.pay.lp.FiatSettlementSentResponse\"\x03\x90\x02\x022\xf9\x01\n" +
-	"\x11LpCallbackService\x12`\n" +
-	"\fExecuteQuote\x12$.tzero.v1.pay.lp.ExecuteQuoteRequest\x1a%.tzero.v1.pay.lp.ExecuteQuoteResponse\"\x03\x90\x02\x02\x12\x81\x01\n" +
-	"\x17UsdtSettlementCompleted\x12/.tzero.v1.pay.lp.UsdtSettlementCompletedRequest\x1a0.tzero.v1.pay.lp.UsdtSettlementCompletedResponse\"\x03\x90\x02\x02B\xbe\x01\n" +
+	"\x1fUsdtSettlementCompletedResponse2\xed\x01\n" +
+	"\tLpService\x12f\n" +
+	"\fPublishQuote\x12$.tzero.v1.pay.lp.PublishQuoteRequest\x1a%.tzero.v1.pay.lp.PublishQuoteResponse\"\t\xa2\xa7\x1d\x02\b\x1e\x90\x02\x02\x12x\n" +
+	"\x12FiatSettlementSent\x12*.tzero.v1.pay.lp.FiatSettlementSentRequest\x1a+.tzero.v1.pay.lp.FiatSettlementSentResponse\"\t\xa2\xa7\x1d\x02\b\x1e\x90\x02\x022\x85\x02\n" +
+	"\x11LpCallbackService\x12f\n" +
+	"\fExecuteQuote\x12$.tzero.v1.pay.lp.ExecuteQuoteRequest\x1a%.tzero.v1.pay.lp.ExecuteQuoteResponse\"\t\xa2\xa7\x1d\x02\b\x1e\x90\x02\x02\x12\x87\x01\n" +
+	"\x17UsdtSettlementCompleted\x12/.tzero.v1.pay.lp.UsdtSettlementCompletedRequest\x1a0.tzero.v1.pay.lp.UsdtSettlementCompletedResponse\"\t\xa2\xa7\x1d\x02\b\x1e\x90\x02\x02B\xbe\x01\n" +
 	"\x13com.tzero.v1.pay.lpB\aLpProtoP\x01Z>github.com/t-0-network/usdt-pay-sdk/go/sdk/gen/tzero/v1/pay/lp\xa2\x02\x04TVPL\xaa\x02\x0fTzero.V1.Pay.Lp\xca\x02\x0fTzero\\V1\\Pay\\Lp\xe2\x02\x1bTzero\\V1\\Pay\\Lp\\GPBMetadata\xea\x02\x12Tzero::V1::Pay::Lpb\x06proto3"
 
 var (

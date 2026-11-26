@@ -25,8 +25,7 @@ const (
 )
 
 // *
-// On-chain network a USDt transfer moves over. Live: ETH, BSC, Polygon,
-// Arbitrum and Plasma. TRON carries a value but is not accepted.
+// On-chain network a USDt transfer moves over.
 type Blockchain int32
 
 const (
@@ -257,7 +256,7 @@ func (x *Decimal) GetExponent() int32 {
 
 // *
 // One on-chain USDt transfer made by the customer. The only payment-method
-// variant in the MVP.
+// variant.
 type UsdtOnChainPayment struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// * Chain the customer's USDt transfer moved over.

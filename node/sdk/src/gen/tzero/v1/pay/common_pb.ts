@@ -47,7 +47,7 @@ export const DecimalSchema: GenMessage<Decimal> = /*@__PURE__*/
 /**
  * *
  * One on-chain USDt transfer made by the customer. The only payment-method
- * variant in the MVP.
+ * variant.
  *
  * @generated from message tzero.v1.pay.UsdtOnChainPayment
  */
@@ -121,8 +121,7 @@ export const OnChainSettlementDetailsSchema: GenMessage<OnChainSettlementDetails
 
 /**
  * *
- * On-chain network a USDt transfer moves over. Live: ETH, BSC, Polygon,
- * Arbitrum and Plasma. TRON carries a value but is not accepted.
+ * On-chain network a USDt transfer moves over.
  *
  * @generated from enum tzero.v1.pay.Blockchain
  */

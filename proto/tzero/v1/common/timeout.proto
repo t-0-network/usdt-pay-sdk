@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package tzero.v1.common;
+
+import "google/protobuf/descriptor.proto";
+import "google/protobuf/duration.proto";
+
+// timeout is the deadline a caller sets on one attempt of a call. The server
+// answers within it, counted from the moment it accepts the request, so a
+// caller that waits less can miss an answer the server still gives.
+extend google.protobuf.MethodOptions {
+  google.protobuf.Duration timeout = 60020;
+}
